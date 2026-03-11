@@ -15,7 +15,23 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     ports:
-      - "8000:8000"
+      - "8023:8023"
+    depends_on:
+      - db-backend
+    env_file:            
+      - backend/.env              
     volumes:
       - ./backend:/app
-    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+
+  db-backend:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: superpassword
+      POSTGRES_DB: hackathon_db
+    ports:
+      - "5432:5432"
+    env_file:            
+      - ./backend/.env            

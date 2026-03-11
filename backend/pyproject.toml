@@ -9,6 +9,11 @@ readme = "README.md"
 python = "^3.11"
 fastapi = "^0.135.1"
 uvicorn = "^0.41.0"
+alembic = "^1.18.4"
+pydantic = "^2.12.5"
+asyncpg = "^0.31.0"
+getenv = "^0.2.0"
+dotenv = "^0.9.9"
 
 
 [build-system]
