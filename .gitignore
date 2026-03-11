@@ -26,6 +26,8 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+
+*_table.py
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
@@ -128,7 +130,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
@@ -185,10 +186,7 @@ __pycache__/
 staticfiles/
 media/
 
-# Environment
-.env
-.env.local
-.env.production
+
 
 # IDE
 .vscode/
@@ -224,7 +222,6 @@ yarn-error.log*
 pnpm-debug.log*
 
 # Локальные переменные окружения (ОЧЕНЬ ВАЖНО для безопасности!)
-.env
 .env.local
 .env.development.local
 .env.test.local
