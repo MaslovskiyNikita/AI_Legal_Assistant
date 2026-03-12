@@ -10,11 +10,11 @@ from alembic import context
 import sys
 from os.path import abspath, dirname
 
-# Добавляем корень бэкенда в пути, чтобы Alembic видел папку app
 sys.path.insert(0, dirname(dirname(abspath(__file__))))
 
 from app.core.database import Base
 import app.models.user
+import app.models.chat
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -73,7 +73,7 @@ async def run_async_migrations() -> None:
     and associate a connection with the context.
 
     """
-    db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:superpassword@db-backend:5432/hackathon_db")
+    db_url = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:superpassword@db-backend:6432/hackathon_db")
     config.set_main_option("sqlalchemy.url", db_url)
 
     connectable = async_engine_from_config(
