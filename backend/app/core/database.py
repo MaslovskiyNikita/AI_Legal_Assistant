@@ -4,7 +4,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 SQLALCHEMY_DATABASE_URL = os.getenv(
     "DATABASE_URL", 
-    "postgresql+asyncpg://postgres:superpassword@db-backend:5432/hackathon_db"
+    "postgresql+asyncpg://postgres:superpassword@db-backend:6432/hackathon_db"
 )
 
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
