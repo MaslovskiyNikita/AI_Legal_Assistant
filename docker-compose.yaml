@@ -27,11 +27,13 @@ services:
   db-backend:
     image: postgres:15-alpine
     restart: always
+    command: -p 6432
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: superpassword
       POSTGRES_DB: hackathon_db
     ports:
-      - "5432:5432"
+      - "6432:6432"
     env_file:            
-      - ./backend/.env            
+      - ./backend/.env     
+    
