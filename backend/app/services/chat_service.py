@@ -1,0 +1,42 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, desc
+from sqlalchemy.orm import selectinload
+from app.models.chat import Chat, Message
+from app.schemas.chat import ChatCreateRequest
+
+async def create_chat(session: AsyncSession, chat_data: ChatCreateRequest) -> Chat:
+
+    new_chat = Chat(
+        user_id=chat_data.user_id, 
+        title=chat_data.title
+    )
+    session.add(new_chat)
+    await session.commit()
+    await session.refresh(new_chat)
+    return new_chat
+
+async def get_user_chats(session: AsyncSession, user_id: int) -> list[Chat]:
+
+    query = (
+        select(Chat)
+        .where(Chat.user_id == user_id)
+        .order_by(desc(Chat.updated_at))
+    )
+    result = await session.execute(query)
+    return list(result.scalars().all())
+
+async def get_chat_with_messages(session: AsyncSession, chat_id: int) -> Chat | None:
+
+    query = (
+        select(Chat)
+        .where(Chat.id == chat_id)
+        .options(selectinload(Chat.messages)) 
+    )
+    result = await session.execute(query)
+    return result.scalar_one_or_none()
+
+
+async def add_message_to_chat(request, chat_id: int, db) -> Message:
+    user_message = Message(chat_id=chat_id, role="user", text=request.text)
+    db.add(user_message)
+    await db.commit()
