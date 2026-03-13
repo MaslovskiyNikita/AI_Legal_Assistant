@@ -138,12 +138,23 @@ export const apiClient = {
   // загрузка файла в чат
   async uploadFileToChat(chat_id: number, filename: string) {
     if (USE_MOCK) return mockApi.uploadFileToChat(chat_id, filename);
+
+    // предполагаем простой REST-эндпоинт для сохранения информации о файле в чате
+    const r = await fetch(`${BASE_URL}/chats/${chat_id}/files`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename }),
+    });
+    if (!r.ok) {
+      throw new Error(`uploadFileToChat failed: ${r.status}`);
+    }
+    return r.json().catch(() => undefined);
   },
 
   // Ping
   async ping() {
     if (USE_MOCK) return mockApi.ping();
-    const r = await fetch(`${BASE_URL}/v1/ping`);
+    const r = await fetch(`${BASE_URL}/ping`);
     return r.json();
   },
 };

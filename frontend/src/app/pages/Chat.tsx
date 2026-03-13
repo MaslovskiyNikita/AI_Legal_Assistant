@@ -23,6 +23,12 @@ export default function Chat() {
   const navigate = useNavigate();
   const { chatId } = useParams();
 
+  // Локальный стейт для актуального chatId, чтобы после создания нового чата
+  // больше не создавать его заново на каждый последующий запрос
+  const [currentChatId, setCurrentChatId] = useState<string | undefined>(
+    chatId,
+  );
+
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -44,19 +50,21 @@ export default function Chat() {
       content: `📎 Загружен файл: ${file.name}`,
       created_at: new Date().toISOString(),
     };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev: any[]) => [...prev, userMsg]);
 
-    let activeChatId = chatId;
+    let activeChatId = currentChatId;
 
     try {
       // 1. Если это новый чат, сначала создаем его на бэкенде
-      if (activeChatId === "new") {
+      if (activeChatId === "new" || !activeChatId) {
         const newChat = await apiClient.createChat({
           user_id: TELEGRAM_USER.id,
           title: `File: ${file.name.substring(0, 20)}...`,
         });
         activeChatId = newChat.id.toString();
-        window.history.replaceState(null, "", `/chat/${activeChatId}`);
+        // сохраняем новый chatId локально и синхронизируемся с роутером
+        setCurrentChatId(activeChatId);
+        navigate(`/chat/${activeChatId}`, { replace: true });
       }
 
       setIsTyping(true);
@@ -65,7 +73,7 @@ export default function Chat() {
       const assistantMsgId = Date.now() + 1;
       const responseText = `Я получил файл "${file.name}". Хотите, чтобы я проанализировал его ключевые пункты или сравнил с другим документом?`;
 
-      setMessages((prev) => [
+      setMessages((prev: any[]) => [
         ...prev,
         {
           id: assistantMsgId,
@@ -79,7 +87,7 @@ export default function Chat() {
       await apiClient.uploadFileToChat(Number(activeChatId), file.name);
     } catch (error) {
       console.error("Error uploading file:", error);
-      setMessages((prev) => prev.filter((msg) => msg.id !== tempUserId));
+      setMessages((prev: any[]) => prev.filter((msg: any) => msg.id !== tempUserId));
     } finally {
       setIsTyping(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -97,9 +105,9 @@ export default function Chat() {
 
   // Загрузка существующего чата
   useEffect(() => {
-    if (chatId && chatId !== "new") {
+    if (currentChatId && currentChatId !== "new") {
       apiClient
-        .getChat(Number(chatId))
+        .getChat(Number(currentChatId))
         .then((res) => {
           setMessages(res.messages || []);
         })
@@ -107,6 +115,11 @@ export default function Chat() {
     } else {
       setMessages([]);
     }
+  }, [currentChatId]);
+
+  // Следим за изменением chatId из маршрута и синхронизируем локальный стейт
+  useEffect(() => {
+    setCurrentChatId(chatId);
   }, [chatId]);
 
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
@@ -126,26 +139,27 @@ export default function Chat() {
       content: textToSend,
       created_at: new Date().toISOString(),
     };
-    setMessages((prev) => [...prev, userMsg]);
+    setMessages((prev: any[]) => [...prev, userMsg]);
     setIsTyping(true);
 
-    let activeChatId = chatId;
+    let activeChatId = currentChatId;
 
     try {
       // 1. Если это новый чат, сначала создаем его на бэкенде
-      if (activeChatId === "new") {
+      if (activeChatId === "new" || !activeChatId) {
         const newChat = await apiClient.createChat({
           user_id: TELEGRAM_USER.id,
           title: textToSend.substring(0, 30) + "...",
         });
         activeChatId = newChat.id.toString();
-        // В фоне меняем URL, чтобы юзер остался в созданном чате
-        window.history.replaceState(null, "", `/chat/${activeChatId}`);
+        // Сохраняем новый chatId локально и синхронизируем с роутером
+        setCurrentChatId(activeChatId);
+        navigate(`/chat/${activeChatId}`, { replace: true });
       }
 
       // 2. Добавляем пустой ответ ассистента, который мы будем заполнять стримом
       const assistantMsgId = Date.now() + 1;
-      setMessages((prev) => [
+      setMessages((prev: any[]) => [
         ...prev,
         {
           id: assistantMsgId,
@@ -161,8 +175,8 @@ export default function Chat() {
         { text: textToSend },
         (chunk) => {
           // По мере прихода слов от ИИ, добавляем их к последнему сообщению
-          setMessages((prev) =>
-            prev.map((msg) =>
+          setMessages((prev: any[]) =>
+            prev.map((msg: any) =>
               msg.id === assistantMsgId
                 ? { ...msg, content: msg.content + chunk }
                 : msg,
@@ -172,7 +186,7 @@ export default function Chat() {
       );
     } catch (error) {
       console.error("Error sending message:", error);
-      setMessages((prev) => prev.filter((msg) => msg.id !== tempUserId));
+      setMessages((prev: any[]) => prev.filter((msg: any) => msg.id !== tempUserId));
     } finally {
       setIsTyping(false);
     }
@@ -277,7 +291,13 @@ export default function Chat() {
               </p>
             )}
 
-            {messages.map((msg) => renderMessage(msg))}
+            {messages.map((msg: any, index: number) => (
+              <React.Fragment
+                key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
+              >
+                {renderMessage(msg)}
+              </React.Fragment>
+            ))}
 
             <div ref={messagesEndRef} />
           </>
@@ -329,8 +349,10 @@ export default function Chat() {
             <input
               type="text"
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setInputText(e.target.value)
+              }
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === "Enter") handleSend();
               }}
               placeholder="Ask a legal question..."
