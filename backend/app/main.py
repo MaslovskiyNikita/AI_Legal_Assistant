@@ -1,11 +1,13 @@
 from fastapi import FastAPI
 import app.models.user 
 import app.models.chat
-from app.api.v1 import auth
+from app.api.v1 import auth, chats, documents
 
 app = FastAPI(title="LegalAI Assistant API")
 
 app.include_router(auth.router)
+app.include_router(chats.router)
+app.include_router(documents.router)
 
 @app.get("/api/v1/ping")
 async def ping():
