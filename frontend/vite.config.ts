@@ -17,16 +17,7 @@ export default defineConfig({
     },
   },
 
-  server: {
-    proxy: {
-      // всё, что начинается с /api/v1, проксируем на бэкенд
-      "/api/v1": {
-        target: "http://0.0.0.0:8023",
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
+  server: {},
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ["**/*.svg", "**/*.csv"],

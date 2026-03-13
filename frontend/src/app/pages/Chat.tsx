@@ -8,10 +8,10 @@ import {
   Shield,
   Scale,
   CheckCircle2,
+  X,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { apiClient } from "../api/client";
-import { TELEGRAM_USER } from "../../utils/telegram";
 
 const COLORS = {
   bg: "#1C1C1D",
@@ -22,79 +22,86 @@ const COLORS = {
 export default function Chat() {
   const navigate = useNavigate();
   const { chatId } = useParams();
+  const userStr = localStorage.getItem("user");
+  const internalUserId = userStr ? JSON.parse(userStr).id : null;
 
-  // Локальный стейт для актуального chatId, чтобы после создания нового чата
-  // больше не создавать его заново на каждый последующий запрос
   const [currentChatId, setCurrentChatId] = useState<string | undefined>(
     chatId,
   );
-
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isCreatingChat = useRef(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
+  const [oldFile, setOldFile] = useState<File | null>(null);
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const [isComparing, setIsComparing] = useState(false);
+  const [compareError, setCompareError] = useState("");
 
-  // Обработчик загрузки файла
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Функция для обработки сравнения и создания нового чата
+  const handleCompareFiles = async () => {
+    if (!oldFile || !newFile || !internalUserId) {
+      setCompareError("Please select both files.");
+      return;
+    }
 
-    // Генерируем временный ID для UI
-    const tempUserId = Date.now();
-
-    const userMsg = {
-      id: tempUserId,
-      role: "user",
-      content: `📎 Загружен файл: ${file.name}`,
-      created_at: new Date().toISOString(),
-    };
-    setMessages((prev: any[]) => [...prev, userMsg]);
-
-    let activeChatId = currentChatId;
+    setIsComparing(true);
+    setCompareError("");
 
     try {
-      // 1. Если это новый чат, сначала создаем его на бэкенде
-      if (activeChatId === "new" || !activeChatId) {
-        const newChat = await apiClient.createChat({
-          user_id: TELEGRAM_USER.id,
-          title: `File: ${file.name.substring(0, 20)}...`,
-        });
-        activeChatId = newChat.id.toString();
-        // сохраняем новый chatId локально и синхронизируемся с роутером
-        setCurrentChatId(activeChatId);
-        navigate(`/chat/${activeChatId}`, { replace: true });
-      }
+      const compareResponse = await apiClient.compareDocuments(
+        oldFile,
+        newFile,
+      );
 
-      setIsTyping(true);
+      const newChat = await apiClient.createChat({
+        user_id: internalUserId,
+        title: `Comparison: ${oldFile.name.substring(0, 10)}...`,
+      });
 
-      // 2. пустой ответ
-      const assistantMsgId = Date.now() + 1;
-      const responseText = `Я получил файл "${file.name}". Хотите, чтобы я проанализировал его ключевые пункты или сравнил с другим документом?`;
-
-      setMessages((prev: any[]) => [
-        ...prev,
+      // 1. ПОДГОТАВЛИВАЕМ ДАННЫЕ ДЛЯ ПЕРЕДАЧИ
+      const resultMsgs = [
         {
-          id: assistantMsgId,
-          role: "assistant",
-          content: responseText,
+          id: Date.now(),
+          role: "user",
+          text: `📎 Сравнение: ${oldFile.name} и ${newFile.name}`,
           created_at: new Date().toISOString(),
         },
-      ]);
+        {
+          id: Date.now() + 1,
+          role: "ai",
+          text:
+            "Документы успешно проанализированы. " +
+            (typeof compareResponse === "string"
+              ? compareResponse
+              : "Различия найдены."),
+          created_at: new Date().toISOString(),
+        },
+      ];
 
-      // 3. Сохраняем это в моковую базу данных, чтобы осталось в истории
-      await apiClient.uploadFileToChat(Number(activeChatId), file.name);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      setMessages((prev: any[]) => prev.filter((msg: any) => msg.id !== tempUserId));
+      // 2. СОХРАНЯЕМ В sessionStorage ПЕРЕД ПЕРЕХОДОМ
+      // Мы используем chatId нового чата как ключ
+      sessionStorage.setItem(
+        `pending_messages_${newChat.id}`,
+        JSON.stringify(resultMsgs),
+      );
+
+      setIsCompareModalOpen(false);
+      setOldFile(null);
+      setNewFile(null);
+      isCreatingChat.current = true;
+
+      navigate(`/chat/${newChat.id}`, { replace: true });
+    } catch (err) {
+      console.error(err);
+      setCompareError("Failed to compare documents.");
     } finally {
-      setIsTyping(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setIsComparing(false);
     }
   };
 
-  // Плавная прокрутка вниз
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -103,21 +110,32 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
-  // Загрузка существующего чата
   useEffect(() => {
     if (currentChatId && currentChatId !== "new") {
+      // ПРОВЕРЯЕМ sessionStorage
+      const pending = sessionStorage.getItem(
+        `pending_messages_${currentChatId}`,
+      );
+      if (pending) {
+        setMessages(JSON.parse(pending));
+        sessionStorage.removeItem(`pending_messages_${currentChatId}`); // Очищаем после загрузки
+        return;
+      }
+
+      if (isCreatingChat.current) {
+        isCreatingChat.current = false;
+        return;
+      }
+
       apiClient
         .getChat(Number(currentChatId))
-        .then((res) => {
-          setMessages(res.messages || []);
-        })
+        .then((res) => setMessages(res.messages || []))
         .catch((err) => console.error("Failed to load chat", err));
     } else {
       setMessages([]);
     }
   }, [currentChatId]);
 
-  // Следим за изменением chatId из маршрута и синхронизируем локальный стейт
   useEffect(() => {
     setCurrentChatId(chatId);
   }, [chatId]);
@@ -125,60 +143,53 @@ export default function Chat() {
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
     const textToSend =
       typeof textOverride === "string" ? textOverride : inputText;
-
     if (!textToSend.trim() || isTyping) return;
-
     setInputText("");
 
     const tempUserId = Date.now();
-
-    // Добавляем сообщение юзера в UI сразу
     const userMsg = {
       id: tempUserId,
       role: "user",
-      content: textToSend,
+      text: textToSend,
       created_at: new Date().toISOString(),
     };
-    setMessages((prev: any[]) => [...prev, userMsg]);
+    setMessages((prev) => [...prev, userMsg]);
     setIsTyping(true);
 
     let activeChatId = currentChatId;
 
     try {
-      // 1. Если это новый чат, сначала создаем его на бэкенде
       if (activeChatId === "new" || !activeChatId) {
+        if (!internalUserId) throw new Error("User ID not found");
         const newChat = await apiClient.createChat({
-          user_id: TELEGRAM_USER.id,
+          user_id: internalUserId,
           title: textToSend.substring(0, 30) + "...",
         });
         activeChatId = newChat.id.toString();
-        // Сохраняем новый chatId локально и синхронизируем с роутером
+        isCreatingChat.current = true;
         setCurrentChatId(activeChatId);
         navigate(`/chat/${activeChatId}`, { replace: true });
       }
 
-      // 2. Добавляем пустой ответ ассистента, который мы будем заполнять стримом
       const assistantMsgId = Date.now() + 1;
-      setMessages((prev: any[]) => [
+      setMessages((prev) => [
         ...prev,
         {
           id: assistantMsgId,
-          role: "assistant",
-          content: "",
+          role: "ai",
+          text: "",
           created_at: new Date().toISOString(),
         },
       ]);
 
-      // 3. Отправляем сообщение и слушаем потоковый ответ (SSE)
       await apiClient.sendMessageStream(
         Number(activeChatId),
         { text: textToSend },
         (chunk) => {
-          // По мере прихода слов от ИИ, добавляем их к последнему сообщению
-          setMessages((prev: any[]) =>
-            prev.map((msg: any) =>
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg.id === assistantMsgId
-                ? { ...msg, content: msg.content + chunk }
+                ? { ...msg, text: (msg.text || "") + chunk }
                 : msg,
             ),
           );
@@ -186,7 +197,7 @@ export default function Chat() {
       );
     } catch (error) {
       console.error("Error sending message:", error);
-      setMessages((prev: any[]) => prev.filter((msg: any) => msg.id !== tempUserId));
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempUserId));
     } finally {
       setIsTyping(false);
     }
@@ -205,15 +216,12 @@ export default function Chat() {
         className={`flex ${isUser ? "justify-end" : "justify-start"}`}
       >
         <div
-          className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[15px] leading-snug text-white shadow-sm
-            ${isUser ? "rounded-tr-sm" : "rounded-tl-sm"}`}
+          className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[15px] leading-snug text-white shadow-sm ${isUser ? "rounded-tr-sm" : "rounded-tl-sm"}`}
           style={{ backgroundColor: isUser ? COLORS.primary : COLORS.surface }}
         >
-          {msg.content}
-
+          {msg.text || msg.content}
           <div
-            className={`text-[11px] text-right mt-1 -mb-1 flex items-center gap-1
-            ${isUser ? "justify-end text-white/70" : "justify-end text-[#8E8E93]"}`}
+            className={`text-[11px] text-right mt-1 -mb-1 flex items-center gap-1 ${isUser ? "justify-end text-white/70" : "justify-end text-[#8E8E93]"}`}
           >
             {timeString}{" "}
             {isUser && <CheckCircle2 size={12} className="inline" />}
@@ -225,20 +233,18 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen w-full relative flex flex-col bg-[#1C1C1D]">
-      {/* Header */}
+      {/* Header, Chat Area... */}
       <div
         className="h-14 px-3 flex items-center justify-between border-b border-black/20 sticky top-0 z-10"
         style={{ backgroundColor: COLORS.surface }}
       >
         <div className="flex items-center gap-2">
-          {/* Кнопка НАЗАД */}
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/profile")}
             className="text-white p-1 -ml-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
           >
             <ChevronLeft size={28} />
           </button>
-
           <div className="flex items-center gap-2.5">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center relative overflow-hidden"
@@ -269,9 +275,8 @@ export default function Chat() {
         </button>
       </div>
 
-      {/* Chat Area - Динамический рендер */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 pb-32">
-        {chatId === "new" && messages.length === 0 ? (
+        {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-[#8E8E93] mt-10">
             <div className="w-16 h-16 bg-[#2C2C2E] rounded-full flex items-center justify-center mb-4">
               <Shield size={32} color="#3390EC" />
@@ -290,7 +295,6 @@ export default function Chat() {
                 Chat History
               </p>
             )}
-
             {messages.map((msg: any, index: number) => (
               <React.Fragment
                 key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
@@ -298,18 +302,81 @@ export default function Chat() {
                 {renderMessage(msg)}
               </React.Fragment>
             ))}
-
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
 
-      {/* Bottom Input Area */}
+      {/* --- МОДАЛЬНОЕ ОКНО ДЛЯ СРАВНЕНИЯ ФАЙЛОВ --- */}
+      {isCompareModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-[#2C2C2E] rounded-2xl p-6 w-full max-w-sm border border-white/10 shadow-lg">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                Compare Documents
+              </h2>
+              <button
+                onClick={() => setIsCompareModalOpen(false)}
+                className="text-gray-400 hover:text-white"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            <p className="text-sm text-gray-400 mb-6">
+              Upload the old and new versions of a document to analyze the
+              changes.
+            </p>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-gray-300 block mb-2">
+                  Old Version
+                </label>
+                <input
+                  type="file"
+                  onChange={(e) => setOldFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#3A3A3C] file:text-white hover:file:bg-[#4A4A4C] cursor-pointer"
+                />
+                {oldFile && (
+                  <p className="text-xs text-gray-500 mt-1 truncate">
+                    {oldFile.name}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-300 block mb-2">
+                  New Version
+                </label>
+                <input
+                  type="file"
+                  onChange={(e) => setNewFile(e.target.files?.[0] || null)}
+                  className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#3A3A3C] file:text-white hover:file:bg-[#4A4A4C] cursor-pointer"
+                />
+                {newFile && (
+                  <p className="text-xs text-gray-500 mt-1 truncate">
+                    {newFile.name}
+                  </p>
+                )}
+              </div>
+            </div>
+            {compareError && (
+              <p className="text-sm text-red-500 mt-4">{compareError}</p>
+            )}
+            <button
+              onClick={handleCompareFiles}
+              disabled={!oldFile || !newFile || isComparing}
+              className="w-full bg-[#3390EC] text-white font-semibold py-2.5 rounded-lg mt-6 disabled:opacity-50 transition-all active:scale-95"
+            >
+              {isComparing ? "Analyzing..." : "Compare Files"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- ИЗМЕНЕННАЯ НИЖНЯЯ ПАНЕЛЬ --- */}
       <div
-        className="fixed bottom-0 left-0 right-0 flex flex-col pt-2 pb-5 px-3 backdrop-blur-md max-w-md mx-auto z-50"
+        className="fixed bottom-0 left-0 right-0 flex flex-col pt-2 pb-5 px-3 backdrop-blur-md max-w-md mx-auto z-40"
         style={{ backgroundColor: "rgba(28, 28, 29, 0.95)" }}
       >
-        {/* Quick Action Chips */}
         <div className="flex overflow-x-auto gap-2 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] -mx-3 px-3">
           {["Summarize Doc", "Civil Code", "Check Contract"].map((text) => (
             <button
@@ -326,18 +393,10 @@ export default function Chat() {
             </button>
           ))}
         </div>
-
-        {/* Text Input */}
         <div className="flex items-end gap-2">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileUpload}
-            className="hidden"
-            accept=".pdf,.doc,.docx,.txt"
-          />
+          {/* Скрепка теперь открывает модальное окно */}
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={() => setIsCompareModalOpen(true)}
             className="p-2.5 text-[#8E8E93] hover:text-white transition-colors pb-3 cursor-pointer"
           >
             <Paperclip size={24} className="rotate-45" />
@@ -349,10 +408,8 @@ export default function Chat() {
             <input
               type="text"
               value={inputText}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setInputText(e.target.value)
-              }
-              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => {
                 if (e.key === "Enter") handleSend();
               }}
               placeholder="Ask a legal question..."

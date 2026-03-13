@@ -18,21 +18,29 @@ export default function Profile() {
 
   useEffect(() => {
     let mounted = true;
-    // Загружаем юзера
-    apiClient
-      .getUser(TELEGRAM_USER.id)
-      .then((u) => {
-        if (mounted) setUser(u);
-      })
-      .catch(() => {});
 
-    // Загружаем историю чатов
-    apiClient
-      .getChats(TELEGRAM_USER.id)
-      .then((c) => {
-        if (mounted) setChats(c);
-      })
-      .catch(() => {});
+    const loadData = async () => {
+      try {
+        // 1. Загружаем профиль юзера по Telegram ID
+        const u = await apiClient.getUser(TELEGRAM_USER.id as any);
+        if (!mounted) return;
+        setUser(u);
+
+        // Обновляем localStorage на случай, если данные изменились
+        localStorage.setItem("user", JSON.stringify(u));
+
+        // 2. Загружаем историю чатов по ВНУТРЕННЕМУ ID юзера (u.id)
+        if (u && u.id) {
+          const c = await apiClient.getChats(u.id);
+          if (!mounted) return;
+          setChats(c);
+        }
+      } catch (error) {
+        console.error("Failed to load profile or chats", error);
+      }
+    };
+
+    loadData();
 
     return () => {
       mounted = false;
@@ -54,10 +62,10 @@ export default function Profile() {
           />
         </div>
         <h2 className="text-[20px] font-semibold text-white tracking-tight">
-          {user ? `${user.first_name} ${user.last_name}` : "Loading..."}
+          {user ? `${user.first_name} ${user.last_name || ""}` : "Loading..."}
         </h2>
         <span className="text-[14px] text-[#8E8E93] font-medium mt-0.5">
-          {user ? `@${user.username}` : ""}
+          {user?.username ? `@${user.username}` : ""}
         </span>
       </div>
 
@@ -157,6 +165,7 @@ export default function Profile() {
                         {timeString}
                       </span>
                     </div>
+                    {/* В бэкенде поля last_message нет, поэтому будет выводиться fallback */}
                     <p className="text-[14px] text-[#8E8E93] truncate">
                       {item.last_message || "Tap to open conversation..."}
                     </p>
