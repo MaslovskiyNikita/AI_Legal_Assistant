@@ -2,7 +2,12 @@
 import * as mockApi from "../../mocks/mockApi";
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true" || false;
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://0.0.0.0:8023";
+// В dev-режиме ходим через proxy Vite по относительному пути,
+// чтобы не ловить CORS в браузере. На проде можно оставить VITE_API_BASE_URL.
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL && import.meta.env.PROD
+    ? import.meta.env.VITE_API_BASE_URL
+    : "";
 
 const BASE_URL = `${API_BASE}/api/v1`;
 
