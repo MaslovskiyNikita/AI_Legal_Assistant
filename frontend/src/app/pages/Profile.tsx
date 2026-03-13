@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { FileText, Scale, Shield, MessageCircle, User } from "lucide-react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../api/client";
+import { TELEGRAM_USER } from "../../utils/telegram";
 
 const COLORS = {
   bg: "#1C1C1D",
@@ -13,47 +14,26 @@ const COLORS = {
 export default function Profile() {
   const navigate = useNavigate();
   const [user, setUser] = useState<any | null>(null);
-  const TELEGRAM_ID = 12345678;
-
-  const historyItems = [
-    {
-      id: 1,
-      icon: <FileText size={20} />,
-      title: "NDA Review - Apple Inc.",
-      desc: "Analysis of duration and scope terms.",
-      time: "12:30",
-    },
-    {
-      id: 2,
-      icon: <Scale size={20} />,
-      title: "Divorce proceeding laws",
-      desc: "California state regulations regarding...",
-      time: "Yesterday",
-    },
-    {
-      id: 3,
-      icon: <Shield size={20} />,
-      title: "Trademark Infringement",
-      desc: "Steps to issue a cease and desist...",
-      time: "Mon",
-    },
-    {
-      id: 4,
-      icon: <FileText size={20} />,
-      title: "Lease Agreement Check",
-      desc: "Renter's rights on early termination.",
-      time: "Jan 12",
-    },
-  ];
+  const [chats, setChats] = useState<any[]>([]);
 
   useEffect(() => {
     let mounted = true;
+    // Загружаем юзера
     apiClient
-      .getUser(TELEGRAM_ID)
+      .getUser(TELEGRAM_USER.id)
       .then((u) => {
         if (mounted) setUser(u);
       })
       .catch(() => {});
+
+    // Загружаем историю чатов
+    apiClient
+      .getChats(TELEGRAM_USER.id)
+      .then((c) => {
+        if (mounted) setChats(c);
+      })
+      .catch(() => {});
+
     return () => {
       mounted = false;
     };
@@ -101,7 +81,7 @@ export default function Profile() {
             </span>
           </div>
           <span className="text-[24px] font-bold text-white tracking-tight">
-            14
+            {user?.documents_analyzed ?? 0}
           </span>
         </div>
         <div
@@ -120,7 +100,7 @@ export default function Profile() {
             </span>
           </div>
           <span className="text-[24px] font-bold text-white tracking-tight">
-            32
+            {chats.length}
           </span>
         </div>
       </div>
@@ -134,33 +114,57 @@ export default function Profile() {
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {historyItems.map((item, index) => (
-            <div
-              key={item.id}
-              onClick={() => navigate(`/chat/${item.id}`)}
-              className={`flex items-center px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer ${index !== historyItems.length - 1 ? "border-b border-white/5" : ""}`}
-            >
-              <div
-                className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 mr-3"
-                style={{ backgroundColor: COLORS.surface }}
-              >
-                <div className="text-[#3390EC]">{item.icon}</div>
-              </div>
-              <div className="flex-1 min-w-0 pr-2">
-                <div className="flex items-center justify-between mb-0.5">
-                  <h4 className="text-[16px] font-medium text-white truncate">
-                    {item.title}
-                  </h4>
-                  <span className="text-[12px] text-[#8E8E93] shrink-0 ml-2">
-                    {item.time}
-                  </span>
-                </div>
-                <p className="text-[14px] text-[#8E8E93] truncate">
-                  {item.desc}
-                </p>
-              </div>
+          {chats.length === 0 ? (
+            <div className="text-center text-[#8E8E93] mt-6 text-[14px]">
+              No dialogues yet
             </div>
-          ))}
+          ) : (
+            chats.map((item, index) => {
+              // Форматируем дату для отображения
+              const dateObj = new Date(item.updated_at);
+              const isToday =
+                new Date().toDateString() === dateObj.toDateString();
+              const timeString = isToday
+                ? dateObj.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : dateObj.toLocaleDateString([], {
+                    month: "short",
+                    day: "numeric",
+                  });
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() => navigate(`/chat/${item.id}`)}
+                  className={`flex items-center px-4 py-3 hover:bg-white/5 transition-colors cursor-pointer ${index !== chats.length - 1 ? "border-b border-white/5" : ""}`}
+                >
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center shrink-0 mr-3"
+                    style={{ backgroundColor: COLORS.surface }}
+                  >
+                    <div className="text-[#3390EC]">
+                      <MessageCircle size={20} />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0 pr-2">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <h4 className="text-[16px] font-medium text-white truncate">
+                        {item.title}
+                      </h4>
+                      <span className="text-[12px] text-[#8E8E93] shrink-0 ml-2">
+                        {timeString}
+                      </span>
+                    </div>
+                    <p className="text-[14px] text-[#8E8E93] truncate">
+                      {item.last_message || "Tap to open conversation..."}
+                    </p>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

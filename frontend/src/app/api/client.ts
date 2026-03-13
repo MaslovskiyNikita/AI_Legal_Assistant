@@ -7,15 +7,21 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://0.0.0.0:8023";
 const BASE_URL = `${API_BASE}/api/v1`;
 
 export const apiClient = {
-  // Отправить файлы на анализ
-  async compareDocuments(files: File[]) {
-    if (USE_MOCK) return mockApi.compareDocuments(files);
-    const formData = new FormData();
-    files.forEach((file) => formData.append("files", file));
-    const response = await fetch(`${BASE_URL}/compare`, {
+  // Отправить файлы на анализ и сравнение
+  async compareDocuments(payload: { old_file: string; new_file: string }) {
+    if (USE_MOCK) return mockApi.compareDocuments(payload);
+
+    const response = await fetch(`${BASE_URL}/documents/compare`, {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
+
+    if (!response.ok) {
+      throw new Error(`compareDocuments failed: ${response.status}`);
+    }
+
+    // Возвращает строку
     return response.json();
   },
 
@@ -71,6 +77,67 @@ export const apiClient = {
     }
     if (!r.ok) throw new Error(`getUser failed: ${r.status}`);
     return r.json();
+  },
+
+  // Создать новый диалог
+  async createChat(payload: { user_id: number; title?: string }) {
+    if (USE_MOCK) return mockApi.createChat(payload);
+    const r = await fetch(`${BASE_URL}/chats/`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error(`createChat failed: ${r.status}`);
+    return r.json();
+  },
+
+  // Получить список всех диалогов
+  async getChats(user_id?: number) {
+    if (USE_MOCK) return mockApi.getChats(user_id);
+    const r = await fetch(`${BASE_URL}/chats/`);
+    if (!r.ok) throw new Error(`getChats failed: ${r.status}`);
+    return r.json();
+  },
+
+  // Получить один диалог по ID (с историей сообщений)
+  async getChat(chat_id: number) {
+    if (USE_MOCK) return mockApi.getChat(chat_id);
+    const r = await fetch(`${BASE_URL}/chats/${chat_id}`);
+    if (!r.ok) throw new Error(`getChat failed: ${r.status}`);
+    return r.json();
+  },
+
+  // Отправить сообщение в чат с поддержкой потокового ответа (SSE)
+  async sendMessageStream(
+    chat_id: number,
+    payload: { text: string; comparison_id?: number },
+    onChunk: (chunk: string) => void,
+  ) {
+    if (USE_MOCK) {
+      return mockApi.sendMessageStream(chat_id, payload, onChunk);
+    }
+    const r = await fetch(`${BASE_URL}/chats/${chat_id}/messages/stream`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok || !r.body)
+      throw new Error(`sendMessageStream failed: ${r.status}`);
+
+    const reader = r.body.getReader();
+    const decoder = new TextDecoder();
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      const text = decoder.decode(value);
+      // Обработка простого текста или Server-Sent Events формата
+      onChunk(text);
+    }
+  },
+
+  // загрузка файла в чат
+  async uploadFileToChat(chat_id: number, filename: string) {
+    if (USE_MOCK) return mockApi.uploadFileToChat(chat_id, filename);
   },
 
   // Ping

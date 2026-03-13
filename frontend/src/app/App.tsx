@@ -20,14 +20,11 @@ function AuthRouter() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // 1. Проверяем локальный сторадж
       const userStr = localStorage.getItem("user");
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
           if (user && user.telegram_id) {
-            // Если юзер заходит в корень (Onboarding), редиректим его в профиль.
-            // Если он уже идет на /chat/..., пропускаем его туда
             if (location.pathname === "/") {
               navigate("/profile", { replace: true });
             }
@@ -42,21 +39,22 @@ function AuthRouter() {
         const profile = await apiClient.getUser(TELEGRAM_USER.id as any);
         localStorage.setItem("user", JSON.stringify(profile));
 
-        // Только если мы были на главной странице, редиректим на профиль
         if (location.pathname === "/") {
           navigate("/profile", { replace: true });
         }
       } catch (err: any) {
         // 3. Юзера нет в базе -> он новый. Принудительно кидаем на онбординг.
-        navigate("/", { replace: true });
+        localStorage.removeItem("user");
+        if (location.pathname !== "/") {
+          navigate("/", { replace: true });
+        }
       } finally {
         setLoading(false);
       }
     };
 
     checkAuth();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Пустой массив зависимостей, чтобы проверка была только один раз при монтировании
+  }, []);
 
   if (loading) {
     return (
