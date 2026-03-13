@@ -4,10 +4,9 @@ import * as mockApi from "../../mocks/mockApi";
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === "true" || false;
 // В dev-режиме ходим через proxy Vite по относительному пути,
 // чтобы не ловить CORS в браузере. На проде можно оставить VITE_API_BASE_URL.
-const API_BASE =
-  import.meta.env.VITE_API_BASE_URL && import.meta.env.PROD
-    ? import.meta.env.VITE_API_BASE_URL
-    : "";
+// В dev-режиме используем относительный путь (прокси Vite),
+// в проде можно задать полный VITE_API_BASE_URL.
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
 
 const BASE_URL = `${API_BASE}/api/v1`;
 
@@ -99,7 +98,11 @@ export const apiClient = {
   // Получить список всех диалогов
   async getChats(user_id?: number) {
     if (USE_MOCK) return mockApi.getChats(user_id);
-    const r = await fetch(`${BASE_URL}/chats/`);
+    const url =
+      typeof user_id === "number"
+        ? `${BASE_URL}/chats/?user_id=${user_id}`
+        : `${BASE_URL}/chats/`;
+    const r = await fetch(url);
     if (!r.ok) throw new Error(`getChats failed: ${r.status}`);
     return r.json();
   },
