@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+} from "react-router";
 
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
@@ -9,17 +15,22 @@ import { TELEGRAM_USER } from "../utils/telegram";
 
 function AuthRouter() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const checkAuth = async () => {
-      // 1. Проверяем локальный сторадж, если юзер уже логинился
+      // 1. Проверяем локальный сторадж
       const userStr = localStorage.getItem("user");
       if (userStr) {
         try {
           const user = JSON.parse(userStr);
           if (user && user.telegram_id) {
-            navigate("/profile", { replace: true });
+            // Если юзер заходит в корень (Onboarding), редиректим его в профиль.
+            // Если он уже идет на /chat/..., пропускаем его туда
+            if (location.pathname === "/") {
+              navigate("/profile", { replace: true });
+            }
             setLoading(false);
             return;
           }
@@ -29,12 +40,14 @@ function AuthRouter() {
       // 2. Идем в бэкенд проверять по telegram_id
       try {
         const profile = await apiClient.getUser(TELEGRAM_USER.id as any);
-        // Если getUser не упал с ошибкой, значит юзер ЕСТЬ в базе
         localStorage.setItem("user", JSON.stringify(profile));
-        navigate("/profile", { replace: true });
+
+        // Только если мы были на главной странице, редиректим на профиль
+        if (location.pathname === "/") {
+          navigate("/profile", { replace: true });
+        }
       } catch (err: any) {
-        // 3. Юзера нет в базе (404 ошибка от getUser) -> он новый
-        // Оставляем его на текущем маршруте
+        // 3. Юзера нет в базе -> он новый. Принудительно кидаем на онбординг.
         navigate("/", { replace: true });
       } finally {
         setLoading(false);
@@ -42,7 +55,8 @@ function AuthRouter() {
     };
 
     checkAuth();
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Пустой массив зависимостей, чтобы проверка была только один раз при монтировании
 
   if (loading) {
     return (
