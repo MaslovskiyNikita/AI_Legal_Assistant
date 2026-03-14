@@ -1,8 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, update
 from sqlalchemy.orm import selectinload
 from app.models.chat import Chat, Message
 from app.schemas.chat import ChatCreateRequest
+from app.models.user import User
 
 async def create_chat(session: AsyncSession, chat_data: ChatCreateRequest) -> Chat:
 
@@ -11,6 +12,7 @@ async def create_chat(session: AsyncSession, chat_data: ChatCreateRequest) -> Ch
         title=chat_data.title
     )
     session.add(new_chat)
+    await session.execute(update(User).where(User.id == chat_data.user_id).values(consultations_count=User.consultations_count + 1))
     await session.commit()
     await session.refresh(new_chat)
     return new_chat
@@ -30,7 +32,7 @@ async def get_chat_with_messages(session: AsyncSession, chat_id: int) -> Chat | 
     query = (
         select(Chat)
         .where(Chat.id == chat_id)
-        .options(selectinload(Chat.messages)) 
+        .options(selectinload(Chat.messages).selectinload(Message.documents)) 
     )
     result = await session.execute(query)
     return result.scalar_one_or_none()
