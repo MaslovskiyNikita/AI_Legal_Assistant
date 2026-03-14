@@ -22,6 +22,11 @@ async def delete_user_chat(chat_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Чат не найден")
     return {"status": "success", "message": "Чат успешно удален"}
 
+@router.delete("/")
+async def delete_all_user_chats(user_id: int, db: AsyncSession = Depends(get_db)):
+    await chat_service.delete_all_chats_for_user(db, user_id)
+    return {"status": "success", "message": "Все чаты пользователя успешно удалены"}
+
 @router.get("/", response_model=List[ChatListResponse])
 async def get_user_chats(user_id: int, db: AsyncSession = Depends(get_db)):
     chats = await chat_service.get_user_chats(db, user_id)

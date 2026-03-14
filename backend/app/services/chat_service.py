@@ -53,10 +53,10 @@ async def get_chat_documents(session: AsyncSession, chat_id: int) -> list:
     
     return documents
 
-async def add_message_to_chat(request, chat_id: int, db) -> Message:
+async def add_message_to_chat(request, chat_id: int, session) -> Message:
     user_message = Message(chat_id=chat_id, role="user", text=request.text)
-    db.add(user_message)
-    await db.commit()
+    session.add(user_message)
+    await session.commit()
     
 async def delete_chat(session: AsyncSession, chat_id: int) -> bool:
 
@@ -69,3 +69,14 @@ async def delete_chat(session: AsyncSession, chat_id: int) -> bool:
     await session.commit()
     
     return True
+
+async def delete_all_chats_for_user(session: AsyncSession, user_id: int) -> None:
+    query = select(Chat).where(Chat.user_id == user_id)
+    result = await session.execute(query)
+    chats = result.scalars().all()
+    
+    for chat in chats:
+        await session.delete(chat)
+    
+    await session.commit()
+    

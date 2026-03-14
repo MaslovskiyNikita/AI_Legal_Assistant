@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from app.models.user import User
-from app.schemas.user import UserAuthRequest
+from app.schemas.user import UserAuthRequest, UserSettingsUpdateRequest
 
 async def get_user_by_telegram_id(session: AsyncSession, telegram_id: int) -> User | None:
 
@@ -28,3 +28,15 @@ async def authenticate_user(session: AsyncSession, user_data: UserAuthRequest) -
     await session.refresh(new_user) 
     
     return new_user, True
+
+async def update_user_settings(session: AsyncSession, user_id: int, settings: UserSettingsUpdateRequest) -> User | None:
+    update_data = settings.model_dump(exclude_unset=True)
+    
+    if not update_data:
+        return await session.get(User, user_id)
+    
+    query = update(User).where(User.id == user_id).values(**update_data).returning(User)
+    result = await session.execute(query)
+    await session.commit()
+    
+    return result.scalar_one_or_none()
