@@ -22,3 +22,4 @@ class Message(Base):
     text = Column(Text, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     chat = relationship("Chat", back_populates="messages")
+    documents = relationship("Document", back_populates="message", cascade="all, delete-orphan")

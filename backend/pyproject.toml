@@ -15,6 +15,7 @@ asyncpg = "^0.31.0"
 getenv = "^0.2.0"
 dotenv = "^0.9.9"
 python-multipart = "^0.0.22"
+aiofiles = "^25.1.0"
 
 
 [build-system]

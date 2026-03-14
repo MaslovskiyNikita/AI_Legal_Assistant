@@ -15,6 +15,7 @@ sys.path.insert(0, dirname(dirname(abspath(__file__))))
 from app.core.database import Base
 import app.models.user
 import app.models.chat
+import app.models.document
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
