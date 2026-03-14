@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.api.dependencies import get_db
-from app.schemas.chat import ChatCreateRequest, ChatListResponse, ChatDetailResponse, MessageStreamRequest
+from app.schemas.chat import ChatCreateRequest, ChatListResponse, ChatDetailResponse, DocumentResponse, MessageStreamRequest
 from app.services import chat_service
 from app.services.llm_service import fake_llm_stream_generator
 
@@ -14,6 +14,13 @@ router = APIRouter(prefix="/api/v1/chats", tags=["Chats"])
 async def create_new_chat(request: ChatCreateRequest, db: AsyncSession = Depends(get_db)):
     chat = await chat_service.create_chat(db, request)
     return chat
+
+@router.delete("/{chat_id}")
+async def delete_user_chat(chat_id: int, db: AsyncSession = Depends(get_db)):
+    success = await chat_service.delete_chat(db, chat_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Чат не найден")
+    return {"status": "success", "message": "Чат успешно удален"}
 
 @router.get("/", response_model=List[ChatListResponse])
 async def get_user_chats(user_id: int, db: AsyncSession = Depends(get_db)):
@@ -46,3 +53,11 @@ async def stream_chat_message(
         fake_llm_stream_generator(db, chat_id, request.text, has_docs),
         media_type="text/event-stream"
     )
+    
+    
+@router.get("/{chat_id}/documents", response_model=List[DocumentResponse])
+async def get_chat_documents(chat_id: int, db: AsyncSession = Depends(get_db)):  
+    documents = await chat_service.get_chat_documents(db, chat_id)
+    return documents
+
+
