@@ -12,6 +12,7 @@ import {
   X,
   Download,
   FileText,
+  Trash2, // <-- Иконка корзины
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { apiClient } from "../api/client";
@@ -44,9 +45,10 @@ export default function Chat() {
   const [isComparing, setIsComparing] = useState(false);
   const [compareError, setCompareError] = useState("");
 
-  // --- Состояния для меню и скачивания ---
+  // --- Состояния для меню, скачивания и УДАЛЕНИЯ ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // <-- Стейт кастомной модалки
   const [chatDocuments, setChatDocuments] = useState<any[]>([]);
 
   const scrollToBottom = () => {
@@ -57,6 +59,7 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
+  // Загрузка истории чата и его документов
   // Загрузка истории чата и его документов
   useEffect(() => {
     if (currentChatId && currentChatId !== "new") {
@@ -74,25 +77,38 @@ export default function Chat() {
         return;
       }
 
-      apiClient
-        .getChat(Number(currentChatId))
-        .then((res) => {
-          setMessages(res.messages || []);
-          // Если бэкенд отдает список документов, сохраняем его
-          if (res.documents) {
-            setChatDocuments(res.documents);
-          }
+      // ---> ИЗМЕНЕНИЯ ЗДЕСЬ: Запрашиваем историю и документы параллельно <---
+      Promise.all([
+        apiClient.getChat(Number(currentChatId)),
+        apiClient.getChatDocuments(Number(currentChatId)),
+      ])
+        .then(([chatRes, docsRes]) => {
+          // Устанавливаем сообщения
+          setMessages(chatRes.messages || []);
+
+          // Устанавливаем документы, полученные из новой ручки
+          setChatDocuments(docsRes || []);
         })
-        .catch((err) => console.error("Failed to load chat", err));
+        .catch((err) => console.error("Failed to load chat or documents", err));
     } else {
       setMessages([]);
       setChatDocuments([]);
     }
   }, [currentChatId]);
 
-  useEffect(() => {
-    setCurrentChatId(chatId);
-  }, [chatId]);
+  // --- Фактическое выполнение удаления чата (вызывается из модалки) ---
+  const executeDeleteChat = async () => {
+    if (!currentChatId || currentChatId === "new") return;
+
+    try {
+      await apiClient.deleteChat(Number(currentChatId));
+      setIsDeleteModalOpen(false); // Закрываем модалку
+      navigate("/profile", { replace: true });
+    } catch (error) {
+      console.error("Failed to delete chat", error);
+      alert("Не удалось удалить чат. Пожалуйста, попробуйте еще раз.");
+    }
+  };
 
   // --- Логика загрузки и сравнения файлов ---
   const handleCompareFiles = async () => {
@@ -107,7 +123,6 @@ export default function Chat() {
     try {
       let targetChatId = currentChatId;
 
-      // 1. Создаем чат, если его еще нет
       if (!targetChatId || targetChatId === "new") {
         const newChat = await apiClient.createChat({
           user_id: internalUserId,
@@ -121,8 +136,6 @@ export default function Chat() {
 
       setIsCompareModalOpen(false);
 
-      // 2. Отправляем файлы на сервер.
-      // В этот момент бэкенд сохранит автосообщение "Прикреплены документы..." в базу
       const uploadResponse = await apiClient.compareDocuments(
         Number(targetChatId),
         internalUserId,
@@ -133,14 +146,12 @@ export default function Chat() {
       const comparisonId =
         uploadResponse?.new_document_id || uploadResponse?.id;
 
-      // Визуально добавляем новые документы в список для скачивания
       setChatDocuments((prev) => [
         ...prev,
         { id: comparisonId - 1 || Date.now(), filename: oldFile.name },
         { id: comparisonId || Date.now() + 1, filename: newFile.name },
       ]);
 
-      // 3. Визуально дублируем то, что сохранил бэкенд, чтобы не перезагружать страницу
       const backendAutoMsg = `Прикреплены документы для сравнения: 1. ${oldFile.name} 2. ${newFile.name}`;
       setMessages((prev) => [
         ...prev,
@@ -152,7 +163,6 @@ export default function Chat() {
         },
       ]);
 
-      // 4. Формируем логичный текстовый запрос, который уйдет в /stream
       const promptText = "Пожалуйста, проанализируй и сравни эти документы.";
       const promptMsgId = Date.now() + 1;
       setMessages((prev) => [
@@ -165,7 +175,6 @@ export default function Chat() {
         },
       ]);
 
-      // 5. Подготавливаем пустое сообщение от ИИ
       const assistantMsgId = Date.now() + 2;
       setMessages((prev) => [
         ...prev,
@@ -177,7 +186,6 @@ export default function Chat() {
         },
       ]);
 
-      // 6. Запускаем генерацию.
       await apiClient.sendMessageStream(
         Number(targetChatId),
         { text: promptText, comparison_id: comparisonId },
@@ -192,7 +200,6 @@ export default function Chat() {
         },
       );
 
-      // Очищаем форму
       setOldFile(null);
       setNewFile(null);
     } catch (err) {
@@ -288,56 +295,14 @@ export default function Chat() {
         className={`flex ${isUser ? "justify-end" : "justify-start"}`}
       >
         <div
-          className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[15px] leading-snug text-white shadow-sm ${
-            isUser ? "rounded-tr-sm" : "rounded-tl-sm"
-          }`}
-          style={{
-            backgroundColor: isUser ? COLORS.primary : COLORS.surface,
-            // Добавим стили для ссылок и списков внутри markdown
-            wordBreak: "break-word",
-          }}
+          className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[15px] leading-snug text-white shadow-sm ${isUser ? "rounded-tr-sm" : "rounded-tl-sm"}`}
+          style={{ backgroundColor: isUser ? COLORS.primary : COLORS.surface }}
         >
-          {/* Рендерим Markdown */}
-          <div className="markdown-body">
-            <ReactMarkdown
-              components={{
-                ul: (props: any) => (
-                  <ul className="list-disc ml-4 my-1" {...props} />
-                ),
-                ol: (props: any) => (
-                  <ol className="list-decimal ml-4 my-1" {...props} />
-                ),
-                li: (props: any) => <li className="mb-1" {...props} />,
-                p: (props: any) => <p className="mb-2 last:mb-0" {...props} />,
-                strong: (props: any) => (
-                  <strong className="font-bold text-white" {...props} />
-                ),
-                h1: (props: any) => (
-                  <h1 className="text-lg font-bold my-2" {...props} />
-                ),
-                h2: (props: any) => (
-                  <h2 className="text-md font-bold my-2" {...props} />
-                ),
-                code: (props: any) => (
-                  <code
-                    className="bg-black/30 rounded px-1 font-mono text-xs"
-                    {...props}
-                  />
-                ),
-              }}
-            >
-              {msg.text || msg.content}
-            </ReactMarkdown>
-          </div>
-
+          {msg.text || msg.content}
           <div
-            className={`text-[11px] text-right mt-1 -mb-1 flex items-center gap-1 ${
-              isUser
-                ? "justify-end text-white/70"
-                : "justify-end text-[#8E8E93]"
-            }`}
+            className={`text-[11px] text-right mt-1 -mb-1 flex items-center gap-1 ${isUser ? "justify-end text-white/70" : "justify-end text-[#8E8E93]"}`}
           >
-            {timeString}
+            {timeString}{" "}
             {isUser && <CheckCircle2 size={12} className="inline" />}
           </div>
         </div>
@@ -412,6 +377,23 @@ export default function Chat() {
                   <Download size={18} className="text-[#3390EC]" />
                   Chat Documents
                 </button>
+
+                {/* Линия-разделитель (Показываем только если чат уже существует) */}
+                {currentChatId && currentChatId !== "new" && (
+                  <>
+                    <div className="h-[1px] bg-white/10 mx-2 my-1" />
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsDeleteModalOpen(true); // Открываем красивую модалку
+                      }}
+                      className="w-full text-left px-4 py-3 text-[15px] font-medium text-[#FF3B30] hover:bg-white/5 transition-colors flex items-center gap-3 cursor-pointer"
+                    >
+                      <Trash2 size={18} />
+                      Delete Chat
+                    </button>
+                  </>
+                )}
               </div>
             </>
           )}
@@ -450,6 +432,38 @@ export default function Chat() {
           </>
         )}
       </div>
+
+      {/* --- КАСТОМНАЯ МОДАЛКА УДАЛЕНИЯ ЧАТА --- */}
+      {isDeleteModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-[#2C2C2E] rounded-2xl p-6 w-full max-w-xs border border-white/10 shadow-lg flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+            <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+              <Trash2 size={24} className="text-[#FF3B30]" />
+            </div>
+            <h2 className="text-lg font-semibold text-white mb-2">
+              Удалить чат
+            </h2>
+            <p className="text-[14px] text-gray-400 mb-6">
+              Вы уверены, что хотите удалить этот чат? Это действие нельзя будет
+              отменить.
+            </p>
+            <div className="flex w-full gap-3">
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="flex-1 py-2.5 rounded-xl font-medium bg-[#3A3A3C] text-white hover:bg-[#4A4A4C] transition-colors cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={executeDeleteChat}
+                className="flex-1 py-2.5 rounded-xl font-medium bg-[#FF3B30] text-white hover:bg-red-600 transition-colors cursor-pointer"
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* --- МОДАЛЬНОЕ ОКНО ДЛЯ СКАЧИВАНИЯ ФАЙЛОВ --- */}
       {isDownloadModalOpen && (

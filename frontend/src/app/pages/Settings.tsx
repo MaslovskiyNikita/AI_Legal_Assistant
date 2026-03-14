@@ -1,5 +1,5 @@
 // src/app/pages/Settings.tsx
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import {
   ChevronLeft,
@@ -9,18 +9,58 @@ import {
   Info,
   ShieldCheck,
   LogOut,
+  Loader2, // <-- Иконка загрузки
 } from "lucide-react";
+import { apiClient } from "../api/client";
 
 export default function Settings() {
   const navigate = useNavigate();
+
+  // Достаем ID пользователя из локального хранилища
+  const userStr = localStorage.getItem("user");
+  const internalUserId = userStr ? JSON.parse(userStr).id : null;
+
+  // Стейты для модалки и процесса удаления
+  const [isClearHistoryModalOpen, setIsClearHistoryModalOpen] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("user");
     navigate("/", { replace: true });
   };
 
+  // --- Логика очистки всей истории ---
+  const executeClearHistory = async () => {
+    if (!internalUserId) return;
+    setIsClearing(true);
+
+    try {
+      // 1. Получаем все чаты пользователя
+      const chats = await apiClient.getChats(internalUserId);
+
+      // 2. Если чаты есть, удаляем их все параллельно
+      if (chats && chats.length > 0) {
+        const deletePromises = chats.map((chat: any) =>
+          apiClient.deleteChat(chat.id),
+        );
+        await Promise.all(deletePromises);
+      }
+
+      // Закрываем модалку после успешного удаления
+      setIsClearHistoryModalOpen(false);
+
+      // Можно показать алерт или toast, что всё прошло успешно
+      // alert("История чатов успешно очищена!");
+    } catch (error) {
+      console.error("Failed to clear history", error);
+      alert("Не удалось очистить историю. Пожалуйста, попробуйте еще раз.");
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full bg-[#1C1C1D] text-white flex flex-col pb-10">
+    <div className="min-h-screen w-full bg-[#1C1C1D] text-white flex flex-col pb-10 relative">
       {/* Header */}
       <div className="h-14 px-3 flex items-center border-b border-white/5 sticky top-0 bg-[#1C1C1D]/90 backdrop-blur-md z-10">
         <button
@@ -66,7 +106,10 @@ export default function Settings() {
             Data & Privacy
           </h3>
           <div className="bg-[#2C2C2E] rounded-2xl overflow-hidden border border-white/5">
-            <button className="w-full flex items-center justify-between px-4 py-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer text-left">
+            <button
+              onClick={() => setIsClearHistoryModalOpen(true)}
+              className="w-full flex items-center justify-between px-4 py-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer text-left"
+            >
               <div className="flex items-center gap-3 text-red-500">
                 <Trash2 size={20} />
                 <span>Clear All Chat History</span>
@@ -102,6 +145,47 @@ export default function Settings() {
           Sign Out
         </button>
       </div>
+
+      {/* --- КАСТОМНАЯ МОДАЛКА ОЧИСТКИ ИСТОРИИ --- */}
+      {isClearHistoryModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-[#2C2C2E] rounded-2xl p-6 w-full max-w-xs border border-white/10 shadow-lg flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
+            <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+              <Trash2 size={24} className="text-[#FF3B30]" />
+            </div>
+            <h2 className="text-lg font-semibold text-white mb-2">
+              Clear All History
+            </h2>
+            <p className="text-[14px] text-gray-400 mb-6">
+              Вы уверены, что хотите удалить <b>все</b> свои консультации и
+              документы? Это действие нельзя будет отменить.
+            </p>
+            <div className="flex w-full gap-3">
+              <button
+                onClick={() => setIsClearHistoryModalOpen(false)}
+                disabled={isClearing}
+                className="flex-1 py-2.5 rounded-xl font-medium bg-[#3A3A3C] text-white hover:bg-[#4A4A4C] transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Отмена
+              </button>
+              <button
+                onClick={executeClearHistory}
+                disabled={isClearing}
+                className="flex-1 py-2.5 rounded-xl font-medium bg-[#FF3B30] text-white hover:bg-red-600 transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+              >
+                {isClearing ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Очистка...
+                  </>
+                ) : (
+                  "Удалить всё"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

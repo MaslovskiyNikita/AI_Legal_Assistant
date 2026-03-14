@@ -1,7 +1,9 @@
+// src/api/client.ts
+
 const BASE_URL = "http://localhost:8023/api/v1";
 
 export const apiClient = {
-  // Обновленный метод для сравнения (добавлены chatId и userId)
+  // Метод для сравнения (добавлены chatId и userId)
   async compareDocuments(
     chatId: number,
     userId: number,
@@ -31,7 +33,7 @@ export const apiClient = {
     return await response.text();
   },
 
-  // Новый метод для скачивания документа напрямую в браузер
+  // Метод для скачивания документа напрямую в браузер
   async downloadDocument(documentId: number, filename: string = "document") {
     const response = await fetch(
       `${BASE_URL}/documents/${documentId}/download`,
@@ -90,6 +92,32 @@ export const apiClient = {
   async getChat(chat_id: number) {
     const r = await fetch(`${BASE_URL}/chats/${chat_id}`);
     if (!r.ok) throw new Error(`getChat failed: ${r.status}`);
+    return r.json();
+  },
+
+  async getChatDocuments(chat_id: number) {
+    const r = await fetch(`${BASE_URL}/chats/${chat_id}/documents`);
+    if (!r.ok) throw new Error(`getChatDocuments failed: ${r.status}`);
+    return r.json();
+  },
+
+  // НОВЫЙ МЕТОД ДЛЯ УДАЛЕНИЯ ЧАТА
+  async deleteChat(chat_id: number) {
+    const r = await fetch(`${BASE_URL}/chats/${chat_id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+
+    if (!r.ok) {
+      // Пытаемся достать текст ошибки с бэкенда, если он есть
+      let errorDetail = `deleteChat failed: ${r.status}`;
+      try {
+        const errorData = await r.json();
+        if (errorData.detail) errorDetail = errorData.detail;
+      } catch (e) {}
+      throw new Error(errorDetail);
+    }
+
     return r.json();
   },
 
