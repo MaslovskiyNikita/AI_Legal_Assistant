@@ -2,11 +2,11 @@ from io import BytesIO
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from .models import BlockDiff, ChangeType
+from .models import FullDocumentAnalysis
 
 class ExportService:
     @staticmethod
-    def generate_docx_report(diffs: list[BlockDiff]) -> BytesIO:
+    def generate_docx_report(diff_text: str, analysis: FullDocumentAnalysis) -> BytesIO:
         doc = Document()
         
         title = doc.add_paragraph()
@@ -15,42 +15,27 @@ class ExportService:
         run.bold = True
         run.font.size = Pt(16)
 
-        table = doc.add_table(rows=1, cols=4)
-        table.style = 'Table Grid'
-        headers = ["№", "Статус", "Содержание изменения", "Анализ рисков"]
-        for i, text in enumerate(headers):
-            table.cell(0, i).text = text
+        # Раздел с diff
+        doc.add_heading("Изменения (Diff)", level=2)
+        diff_para = doc.add_paragraph()
+        diff_para.add_run(diff_text).font.name = 'Courier New'
 
-        row_idx = 1
-        for diff in diffs:
-            if diff.change_type == ChangeType.UNCHANGED:
-                continue
-                
-            row = table.add_row()
-            row.cells[0].text = str(row_idx)
-            row.cells[1].text = diff.change_type.value
-            
-            # Текст изменений
-            cell_text = row.cells[2]
-            if diff.old_block:
-                p = cell_text.add_paragraph()
-                p.add_run(f"БЫЛО: {diff.old_block.text}").italic = True
-            if diff.new_block:
-                p = cell_text.add_paragraph()
-                p.add_run(f"СТАЛО: {diff.new_block.text}").bold = True
-
-            # Риски
-            cell_risk = row.cells[3]
-            p_risk = cell_risk.add_paragraph()
-            run_risk = p_risk.add_run(f"РИСК: {diff.risk or 'НЕ ОПРЕДЕЛЕН'}")
-            run_risk.bold = True
-            
-            if diff.comment:
-                cell_risk.add_paragraph(diff.comment)
-            if diff.violated_law:
-                cell_risk.add_paragraph(f"Нарушает: {diff.violated_law}").italic = True
-                
-            row_idx += 1
+        # Раздел с анализом
+        doc.add_heading("Анализ рисков", level=2)
+        risk_para = doc.add_paragraph()
+        run_risk = risk_para.add_run(f"Общий уровень риска: {analysis.overall_risk}")
+        run_risk.bold = True
+        
+        doc.add_paragraph(analysis.summary)
+        
+        if analysis.details:
+            doc.add_heading("Детальный анализ", level=3)
+            for detail in analysis.details:
+                p = doc.add_paragraph()
+                p.add_run(f"• {detail.title}: {detail.risk}").bold = True
+                doc.add_paragraph(detail.explanation)
+                if detail.violated_law:
+                    doc.add_paragraph(f"Нарушает: {detail.violated_law}").italic = True
 
         out = BytesIO()
         doc.save(out)

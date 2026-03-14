@@ -12,4 +12,3 @@ class BlockDiff(BaseModel):
     comment: Optional[str] = None
     violated_law: Optional[str] = None
     diff_html: Optional[str] = None
-    analysis_source: Optional[str] = None  # "LLM" | "heuristic"
