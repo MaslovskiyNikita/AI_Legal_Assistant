@@ -51,17 +51,19 @@ export default function Chat() {
     setCompareError("");
 
     try {
+      // 1. Получаем ответ от бэкенда со сравнением
       const compareResponse = await apiClient.compareDocuments(
         oldFile,
         newFile,
       );
 
-      const newChat = await apiClient.createChat({
-        user_id: internalUserId,
-        title: `Comparison: ${oldFile.name.substring(0, 10)}...`,
-      });
+      const aiResponseText =
+        "Документы успешно проанализированы. " +
+        (typeof compareResponse === "string"
+          ? compareResponse
+          : "Различия найдены.");
 
-      // 1. ПОДГОТАВЛИВАЕМ ДАННЫЕ ДЛЯ ПЕРЕДАЧИ
+      // 2. Формируем сообщения для отображения
       const resultMsgs = [
         {
           id: Date.now(),
@@ -72,28 +74,45 @@ export default function Chat() {
         {
           id: Date.now() + 1,
           role: "ai",
-          text:
-            "Документы успешно проанализированы. " +
-            (typeof compareResponse === "string"
-              ? compareResponse
-              : "Различия найдены."),
+          text: aiResponseText,
           created_at: new Date().toISOString(),
         },
       ];
 
-      // 2. СОХРАНЯЕМ В sessionStorage ПЕРЕД ПЕРЕХОДОМ
-      // Мы используем chatId нового чата как ключ
-      sessionStorage.setItem(
-        `pending_messages_${newChat.id}`,
-        JSON.stringify(resultMsgs),
-      );
+      // 3. ПРОВЕРЯЕМ: Мы уже в существующем чате или создаем новый?
+      const isActiveChat = currentChatId && currentChatId !== "new";
 
-      setIsCompareModalOpen(false);
-      setOldFile(null);
-      setNewFile(null);
-      isCreatingChat.current = true;
+      if (isActiveChat) {
+        // ЕСЛИ ЧАТ УЖЕ СУЩЕСТВУЕТ: просто добавляем сообщения на экран
+        setMessages((prev) => [...prev, ...resultMsgs]);
 
-      navigate(`/chat/${newChat.id}`, { replace: true });
+        setIsCompareModalOpen(false);
+        setOldFile(null);
+        setNewFile(null);
+
+        // ВАЖНОЕ ЗАМЕЧАНИЕ: Сейчас эти сообщения добавятся только визуально (в стейт).
+        // Если вы хотите, чтобы они сохранились в истории чата на бэкенде,
+        // вам нужно будет отправить их на бэкенд. (В вашем API пока нет отдельного
+        // метода просто для сохранения истории без генерации ответа ИИ).
+      } else {
+        // ЕСЛИ ЭТО НОВЫЙ ЧАТ: логика остается прежней
+        const newChat = await apiClient.createChat({
+          user_id: internalUserId,
+          title: `Comparison: ${oldFile.name.substring(0, 10)}...`,
+        });
+
+        sessionStorage.setItem(
+          `pending_messages_${newChat.id}`,
+          JSON.stringify(resultMsgs),
+        );
+
+        setIsCompareModalOpen(false);
+        setOldFile(null);
+        setNewFile(null);
+        isCreatingChat.current = true;
+
+        navigate(`/chat/${newChat.id}`, { replace: true });
+      }
     } catch (err) {
       console.error(err);
       setCompareError("Failed to compare documents.");
