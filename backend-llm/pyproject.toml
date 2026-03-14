@@ -1,0 +1,28 @@
+[project]
+name = "backend-llm"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "stanislav", email = "s.markovtsev@gmail.com"}
+]
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.109.0",
+    "uvicorn==0.27.0",
+    "python-multipart>=0.0.6",
+    "python-docx>=1.1.0",
+    "httpx>=0.26.0",
+    "pydantic>=2.6.0",
+    "alembic>=1.18.4",
+    "asyncpg>=0.31.0",
+    "getenv>=0.2.0",
+    "dotenv>=0.9.9",
+    "aiofiles>=25.1.0"
+]
+
+[tool.poetry]
+package-mode = false  # <--- Проверьте, что это ЗДЕСЬ
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
