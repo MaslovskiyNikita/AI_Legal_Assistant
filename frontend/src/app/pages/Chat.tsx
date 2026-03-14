@@ -1,5 +1,6 @@
 // src/app/pages/Chat.tsx
 import React, { useEffect, useState, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 import {
   ChevronLeft,
   MoreVertical,
@@ -9,6 +10,8 @@ import {
   Scale,
   CheckCircle2,
   X,
+  Download,
+  FileText,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router";
 import { apiClient } from "../api/client";
@@ -34,92 +37,17 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isCreatingChat = useRef(false);
 
+  // --- Состояния для сравнения файлов ---
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [oldFile, setOldFile] = useState<File | null>(null);
   const [newFile, setNewFile] = useState<File | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [compareError, setCompareError] = useState("");
 
-  // Функция для обработки сравнения и создания нового чата
-  const handleCompareFiles = async () => {
-    if (!oldFile || !newFile || !internalUserId) {
-      setCompareError("Please select both files.");
-      return;
-    }
-
-    setIsComparing(true);
-    setCompareError("");
-
-    try {
-      // 1. Получаем ответ от бэкенда со сравнением
-      const compareResponse = await apiClient.compareDocuments(
-        oldFile,
-        newFile,
-      );
-
-      const aiResponseText =
-        "Документы успешно проанализированы. " +
-        (typeof compareResponse === "string"
-          ? compareResponse
-          : "Различия найдены.");
-
-      // 2. Формируем сообщения для отображения
-      const resultMsgs = [
-        {
-          id: Date.now(),
-          role: "user",
-          text: `📎 Сравнение: ${oldFile.name} и ${newFile.name}`,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: Date.now() + 1,
-          role: "ai",
-          text: aiResponseText,
-          created_at: new Date().toISOString(),
-        },
-      ];
-
-      // 3. ПРОВЕРЯЕМ: Мы уже в существующем чате или создаем новый?
-      const isActiveChat = currentChatId && currentChatId !== "new";
-
-      if (isActiveChat) {
-        // ЕСЛИ ЧАТ УЖЕ СУЩЕСТВУЕТ: просто добавляем сообщения на экран
-        setMessages((prev) => [...prev, ...resultMsgs]);
-
-        setIsCompareModalOpen(false);
-        setOldFile(null);
-        setNewFile(null);
-
-        // ВАЖНОЕ ЗАМЕЧАНИЕ: Сейчас эти сообщения добавятся только визуально (в стейт).
-        // Если вы хотите, чтобы они сохранились в истории чата на бэкенде,
-        // вам нужно будет отправить их на бэкенд. (В вашем API пока нет отдельного
-        // метода просто для сохранения истории без генерации ответа ИИ).
-      } else {
-        // ЕСЛИ ЭТО НОВЫЙ ЧАТ: логика остается прежней
-        const newChat = await apiClient.createChat({
-          user_id: internalUserId,
-          title: `Comparison: ${oldFile.name.substring(0, 10)}...`,
-        });
-
-        sessionStorage.setItem(
-          `pending_messages_${newChat.id}`,
-          JSON.stringify(resultMsgs),
-        );
-
-        setIsCompareModalOpen(false);
-        setOldFile(null);
-        setNewFile(null);
-        isCreatingChat.current = true;
-
-        navigate(`/chat/${newChat.id}`, { replace: true });
-      }
-    } catch (err) {
-      console.error(err);
-      setCompareError("Failed to compare documents.");
-    } finally {
-      setIsComparing(false);
-    }
-  };
+  // --- Состояния для меню и скачивания ---
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+  const [chatDocuments, setChatDocuments] = useState<any[]>([]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -129,15 +57,15 @@ export default function Chat() {
     scrollToBottom();
   }, [messages]);
 
+  // Загрузка истории чата и его документов
   useEffect(() => {
     if (currentChatId && currentChatId !== "new") {
-      // ПРОВЕРЯЕМ sessionStorage
       const pending = sessionStorage.getItem(
         `pending_messages_${currentChatId}`,
       );
       if (pending) {
         setMessages(JSON.parse(pending));
-        sessionStorage.removeItem(`pending_messages_${currentChatId}`); // Очищаем после загрузки
+        sessionStorage.removeItem(`pending_messages_${currentChatId}`);
         return;
       }
 
@@ -148,10 +76,17 @@ export default function Chat() {
 
       apiClient
         .getChat(Number(currentChatId))
-        .then((res) => setMessages(res.messages || []))
+        .then((res) => {
+          setMessages(res.messages || []);
+          // Если бэкенд отдает список документов, сохраняем его
+          if (res.documents) {
+            setChatDocuments(res.documents);
+          }
+        })
         .catch((err) => console.error("Failed to load chat", err));
     } else {
       setMessages([]);
+      setChatDocuments([]);
     }
   }, [currentChatId]);
 
@@ -159,6 +94,124 @@ export default function Chat() {
     setCurrentChatId(chatId);
   }, [chatId]);
 
+  // --- Логика загрузки и сравнения файлов ---
+  const handleCompareFiles = async () => {
+    if (!oldFile || !newFile || !internalUserId) {
+      setCompareError("Please select both files.");
+      return;
+    }
+
+    setIsComparing(true);
+    setCompareError("");
+
+    try {
+      let targetChatId = currentChatId;
+
+      // 1. Создаем чат, если его еще нет
+      if (!targetChatId || targetChatId === "new") {
+        const newChat = await apiClient.createChat({
+          user_id: internalUserId,
+          title: `Сравнение: ${oldFile.name.substring(0, 10)}...`,
+        });
+        targetChatId = newChat.id.toString();
+
+        setCurrentChatId(targetChatId);
+        navigate(`/chat/${targetChatId}`, { replace: true });
+      }
+
+      setIsCompareModalOpen(false);
+
+      // 2. Отправляем файлы на сервер.
+      // В этот момент бэкенд сохранит автосообщение "Прикреплены документы..." в базу
+      const uploadResponse = await apiClient.compareDocuments(
+        Number(targetChatId),
+        internalUserId,
+        oldFile,
+        newFile,
+      );
+
+      const comparisonId =
+        uploadResponse?.new_document_id || uploadResponse?.id;
+
+      // Визуально добавляем новые документы в список для скачивания
+      setChatDocuments((prev) => [
+        ...prev,
+        { id: comparisonId - 1 || Date.now(), filename: oldFile.name },
+        { id: comparisonId || Date.now() + 1, filename: newFile.name },
+      ]);
+
+      // 3. Визуально дублируем то, что сохранил бэкенд, чтобы не перезагружать страницу
+      const backendAutoMsg = `Прикреплены документы для сравнения: 1. ${oldFile.name} 2. ${newFile.name}`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          role: "user",
+          text: backendAutoMsg,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      // 4. Формируем логичный текстовый запрос, который уйдет в /stream
+      const promptText = "Пожалуйста, проанализируй и сравни эти документы.";
+      const promptMsgId = Date.now() + 1;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: promptMsgId,
+          role: "user",
+          text: promptText,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      // 5. Подготавливаем пустое сообщение от ИИ
+      const assistantMsgId = Date.now() + 2;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: assistantMsgId,
+          role: "ai",
+          text: "",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      // 6. Запускаем генерацию.
+      await apiClient.sendMessageStream(
+        Number(targetChatId),
+        { text: promptText, comparison_id: comparisonId },
+        (chunk) => {
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === assistantMsgId
+                ? { ...msg, text: (msg.text || "") + chunk }
+                : msg,
+            ),
+          );
+        },
+      );
+
+      // Очищаем форму
+      setOldFile(null);
+      setNewFile(null);
+    } catch (err) {
+      console.error(err);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          role: "ai",
+          text: "❌ Произошла ошибка при загрузке или анализе документов. Попробуйте еще раз.",
+          created_at: new Date().toISOString(),
+        },
+      ]);
+    } finally {
+      setIsComparing(false);
+    }
+  };
+
+  // --- Логика отправки обычного текста ---
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
     const textToSend =
       typeof textOverride === "string" ? textOverride : inputText;
@@ -235,14 +288,56 @@ export default function Chat() {
         className={`flex ${isUser ? "justify-end" : "justify-start"}`}
       >
         <div
-          className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[15px] leading-snug text-white shadow-sm ${isUser ? "rounded-tr-sm" : "rounded-tl-sm"}`}
-          style={{ backgroundColor: isUser ? COLORS.primary : COLORS.surface }}
+          className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[15px] leading-snug text-white shadow-sm ${
+            isUser ? "rounded-tr-sm" : "rounded-tl-sm"
+          }`}
+          style={{
+            backgroundColor: isUser ? COLORS.primary : COLORS.surface,
+            // Добавим стили для ссылок и списков внутри markdown
+            wordBreak: "break-word",
+          }}
         >
-          {msg.text || msg.content}
+          {/* Рендерим Markdown */}
+          <div className="markdown-body">
+            <ReactMarkdown
+              components={{
+                ul: (props: any) => (
+                  <ul className="list-disc ml-4 my-1" {...props} />
+                ),
+                ol: (props: any) => (
+                  <ol className="list-decimal ml-4 my-1" {...props} />
+                ),
+                li: (props: any) => <li className="mb-1" {...props} />,
+                p: (props: any) => <p className="mb-2 last:mb-0" {...props} />,
+                strong: (props: any) => (
+                  <strong className="font-bold text-white" {...props} />
+                ),
+                h1: (props: any) => (
+                  <h1 className="text-lg font-bold my-2" {...props} />
+                ),
+                h2: (props: any) => (
+                  <h2 className="text-md font-bold my-2" {...props} />
+                ),
+                code: (props: any) => (
+                  <code
+                    className="bg-black/30 rounded px-1 font-mono text-xs"
+                    {...props}
+                  />
+                ),
+              }}
+            >
+              {msg.text || msg.content}
+            </ReactMarkdown>
+          </div>
+
           <div
-            className={`text-[11px] text-right mt-1 -mb-1 flex items-center gap-1 ${isUser ? "justify-end text-white/70" : "justify-end text-[#8E8E93]"}`}
+            className={`text-[11px] text-right mt-1 -mb-1 flex items-center gap-1 ${
+              isUser
+                ? "justify-end text-white/70"
+                : "justify-end text-[#8E8E93]"
+            }`}
           >
-            {timeString}{" "}
+            {timeString}
             {isUser && <CheckCircle2 size={12} className="inline" />}
           </div>
         </div>
@@ -252,7 +347,7 @@ export default function Chat() {
 
   return (
     <div className="min-h-screen w-full relative flex flex-col bg-[#1C1C1D]">
-      {/* Header, Chat Area... */}
+      {/* --- HEADER И МЕНЮ --- */}
       <div
         className="h-14 px-3 flex items-center justify-between border-b border-black/20 sticky top-0 z-10"
         style={{ backgroundColor: COLORS.surface }}
@@ -289,11 +384,41 @@ export default function Chat() {
             </div>
           </div>
         </div>
-        <button className="text-white p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
-          <MoreVertical size={24} />
-        </button>
+
+        {/* --- Кнопка "Три точки" и выпадающее меню --- */}
+        <div className="relative">
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="text-white p-1 hover:bg-white/10 rounded-full transition-colors cursor-pointer"
+          >
+            <MoreVertical size={24} />
+          </button>
+
+          {isMenuOpen && (
+            <>
+              {/* Невидимый фон для закрытия меню при клике мимо */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsMenuOpen(false)}
+              />
+              <div className="absolute right-0 top-12 w-56 bg-[#2C2C2E] border border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden py-1">
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsDownloadModalOpen(true);
+                  }}
+                  className="w-full text-left px-4 py-3 text-[15px] font-medium text-white hover:bg-white/5 transition-colors flex items-center gap-3 cursor-pointer"
+                >
+                  <Download size={18} className="text-[#3390EC]" />
+                  Chat Documents
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
+      {/* --- ОБЛАСТЬ СООБЩЕНИЙ --- */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 pb-32">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-[#8E8E93] mt-10">
@@ -326,6 +451,65 @@ export default function Chat() {
         )}
       </div>
 
+      {/* --- МОДАЛЬНОЕ ОКНО ДЛЯ СКАЧИВАНИЯ ФАЙЛОВ --- */}
+      {isDownloadModalOpen && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-[#2C2C2E] rounded-2xl p-6 w-full max-w-sm border border-white/10 shadow-lg flex flex-col max-h-[80vh]">
+            <div className="flex justify-between items-center mb-4 shrink-0">
+              <h2 className="text-lg font-semibold text-white">
+                Chat Documents
+              </h2>
+              <button
+                onClick={() => setIsDownloadModalOpen(false)}
+                className="text-gray-400 hover:text-white transition-colors cursor-pointer p-1"
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-400 mb-4 shrink-0">
+              Files uploaded in this conversation:
+            </p>
+
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full">
+              {chatDocuments.length === 0 ? (
+                <div className="text-center py-8 text-[#8E8E93] text-sm bg-[#1C1C1D] rounded-xl border border-white/5">
+                  No documents found
+                </div>
+              ) : (
+                chatDocuments.map((doc, idx) => (
+                  <div
+                    key={doc.id || idx}
+                    className="flex items-center justify-between bg-[#1C1C1D] p-3 rounded-xl border border-white/5 hover:border-white/10 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 overflow-hidden pr-3">
+                      <div className="p-2 bg-[#3390EC]/10 rounded-lg shrink-0">
+                        <FileText size={20} className="text-[#3390EC]" />
+                      </div>
+                      <span className="text-[14px] font-medium text-white truncate">
+                        {doc.filename || doc.name || `Document #${doc.id}`}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() =>
+                        apiClient.downloadDocument(
+                          doc.id,
+                          doc.filename || "document",
+                        )
+                      }
+                      className="p-2 text-[#8E8E93] hover:text-[#3390EC] hover:bg-white/10 rounded-lg transition-colors cursor-pointer shrink-0"
+                      title="Download"
+                    >
+                      <Download size={20} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* --- МОДАЛЬНОЕ ОКНО ДЛЯ СРАВНЕНИЯ ФАЙЛОВ --- */}
       {isCompareModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
@@ -336,7 +520,7 @@ export default function Chat() {
               </h2>
               <button
                 onClick={() => setIsCompareModalOpen(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white cursor-pointer p-1"
               >
                 <X size={24} />
               </button>
@@ -383,7 +567,7 @@ export default function Chat() {
             <button
               onClick={handleCompareFiles}
               disabled={!oldFile || !newFile || isComparing}
-              className="w-full bg-[#3390EC] text-white font-semibold py-2.5 rounded-lg mt-6 disabled:opacity-50 transition-all active:scale-95"
+              className="w-full bg-[#3390EC] text-white font-semibold py-2.5 rounded-lg mt-6 disabled:opacity-50 transition-all active:scale-95 cursor-pointer"
             >
               {isComparing ? "Analyzing..." : "Compare Files"}
             </button>
@@ -391,7 +575,7 @@ export default function Chat() {
         </div>
       )}
 
-      {/* --- ИЗМЕНЕННАЯ НИЖНЯЯ ПАНЕЛЬ --- */}
+      {/* --- НИЖНЯЯ ПАНЕЛЬ --- */}
       <div
         className="fixed bottom-0 left-0 right-0 flex flex-col pt-2 pb-5 px-3 backdrop-blur-md max-w-md mx-auto z-40"
         style={{ backgroundColor: "rgba(28, 28, 29, 0.95)" }}
@@ -413,7 +597,6 @@ export default function Chat() {
           ))}
         </div>
         <div className="flex items-end gap-2">
-          {/* Скрепка теперь открывает модальное окно */}
           <button
             onClick={() => setIsCompareModalOpen(true)}
             className="p-2.5 text-[#8E8E93] hover:text-white transition-colors pb-3 cursor-pointer"

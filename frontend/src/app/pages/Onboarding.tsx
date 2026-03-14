@@ -1,39 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
-import { apiClient } from "../api/client";
 import { Scale, Shield, FileText } from "lucide-react";
-import { TELEGRAM_USER } from "../../utils/telegram";
 
 export default function Onboarding() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  const handleStart = async () => {
-    try {
-      setLoading(true);
-      // Автоматически регистрируем юзера с данными, которые пришли
-      const authRes = await apiClient.auth({
-        telegram_id: TELEGRAM_USER.id,
-        username: TELEGRAM_USER.username,
-        first_name: TELEGRAM_USER.first_name,
-      });
-      // Сохраняем в localStorage
-      localStorage.setItem(
-        "user",
-        JSON.stringify({
-          telegram_id: TELEGRAM_USER.id,
-          first_name: TELEGRAM_USER.first_name,
-          username: TELEGRAM_USER.username,
-        }),
-      );
-      // Отправляем в профиль
+  const handleStart = () => {
+    setLoading(true);
+    // Юзер УЖЕ зарегистрирован и сохранен в localStorage
+    // благодаря AuthRouter в App.tsx.
+    // Нам нужно просто пустить его дальше в приложение!
+    setTimeout(() => {
       navigate("/profile", { replace: true });
-    } catch (e) {
-      console.error("Ошибка при регистрации:", e);
-      navigate("/profile", { replace: true });
-    } finally {
-      setLoading(false);
-    }
+    }, 300); // Небольшая задержка для красоты анимации кнопки (опционально)
   };
 
   return (
