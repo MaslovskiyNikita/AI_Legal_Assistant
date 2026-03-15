@@ -6,17 +6,19 @@ import {
   Trash2,
   Bell,
   Moon,
-  Info,
   ShieldCheck,
-  LogOut,
   Loader2,
-  User,
   MessageSquare,
   CalendarDays,
+  CalendarRange,
   ChevronRight,
   Clock,
   Layers,
   FileText,
+  CheckCircle2,
+  Download,
+  X,
+  LogOut,
 } from "lucide-react";
 import { apiClient } from "../api/client";
 
@@ -30,32 +32,39 @@ export default function Settings() {
   const firstName = user?.first_name || "Пользователь";
   const username = user?.username ? `@${user.username}` : "Telegram ID скрыт";
 
-  // Стейты
+  // Стейты модалок
   const [isClearHistoryModalOpen, setIsClearHistoryModalOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
-  // Стейты для истории и статистики
+  // Основные стейты
+  const [activeTab, setActiveTab] = useState<"chats" | "documents">("chats");
   const [chats, setChats] = useState<any[]>([]);
-  const [documentsCount, setDocumentsCount] = useState<number>(0);
+  const [allDocuments, setAllDocuments] = useState<any[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
-  const [theme, setTheme] = useState(user?.theme || "dark");
-  const [notifications, setNotifications] = useState(user?.notifications_enabled ?? true);
+  const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
-  // null = Показать все чаты. Date = фильтр по конкретному дню
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [theme, setTheme] = useState(user?.theme || "dark");
+  const [notifications, setNotifications] = useState(
+    user?.notifications_enabled ?? true,
+  );
+
+  // --- СТЕЙТЫ ДЛЯ ФИЛЬТРОВ ---
+  const [filterPeriod, setFilterPeriod] = useState<
+    "all" | "today" | "week" | "custom"
+  >("all");
+  const [customStartDate, setCustomStartDate] = useState("");
+  const [customEndDate, setCustomEndDate] = useState("");
   const [showAllChats, setShowAllChats] = useState(false);
 
-  // Универсальная функция получения даты
   const getChatDateStr = (chat: any) =>
     chat.created_at || chat.createdAt || chat.updated_at || null;
 
-  // Загрузка истории чатов и количества документов
   useEffect(() => {
     if (internalUserId) {
       apiClient
         .getChats(internalUserId)
         .then(async (data) => {
-          // Сортируем чаты от новых к старым
           const sorted = (data || []).sort((a: any, b: any) => {
             const dateA = getChatDateStr(a);
             const dateB = getChatDateStr(b);
@@ -65,23 +74,39 @@ export default function Settings() {
           });
           setChats(sorted);
 
-          // Считаем документы со всех чатов пользователя
-          let totalDocs = 0;
+          let docsArray: any[] = [];
           try {
             const docsPromises = sorted.map((chat: any) =>
-              apiClient.getChatDocuments(chat.id),
+              apiClient.getChatDocuments(chat.id).then((docs) =>
+                docs.map((d: any) => ({
+                  ...d,
+                  chatTitle: chat.title,
+                  chatId: chat.id,
+                  chatDate: getChatDateStr(chat), // Добавляем дату чата как фоллбэк
+                })),
+              ),
             );
             const docsResults = await Promise.allSettled(docsPromises);
 
             docsResults.forEach((result) => {
               if (result.status === "fulfilled" && result.value) {
-                totalDocs += result.value.length;
+                docsArray = [...docsArray, ...result.value];
               }
             });
+
+            docsArray.sort((a, b) => {
+              const dateA = new Date(
+                a.created_at || a.createdAt || a.updated_at || a.chatDate || 0,
+              ).getTime();
+              const dateB = new Date(
+                b.created_at || b.createdAt || b.updated_at || b.chatDate || 0,
+              ).getTime();
+              return dateB - dateA;
+            });
           } catch (err) {
-            console.error("Ошибка при подсчете документов", err);
+            console.error("Ошибка при получении документов", err);
           }
-          setDocumentsCount(totalDocs);
+          setAllDocuments(docsArray);
         })
         .catch((err) => console.error("Ошибка загрузки чатов", err))
         .finally(() => setIsLoadingStats(false));
@@ -102,7 +127,7 @@ export default function Settings() {
       if (chats.length > 0) {
         await apiClient.deleteAllChats(internalUserId);
         setChats([]);
-        setDocumentsCount(0); // Сбрасываем и счетчик документов
+        setAllDocuments([]);
       }
       setIsClearHistoryModalOpen(false);
     } catch (error) {
@@ -113,13 +138,33 @@ export default function Settings() {
     }
   };
 
+  const handleDownload = async (
+    e: React.MouseEvent,
+    docId: number,
+    filename: string,
+  ) => {
+    e.stopPropagation();
+    setDownloadingDocId(docId);
+    try {
+      await apiClient.downloadDocument(docId, filename);
+    } catch (err) {
+      console.error("Ошибка скачивания", err);
+      alert("Не удалось скачать файл");
+    } finally {
+      setDownloadingDocId(null);
+    }
+  };
+
   const toggleTheme = async () => {
     if (!internalUserId) return;
     const newTheme = theme === "dark" ? "light" : "dark";
     setTheme(newTheme);
     try {
-      const updatedUser = await apiClient.updateSettings(internalUserId, { theme: newTheme });
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      await apiClient.updateSettings(internalUserId, { theme: newTheme });
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...user, theme: newTheme }),
+      );
     } catch (error) {
       console.error("Failed to update theme", error);
       setTheme(theme);
@@ -131,369 +176,592 @@ export default function Settings() {
     const newNotifications = !notifications;
     setNotifications(newNotifications);
     try {
-      const updatedUser = await apiClient.updateSettings(internalUserId, { notifications_enabled: newNotifications });
-      localStorage.setItem("user", JSON.stringify(updatedUser));
+      await apiClient.updateSettings(internalUserId, {
+        notifications_enabled: newNotifications,
+      });
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...user, notifications_enabled: newNotifications }),
+      );
     } catch (error) {
       console.error("Failed to update notifications", error);
       setNotifications(notifications);
     }
   };
 
-  // Генерация последних 7 дней для мини-календаря
-  const generateLast7Days = () => {
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date();
-      d.setHours(0, 0, 0, 0);
-      d.setDate(d.getDate() - (6 - i));
-      return d;
-    });
+  // --- ЛОГИКА ФИЛЬТРАЦИИ ---
+  const isDateInFilter = (dateStr: string | null) => {
+    if (filterPeriod === "all") return true;
+    if (!dateStr) return false;
+
+    const date = new Date(dateStr);
+    const now = new Date();
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+    );
+
+    if (filterPeriod === "today") {
+      return date >= startOfToday;
+    }
+
+    if (filterPeriod === "week") {
+      const aWeekAgo = new Date(startOfToday);
+      aWeekAgo.setDate(aWeekAgo.getDate() - 7);
+      return date >= aWeekAgo;
+    }
+
+    if (filterPeriod === "custom") {
+      if (!customStartDate && !customEndDate) return true;
+      let isValid = true;
+      if (customStartDate) {
+        const start = new Date(customStartDate);
+        start.setHours(0, 0, 0, 0);
+        isValid = isValid && date >= start;
+      }
+      if (customEndDate) {
+        const end = new Date(customEndDate);
+        end.setHours(23, 59, 59, 999);
+        isValid = isValid && date <= end;
+      }
+      return isValid;
+    }
+    return true;
   };
-  const weekDays = generateLast7Days();
 
-  // Форматирование даты
-  const getDayName = (date: Date) =>
-    date.toLocaleDateString("ru-RU", { weekday: "short" });
-  const getDayNumber = (date: Date) => date.getDate();
-
-  // Фильтрация
-  const filteredChats = selectedDate
-    ? chats.filter((chat) => {
-        const dateStr = getChatDateStr(chat);
-        if (!dateStr) return false;
-
-        const chatDate = new Date(dateStr);
-        return (
-          chatDate.getFullYear() === selectedDate.getFullYear() &&
-          chatDate.getMonth() === selectedDate.getMonth() &&
-          chatDate.getDate() === selectedDate.getDate()
-        );
-      })
-    : chats;
-
+  // Применяем фильтр к чатам
+  const filteredChats = chats.filter((chat) =>
+    isDateInFilter(getChatDateStr(chat)),
+  );
   const displayedChats = showAllChats
     ? filteredChats
     : filteredChats.slice(0, 5);
 
-  return (
-    <div className="min-h-screen w-full bg-black text-white flex flex-col pb-10 relative font-sans overflow-x-hidden">
-      {/* Фоновое пурпурное свечение */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[400px] bg-gradient-to-b from-[#24A1DE]/20 via-[#24A1DE]/5 to-transparent blur-[80px] pointer-events-none z-0"></div>
+  // Применяем фильтр к документам
+  const filteredDocuments = allDocuments.filter((doc) =>
+    isDateInFilter(
+      doc.created_at || doc.createdAt || doc.updated_at || doc.chatDate || null,
+    ),
+  );
 
+  // Массив конфигурации фильтров для рендера
+  const filters = [
+    { id: "all", label: "Все", icon: Layers },
+    { id: "today", label: "Сегодня", icon: Clock },
+    { id: "week", label: "Неделя", icon: CalendarDays },
+    { id: "custom", label: "Период", icon: CalendarRange },
+  ];
+
+  return (
+    <div className="min-h-screen w-full bg-[#F2F2F7] text-black flex flex-col pb-10 relative font-sans overflow-x-hidden">
       {/* Header */}
-      <div className="h-16 px-4 flex items-center border-b border-white/5 sticky top-0 bg-black/40 backdrop-blur-xl z-20">
+      <div className="h-14 px-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-xl z-20 border-b border-[#E5E5EA]">
         <button
           onClick={() => navigate("/profile")}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors cursor-pointer"
+          className="flex items-center text-[#3390EC] active:opacity-70 transition-opacity"
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={24} className="-ml-1" />
+          <span className="text-[17px]">Назад</span>
         </button>
-        <h2 className="ml-3 text-[17px] font-medium text-white/90">Профиль</h2>
+        <h2 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-black">
+          Настройки
+        </h2>
       </div>
 
-      <div className="p-5 flex-1 z-10 relative space-y-8">
+      <div className="flex-1 z-10 relative space-y-6 pt-6 pb-8 flex flex-col">
         {/* Карточка профиля */}
-        <div className="flex flex-col items-center justify-center pt-2">
-          {/* Аватарка: градиент изменен на 100% фиолетовый/маджентовый */}
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#24A1DE] to-[#24A1DE] p-[3px] mb-4 shadow-[0_0_30px_rgba(36,161,222,0.3)]">
-            <div className="w-full h-full bg-[#1C1C1D] rounded-full flex items-center justify-center">
-              <User size={40} className="text-[#24A1DE]" />
-            </div>
+        <div className="flex flex-col items-center justify-center px-4 shrink-0">
+          <div className="w-20 h-20 rounded-full bg-[#3390EC] flex items-center justify-center text-white text-3xl font-medium mb-3 shadow-sm">
+            {firstName.charAt(0).toUpperCase()}
           </div>
-          <h1 className="text-2xl font-bold text-white mb-1">{firstName}</h1>
-          <p className="text-[15px] text-white/50 mb-6">{username}</p>
+          <h1 className="text-2xl font-bold text-black mb-0.5">{firstName}</h1>
+          <p className="text-[15px] text-[#8E8E93] mb-6">{username}</p>
 
-          {/* --- БЛОК СТАТИСТИКИ (Чаты + Документы) --- */}
+          {/* ВКЛАДКИ (ТАБЫ) СО СТАТИСТИКОЙ */}
           <div className="w-full flex gap-3">
-            {/* Карточка 1: Консультации */}
-            <div className="flex-1 bg-[#1C1C1D] border border-white/5 rounded-3xl p-4 flex flex-col items-center justify-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-[#24A1DE]/10 blur-[20px] rounded-full"></div>
-              <MessageSquare size={20} className="text-[#24A1DE] mb-2" />
-              <span className="text-2xl font-bold text-white mb-0.5">
+            <div
+              onClick={() => setActiveTab("chats")}
+              className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "chats" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-white border-[#E5E5EA] active:bg-[#F2F2F7]"}`}
+            >
+              {activeTab === "chats" && (
+                <CheckCircle2
+                  size={18}
+                  className="absolute top-3 right-3 text-[#3390EC]"
+                  fill="white"
+                />
+              )}
+              <div
+                className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "chats" ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-[#F2F2F7] text-[#8E8E93]"}`}
+              >
+                <MessageSquare size={20} />
+              </div>
+              <span className="text-2xl font-bold text-black mb-0.5">
                 {isLoadingStats ? (
-                  <Loader2 size={24} className="animate-spin text-white/30" />
+                  <Loader2 size={24} className="animate-spin text-[#8E8E93]" />
                 ) : (
                   chats.length
                 )}
               </span>
-              <span className="text-[12px] text-white/50 uppercase font-medium tracking-wide">
+              <span
+                className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "chats" ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
+              >
                 Консультаций
               </span>
             </div>
 
-            {/* Карточка 2: Документы (Синий изменен на пурпурный) */}
-            <div className="flex-1 bg-[#1C1C1D] border border-white/5 rounded-3xl p-4 flex flex-col items-center justify-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-[#24A1DE]/10 blur-[20px] rounded-full"></div>
-              <FileText size={20} className="text-[#24A1DE] mb-2" />
-              <span className="text-2xl font-bold text-white mb-0.5">
+            <div
+              onClick={() => setActiveTab("documents")}
+              className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "documents" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-white border-[#E5E5EA] active:bg-[#F2F2F7]"}`}
+            >
+              {activeTab === "documents" && (
+                <CheckCircle2
+                  size={18}
+                  className="absolute top-3 right-3 text-[#3390EC]"
+                  fill="white"
+                />
+              )}
+              <div
+                className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "documents" ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-[#F2F2F7] text-[#8E8E93]"}`}
+              >
+                <FileText size={20} />
+              </div>
+              <span className="text-2xl font-bold text-black mb-0.5">
                 {isLoadingStats ? (
-                  <Loader2 size={24} className="animate-spin text-white/30" />
+                  <Loader2 size={24} className="animate-spin text-[#8E8E93]" />
                 ) : (
-                  documentsCount
+                  allDocuments.length
                 )}
               </span>
-              <span className="text-[12px] text-white/50 uppercase font-medium tracking-wide">
+              <span
+                className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "documents" ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
+              >
                 Документов
               </span>
             </div>
           </div>
         </div>
 
-        {/* --- СЕКЦИЯ: КАЛЕНДАРЬ И ИСТОРИЯ ЧАТОВ --- */}
-        <section>
-          <div className="flex items-center justify-between mb-4 px-1">
-            <div className="flex items-center gap-2 text-white/90">
-              <CalendarDays size={20} className="text-[#24A1DE]" />
-              <h3 className="text-[16px] font-semibold">История запросов</h3>
-            </div>
-            <span className="text-[13px] text-white/40 bg-white/5 px-2 py-1 rounded-lg">
-              {filteredChats.length} чатов
-            </span>
+        {/* --- ОБЪЕДИНЕННАЯ СЕКЦИЯ КОНТЕНТА (ФИЛЬТРЫ + СПИСКИ) --- */}
+        <section className="pt-2 animate-in fade-in duration-300 shrink-0">
+          <div className="flex items-center justify-between mb-3 px-4">
+            <h3 className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider ml-1">
+              {activeTab === "chats" ? "История запросов" : "Сохраненные файлы"}
+            </h3>
           </div>
 
-          {/* Горизонтальный мини-календарь */}
-          <div className="flex gap-2 overflow-x-auto pb-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {/* Кнопка "Все" */}
-            <button
-              onClick={() => {
-                setSelectedDate(null);
-                setShowAllChats(false);
-              }}
-              className={`flex flex-col items-center justify-center min-w-[56px] h-[70px] rounded-2xl border transition-all cursor-pointer shrink-0 ${
-                selectedDate === null
-                  ? "bg-[#24A1DE] border-[#24A1DE] text-white shadow-[0_0_15px_rgba(36,161,222,0.4)]"
-                  : "bg-[#1C1C1D] border-white/5 text-white/60 hover:bg-[#2C2C2E]"
-              }`}
-            >
-              <span
-                className={`text-[12px] uppercase font-medium mb-1 ${selectedDate === null ? "text-white/80" : "text-white/40"}`}
-              >
-                Все
-              </span>
-              <span
-                className={`flex items-center justify-center ${selectedDate === null ? "text-white" : "text-white/90"}`}
-              >
-                <Layers size={20} />
-              </span>
-            </button>
-
-            {/* Дни недели */}
-            {weekDays.map((date, idx) => {
-              const isSelected =
-                selectedDate &&
-                date.getFullYear() === selectedDate.getFullYear() &&
-                date.getMonth() === selectedDate.getMonth() &&
-                date.getDate() === selectedDate.getDate();
+          {/* КВАДРАТНЫЕ ФИЛЬТРЫ (РАСТЯНУТЫ НА ВСЮ ШИРИНУ) */}
+          <div className="grid grid-cols-4 gap-2 px-4 mb-4">
+            {filters.map((filter) => {
+              const isSelected = filterPeriod === filter.id;
+              const Icon = filter.icon;
 
               return (
                 <button
-                  key={idx}
+                  key={filter.id}
                   onClick={() => {
-                    setSelectedDate(date);
+                    setFilterPeriod(filter.id as any);
                     setShowAllChats(false);
                   }}
-                  className={`flex flex-col items-center justify-center min-w-[56px] h-[70px] rounded-2xl border transition-all cursor-pointer shrink-0 ${
-                    isSelected
-                      ? "bg-[#24A1DE] border-[#24A1DE] text-white shadow-[0_0_15px_rgba(36,161,222,0.4)]"
-                      : "bg-[#1C1C1D] border-white/5 text-white/60 hover:bg-[#2C2C2E]"
-                  }`}
+                  className={`flex flex-col items-center justify-center h-[70px] rounded-2xl border transition-all cursor-pointer
+                    ${isSelected ? "bg-[#3390EC] border-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-white border-[#E5E5EA] text-[#8E8E93] active:bg-[#F2F2F7]"}`}
                 >
+                  <Icon
+                    size={20}
+                    className={`mb-1.5 ${isSelected ? "text-white" : "text-black"}`}
+                  />
                   <span
-                    className={`text-[12px] uppercase font-medium mb-1 ${isSelected ? "text-white/80" : "text-white/40"}`}
+                    className={`text-[10px] uppercase font-bold tracking-wider ${isSelected ? "text-white/90" : "text-[#8E8E93]"}`}
                   >
-                    {getDayName(date)}
-                  </span>
-                  <span
-                    className={`text-[18px] font-bold ${isSelected ? "text-white" : "text-white/90"}`}
-                  >
-                    {getDayNumber(date)}
+                    {filter.label}
                   </span>
                 </button>
               );
             })}
           </div>
 
-          {/* Список чатов */}
-          <div className="bg-[#1C1C1D] rounded-3xl border border-white/5 overflow-hidden flex flex-col min-h-[120px]">
-            {isLoadingStats ? (
-              <div className="flex-1 flex items-center justify-center py-8">
-                <Loader2 size={24} className="animate-spin text-[#24A1DE]" />
-              </div>
-            ) : chats.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
-                <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
-                  <Clock size={24} className="text-white/30" />
+          {/* ИНПУТЫ ДЛЯ КАСТОМНОГО ПЕРИОДА */}
+          {filterPeriod === "custom" && (
+            <div className="mx-4 mb-4 flex items-center gap-2 animate-in slide-in-from-top-2 fade-in duration-200">
+              <input
+                type="date"
+                value={customStartDate}
+                onChange={(e) => setCustomStartDate(e.target.value)}
+                className="flex-1 h-10 bg-white border border-[#E5E5EA] rounded-xl px-3 text-[14px] text-black outline-none focus:border-[#3390EC] transition-colors appearance-none"
+              />
+              <span className="text-[#8E8E93] font-medium">—</span>
+              <input
+                type="date"
+                value={customEndDate}
+                onChange={(e) => setCustomEndDate(e.target.value)}
+                className="flex-1 h-10 bg-white border border-[#E5E5EA] rounded-xl px-3 text-[14px] text-black outline-none focus:border-[#3390EC] transition-colors appearance-none"
+              />
+            </div>
+          )}
+
+          {/* КОНТЕЙНЕР СО СПИСКОМ (ОБЩИЙ) */}
+          <div className="mx-4 bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden flex flex-col min-h-[120px] shadow-sm">
+            {activeTab === "chats" ? (
+              // --- РЕНДЕР ЧАТОВ ---
+              isLoadingStats ? (
+                <div className="flex-1 flex items-center justify-center py-8">
+                  <Loader2 size={24} className="animate-spin text-[#8E8E93]" />
                 </div>
-                <p className="text-white/60 text-[14px]">
-                  У вас пока нет сохраненных консультаций
+              ) : chats.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
+                  <Clock size={32} className="text-[#C7C7CC] mb-3" />
+                  <p className="text-[#8E8E93] text-[15px]">
+                    У вас пока нет консультаций
+                  </p>
+                </div>
+              ) : filteredChats.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
+                  <CalendarDays size={32} className="text-[#C7C7CC] mb-3" />
+                  <p className="text-[#8E8E93] text-[15px]">
+                    Нет консультаций за выбранный период
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {displayedChats.map((chat: any, idx) => {
+                    const displayDate = chat.created_at
+                      ? new Date(chat.created_at).toLocaleDateString("ru-RU", {
+                          day: "numeric",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : "";
+                    return (
+                      <button
+                        key={chat.id}
+                        onClick={() => navigate(`/chat/${chat.id}`)}
+                        className={`w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[#F2F2F7] transition-colors cursor-pointer text-left ${idx !== displayedChats.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
+                      >
+                        <div className="flex items-center gap-3 overflow-hidden pr-4">
+                          <div className="w-9 h-9 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+                            <MessageSquare
+                              size={16}
+                              className="text-[#3390EC]"
+                            />
+                          </div>
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="font-semibold text-[15px] text-black truncate">
+                              {chat.title || "Новая консультация"}
+                            </span>
+                            <span className="text-[13px] text-[#8E8E93] mt-0.5">
+                              {displayDate}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight
+                          size={18}
+                          className="text-[#C7C7CC] shrink-0"
+                        />
+                      </button>
+                    );
+                  })}
+                  {filteredChats.length > 5 && (
+                    <button
+                      onClick={() => setShowAllChats(!showAllChats)}
+                      className="w-full py-3.5 text-[15px] font-medium text-[#3390EC] bg-white active:bg-[#F2F2F7] transition-colors cursor-pointer border-t border-[#E5E5EA]"
+                    >
+                      {showAllChats
+                        ? "Скрыть"
+                        : `Показать все (${filteredChats.length})`}
+                    </button>
+                  )}
+                </>
+              )
+            ) : // --- РЕНДЕР ДОКУМЕНТОВ ---
+            isLoadingStats ? (
+              <div className="flex-1 flex items-center justify-center py-8">
+                <Loader2 size={24} className="animate-spin text-[#8E8E93]" />
+              </div>
+            ) : allDocuments.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
+                <FileText size={32} className="text-[#C7C7CC] mb-3" />
+                <p className="text-[#8E8E93] text-[15px]">
+                  У вас пока нет загруженных документов
                 </p>
               </div>
-            ) : filteredChats.length === 0 ? (
+            ) : filteredDocuments.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
-                <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center mb-3">
-                  <CalendarDays size={24} className="text-white/30" />
-                </div>
-                <p className="text-white/60 text-[14px]">
-                  Нет консультаций за эту дату
+                <CalendarDays size={32} className="text-[#C7C7CC] mb-3" />
+                <p className="text-[#8E8E93] text-[15px]">
+                  Нет документов за выбранный период
                 </p>
               </div>
             ) : (
-              <>
-                {displayedChats.map((chat: any) => {
-                  const dateStr = getChatDateStr(chat);
-                  const displayDate = dateStr
-                    ? new Date(dateStr).toLocaleDateString("ru-RU", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : "Неизвестная дата";
-
-                  return (
-                    <button
-                      key={chat.id}
-                      onClick={() => navigate(`/chat/${chat.id}`)}
-                      className="w-full flex items-center justify-between px-5 py-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer text-left last:border-0"
-                    >
-                      <div className="flex items-center gap-4 overflow-hidden pr-4">
-                        <div className="w-10 h-10 rounded-full bg-[#24A1DE]/10 flex items-center justify-center shrink-0">
-                          <MessageSquare size={18} className="text-[#24A1DE]" />
-                        </div>
-                        <div className="flex flex-col overflow-hidden">
-                          <span className="font-medium text-[15px] text-white/90 truncate">
-                            {chat.title || "Новая консультация"}
-                          </span>
-                          <span className="text-[12px] text-white/40 mt-0.5">
-                            {displayDate}
-                          </span>
-                        </div>
-                      </div>
-                      <ChevronRight
-                        size={18}
-                        className="text-white/30 shrink-0"
-                      />
-                    </button>
-                  );
-                })}
-
-                {filteredChats.length > 5 && (
-                  <button
-                    onClick={() => setShowAllChats(!showAllChats)}
-                    className="w-full py-3 text-[13px] font-medium text-[#24A1DE] hover:bg-white/5 transition-colors cursor-pointer border-t border-white/5"
+              filteredDocuments.map((doc: any, idx) => {
+                const isDownloading = downloadingDocId === doc.id;
+                const docDateStr =
+                  doc.created_at ||
+                  doc.createdAt ||
+                  doc.updated_at ||
+                  doc.chatDate;
+                const displayDate = docDateStr
+                  ? new Date(docDateStr).toLocaleDateString("ru-RU", {
+                      day: "numeric",
+                      month: "short",
+                    })
+                  : "Документ из чата";
+                return (
+                  <div
+                    key={doc.id}
+                    onClick={() => navigate(`/chat/${doc.chatId}`)}
+                    className={`w-full flex items-center justify-between px-4 py-3.5 bg-white hover:bg-[#F9FAFB] active:bg-[#F2F2F7] transition-colors cursor-pointer text-left ${idx !== filteredDocuments.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
                   >
-                    {showAllChats
-                      ? "Скрыть"
-                      : `Показать все (${filteredChats.length})`}
-                  </button>
-                )}
-              </>
+                    <div className="flex items-center gap-3 overflow-hidden pr-2">
+                      <div className="w-10 h-10 rounded-lg bg-[#F0F8FF] border border-[#E5E5EA] flex items-center justify-center shrink-0">
+                        <FileText size={18} className="text-[#3390EC]" />
+                      </div>
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="font-semibold text-[15px] text-black truncate">
+                          {doc.filename || `Документ #${doc.id}`}
+                        </span>
+                        <span className="text-[12px] text-[#8E8E93] mt-0.5 truncate">
+                          {displayDate} • {doc.chatTitle || "Консультация"}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) =>
+                        handleDownload(
+                          e,
+                          doc.id,
+                          doc.filename || "document.pdf",
+                        )
+                      }
+                      disabled={isDownloading}
+                      className="w-9 h-9 shrink-0 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#3390EC] hover:bg-[#E5E5EA] active:scale-95 transition-all"
+                    >
+                      {isDownloading ? (
+                        <Loader2 size={16} className="animate-spin" />
+                      ) : (
+                        <Download size={16} />
+                      )}
+                    </button>
+                  </div>
+                );
+              })
             )}
           </div>
         </section>
 
         {/* --- Раздел: Основные --- */}
-        <section>
-          <h3 className="text-white/40 text-[13px] font-semibold uppercase tracking-wider ml-4 mb-2">
+        <section className="px-4 pt-4 shrink-0">
+          <h3 className="text-[#8E8E93] text-[13px] font-medium uppercase tracking-wider ml-1 mb-2">
             Основные
           </h3>
-          <div className="bg-[#1C1C1D] rounded-3xl border border-white/5 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
-              <div className="flex items-center gap-4 text-white/90">
-                <Moon size={20} className="text-[#24A1DE]" />
-                <span className="font-medium text-[15px]">Темная тема</span>
+          <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA]">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#5856D6] flex items-center justify-center">
+                  <Moon size={16} className="text-white" />
+                </div>
+                <span className="font-medium text-[16px] text-black">
+                  Темная тема
+                </span>
               </div>
-              <div 
+              <div
                 onClick={toggleTheme}
-                className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors ${theme === 'dark' ? 'bg-[#24A1DE] shadow-[0_0_10px_rgba(36,161,222,0.3)]' : 'bg-white/10'}`}
+                className={`w-[50px] h-[30px] rounded-full relative cursor-pointer transition-colors duration-300 ${theme === "dark" ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
               >
-                <div className={`absolute top-1 w-5 h-5 rounded-full shadow-sm transition-all ${theme === 'dark' ? 'right-1 bg-white' : 'left-1 bg-white/50'}`} />
+                <div
+                  className={`absolute top-[2px] w-[26px] h-[26px] bg-white rounded-full shadow-md transition-all duration-300 ${theme === "dark" ? "left-[22px]" : "left-[2px]"}`}
+                />
               </div>
             </div>
-            <div className="flex items-center justify-between px-5 py-4">
-              <div className="flex items-center gap-4 text-white/90">
-                <Bell size={20} className="text-white/50" />
-                <span className="font-medium text-[15px]">Уведомления</span>
+            <div className="flex items-center justify-between px-4 py-3.5">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#FF9500] flex items-center justify-center">
+                  <Bell size={16} className="text-white" />
+                </div>
+                <span className="font-medium text-[16px] text-black">
+                  Уведомления
+                </span>
               </div>
-              <div 
+              <div
                 onClick={toggleNotifications}
-                className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors ${notifications ? 'bg-[#24A1DE] shadow-[0_0_10px_rgba(36,161,222,0.3)]' : 'bg-white/10'}`}
+                className={`w-[50px] h-[30px] rounded-full relative cursor-pointer transition-colors duration-300 ${notifications ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
               >
-                <div className={`absolute top-1 w-5 h-5 rounded-full shadow-sm transition-all ${notifications ? 'right-1 bg-white' : 'left-1 bg-white/50'}`} />
+                <div
+                  className={`absolute top-[2px] w-[26px] h-[26px] bg-white rounded-full shadow-md transition-all duration-300 ${notifications ? "left-[22px]" : "left-[2px]"}`}
+                />
               </div>
             </div>
           </div>
         </section>
 
-        {/* --- Раздел: Данные --- */}
-        <section>
-          <h3 className="text-white/40 text-[13px] font-semibold uppercase tracking-wider ml-4 mb-2">
-            Данные и Приватность
+        {/* --- Раздел: Информация --- */}
+        <section className="px-4 pt-2 shrink-0">
+          <h3 className="text-[#8E8E93] text-[13px] font-medium uppercase tracking-wider ml-1 mb-2">
+            Информация
           </h3>
-          <div className="bg-[#1C1C1D] rounded-3xl border border-white/5 overflow-hidden">
+          <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
             <button
-              onClick={() => setIsClearHistoryModalOpen(true)}
-              className="w-full flex items-center justify-between px-5 py-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer text-left"
+              onClick={() => setIsPrivacyModalOpen(true)}
+              className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[#F2F2F7] transition-colors text-left"
             >
-              <div className="flex items-center gap-4 text-[#FF3B30]">
-                <Trash2 size={20} />
-                <span className="font-medium text-[15px]">
-                  Очистить историю чатов
-                </span>
-              </div>
-            </button>
-            <button className="w-full flex items-center justify-between px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer text-left">
-              <div className="flex items-center gap-4 text-white/90">
-                <ShieldCheck size={20} className="text-white/50" />
-                <span className="font-medium text-[15px]">
+              <div className="flex items-center gap-3 text-black">
+                <div className="w-8 h-8 rounded-lg bg-[#8E8E93]/10 flex items-center justify-center">
+                  <ShieldCheck size={16} className="text-[#8E8E93]" />
+                </div>
+                <span className="font-medium text-[16px]">
                   Политика конфиденциальности
                 </span>
               </div>
+              <ChevronRight size={18} className="text-[#C7C7CC]" />
             </button>
           </div>
         </section>
 
-        {/* --- Кнопка Выхода --- */}
-        <button
-          onClick={handleLogout}
-          className="w-full py-4 text-[#FF3B30] font-medium bg-[#FF3B30]/10 rounded-3xl border border-[#FF3B30]/20 hover:bg-[#FF3B30]/20 transition-colors cursor-pointer flex items-center justify-center gap-3 mt-4"
-        >
-          <LogOut size={20} />
-          <span className="text-[16px]">Выйти из аккаунта</span>
-        </button>
+        {/* --- Опасная зона (Удаление и Выход) - Прижата к низу --- */}
+        <section className="px-4 pt-8 mt-auto shrink-0">
+          <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm flex flex-col">
+            <button
+              onClick={() => setIsClearHistoryModalOpen(true)}
+              className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] bg-white active:bg-[#F2F2F7] transition-colors text-left"
+            >
+              <div className="flex items-center gap-3 text-[#FF3B30]">
+                <div className="w-8 h-8 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center">
+                  <Trash2 size={16} />
+                </div>
+                <span className="font-medium text-[16px]">
+                  Очистить историю запросов
+                </span>
+              </div>
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[#F2F2F7] transition-colors text-left"
+            >
+              <div className="flex items-center gap-3 text-[#FF3B30]">
+                <div className="w-8 h-8 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center">
+                  <LogOut size={16} />
+                </div>
+                <span className="font-medium text-[16px]">
+                  Выйти из аккаунта
+                </span>
+              </div>
+            </button>
+          </div>
+        </section>
       </div>
 
       {/* --- МОДАЛКА ОЧИСТКИ ИСТОРИИ --- */}
       {isClearHistoryModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-          <div className="bg-[#1C1C1D] rounded-3xl p-6 w-full max-w-xs border border-white/10 shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
-            <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
-              <Trash2 size={28} className="text-[#FF3B30]" />
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-[300px] flex flex-col items-center text-center overflow-hidden animate-in zoom-in-95 duration-200 shadow-2xl">
+            <div className="p-6 pb-5">
+              <h2 className="text-[17px] font-semibold text-black mb-1.5">
+                Очистить историю?
+              </h2>
+              <p className="text-[13px] text-[#8E8E93] leading-snug">
+                Вы уверены, что хотите удалить все консультации? Это действие
+                нельзя отменить.
+              </p>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">
-              Очистить историю
-            </h2>
-            <p className="text-[14px] text-white/60 mb-6 leading-relaxed">
-              Вы уверены, что хотите удалить <b>все</b> свои консультации и
-              документы? Это действие нельзя будет отменить.
-            </p>
-            <div className="flex w-full gap-3">
-              <button
-                onClick={() => setIsClearHistoryModalOpen(false)}
-                disabled={isClearing}
-                className="flex-1 py-3 rounded-xl font-medium bg-white/5 text-white hover:bg-white/10 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Отмена
-              </button>
+            <div className="flex flex-col w-full border-t border-[#E5E5EA]">
               <button
                 onClick={executeClearHistory}
                 disabled={isClearing}
-                className="flex-1 py-3 rounded-xl font-medium bg-[#FF3B30] text-white hover:bg-red-600 transition-colors cursor-pointer flex items-center justify-center gap-2 disabled:opacity-50"
+                className="w-full py-3.5 text-[17px] font-normal text-[#FF3B30] border-b border-[#E5E5EA] active:bg-[#F2F2F7] transition-colors flex items-center justify-center gap-2"
               >
                 {isClearing ? (
                   <Loader2 size={18} className="animate-spin" />
                 ) : (
-                  "Удалить"
+                  "Удалить все"
                 )}
+              </button>
+              <button
+                onClick={() => setIsClearHistoryModalOpen(false)}
+                disabled={isClearing}
+                className="w-full py-3.5 text-[17px] font-semibold text-[#3390EC] active:bg-[#F2F2F7] transition-colors"
+              >
+                Отмена
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- МОДАЛКА ПОЛИТИКИ КОНФИДЕНЦИАЛЬНОСТИ --- */}
+      {isPrivacyModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-t-2xl sm:rounded-2xl w-full max-w-[500px] max-h-[85vh] flex flex-col overflow-hidden animate-in slide-in-from-bottom-full sm:zoom-in-95 duration-300 shadow-2xl pb-safe">
+            <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] shrink-0">
+              <h2 className="text-[17px] font-semibold text-black">
+                Политика конфиденциальности
+              </h2>
+              <button
+                onClick={() => setIsPrivacyModalOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F2F2F7] text-[#8E8E93] active:bg-[#E5E5EA] transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto text-[15px] leading-relaxed text-[#3A3A3C] space-y-4">
+              <p className="text-[13px] text-[#8E8E93] font-medium">
+                Последнее обновление: {new Date().toLocaleDateString("ru-RU")}
+              </p>
+              <p>
+                Это демонстрационная заглушка для политики конфиденциальности. В
+                реальном приложении здесь будет размещен юридически значимый
+                текст, описывающий сбор, хранение и обработку персональных
+                данных пользователей сервиса.
+              </p>
+
+              <h3 className="font-semibold text-black text-[16px] mt-4">
+                1. Сбор информации
+              </h3>
+              <p>
+                Мы собираем информацию, когда вы регистрируетесь в
+                Telegram-боте, заходите в свой аккаунт, загружаете документы и
+                общаетесь с ИИ. Информация включает ваш Telegram ID, имя, а
+                также историю текстовых запросов.
+              </p>
+
+              <h3 className="font-semibold text-black text-[16px] mt-4">
+                2. Использование данных ИИ
+              </h3>
+              <p>
+                Загруженные вами документы и отправленные сообщения используются
+                исключительно для генерации ответов нейросетью. Мы не используем
+                ваши личные договоры и персональные данные для дообучения
+                глобальных моделей.
+              </p>
+
+              <h3 className="font-semibold text-black text-[16px] mt-4">
+                3. Защита информации
+              </h3>
+              <p>
+                Мы используем современные методы шифрования для защиты вашей
+                конфиденциальной информации. Доступ к вашим чатам и файлам есть
+                только у вас. Серверы, на которых хранятся данные, находятся в
+                защищенном окружении.
+              </p>
+
+              <h3 className="font-semibold text-black text-[16px] mt-4">
+                4. Удаление данных
+              </h3>
+              <p>
+                Вы имеете полное право в любой момент запросить удаление всей
+                своей истории, нажав на кнопку «Очистить историю запросов» в
+                настройках. После этого данные безвозвратно удаляются с наших
+                серверов.
+              </p>
+            </div>
+
+            <div className="p-4 border-t border-[#E5E5EA] bg-white shrink-0">
+              <button
+                onClick={() => setIsPrivacyModalOpen(false)}
+                className="w-full py-3.5 bg-[#3390EC] text-white font-semibold rounded-xl active:bg-blue-600 transition-colors shadow-sm"
+              >
+                Понятно
               </button>
             </div>
           </div>

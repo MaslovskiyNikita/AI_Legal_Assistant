@@ -1,20 +1,20 @@
 // src/app/pages/Profile.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
-  Menu,
   MessageSquare,
   Scale,
   Briefcase,
   FileSearch,
-  Mic,
-  ArrowUpRight,
-  User,
+  ChevronRight,
+  CheckCircle2,
+  ArrowUp,
   Clock,
-  Info,
+  Loader2,
 } from "lucide-react";
 
-// --- ДАННЫЕ АГЕНТОВ ---
+import { apiClient } from "../api/client";
+
 const agents = [
   {
     id: "strict",
@@ -27,7 +27,7 @@ const agents = [
   {
     id: "consultant",
     title: "Консультант",
-    description: "",
+    description: "Понятно и дружелюбно",
     icon: Briefcase,
     size: "small",
     prompt: "Действуй как дружелюбный и понятный юридический консультант. ",
@@ -35,7 +35,7 @@ const agents = [
   {
     id: "analyzer",
     title: "Аналитик",
-    description: "",
+    description: "Поиск рисков",
     icon: FileSearch,
     size: "small",
     prompt:
@@ -43,47 +43,42 @@ const agents = [
   },
 ];
 
-const TokenUsage = ({ percent }: { percent: number }) => {
-  const radius = 18;
+const TokenCircleMenu = ({ percent }: { percent: number }) => {
+  const radius = 15;
   const circumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circumference - (percent / 100) * circumference;
+  const offset = circumference - (percent / 100) * circumference;
 
   return (
-    <div className="group relative flex items-center justify-center">
-      {/* Круговой индикатор */}
-      <svg width="40" height="40" className="transform -rotate-90">
-        {/* Фоновый круг (серый) */}
+    <div className="group relative flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-[#F2F2F7] cursor-pointer active:scale-95 transition-all z-50">
+      <svg width="36" height="36" className="transform -rotate-90">
         <circle
-          cx="20"
-          cy="20"
+          cx="18"
+          cy="18"
           r={radius}
-          stroke="currentColor"
-          strokeWidth="3"
+          stroke="#F2F2F7"
+          strokeWidth="3.5"
           fill="transparent"
-          className="text-white/10"
         />
-        {/* Заполняемый круг (пурпурный) */}
         <circle
-          cx="20"
-          cy="20"
+          cx="18"
+          cy="18"
           r={radius}
-          stroke="currentColor"
-          strokeWidth="3"
+          stroke="#3390EC"
+          strokeWidth="3.5"
           fill="transparent"
           strokeDasharray={circumference}
-          strokeDashoffset={strokeDashoffset}
+          strokeDashoffset={offset}
           strokeLinecap="round"
-          className="text-[#24A1DE] transition-all duration-1000"
+          className="transition-all duration-1000 ease-out"
         />
       </svg>
-      {/* Текст внутри (опционально) или просто иконка */}
-      <div className="absolute flex items-center justify-center">
-        <span className="text-[10px] font-bold text-white">{percent}%</span>
-      </div>
+      <span className="absolute text-[10px] font-bold text-black tracking-tighter">
+        {percent}%
+      </span>
 
-      {/* Подсказка при наведении (Tooltip) */}
-      <div className="absolute top-12 right-0 w-32 p-2 bg-[#1C1C1D] border border-white/10 rounded-lg text-[10px] text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-center shadow-xl">
-        Использовано токенов: {percent}%
+      {/* Тултип */}
+      <div className="absolute top-12 right-0 w-max px-3 py-1.5 bg-[#2C2C2E] text-white text-[11px] font-medium rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-center shadow-lg transform origin-top-right">
+        Использовано токенов сегодня
       </div>
     </div>
   );
@@ -92,34 +87,48 @@ const TokenUsage = ({ percent }: { percent: number }) => {
 export default function Profile() {
   const navigate = useNavigate();
   const [inputText, setInputText] = useState("");
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  // --- НОВЫЙ СТЕЙТ ДЛЯ ВЫБОРА АГЕНТА ---
-  const [selectedAgent, setSelectedAgent] = useState("strict"); // По умолчанию выбран "Строгий юрист"
+  const [selectedAgent, setSelectedAgent] = useState("strict");
+  const [recentChats, setRecentChats] = useState<any[]>([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(true);
 
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
+  const internalUserId = user?.id || null;
   const firstName = user?.first_name || "User";
 
-  // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ---
-  // Теперь она будет добавлять системный промпт выбранного агента
-  // --- ОБНОВЛЕННАЯ ФУНКЦИЯ ---
-  const startNewChat = (promptText?: string | React.MouseEvent) => {
-    // Определяем фактический текст юзера: если передали строку (quick prompt), берем ее, иначе текст из инпута
-    const actualText = typeof promptText === "string" ? promptText : inputText;
+  useEffect(() => {
+    if (internalUserId) {
+      setIsLoadingRecent(true);
+      apiClient
+        .getChats(internalUserId)
+        .then((data) => {
+          if (data && data.length > 0) {
+            const sorted = data.sort((a: any, b: any) => {
+              const dateA = a.created_at || a.createdAt || a.updated_at || null;
+              const dateB = b.created_at || b.createdAt || b.updated_at || null;
+              if (!dateA) return 1;
+              if (!dateB) return -1;
+              return new Date(dateB).getTime() - new Date(dateA).getTime();
+            });
+            setRecentChats(sorted.slice(0, 3));
+          }
+        })
+        .catch((err) => console.error("Ошибка загрузки последних чатов", err))
+        .finally(() => setIsLoadingRecent(false));
+    } else {
+      setIsLoadingRecent(false);
+    }
+  }, [internalUserId]);
 
-    // Если текста нет, просто открываем пустой чат (чтобы случайно не отправить голый системный промпт)
+  const startNewChat = (promptText?: string | React.MouseEvent) => {
+    const actualText = typeof promptText === "string" ? promptText : inputText;
     if (!actualText.trim()) {
       navigate("/chat/new");
       return;
     }
-
-    // Находим системный промпт выбранного агента
     const agentPrompt =
       agents.find((agent) => agent.id === selectedAgent)?.prompt || "";
-
     const textToSend = agentPrompt + actualText;
-
     navigate("/chat/new", { state: { initialPrompt: textToSend } });
   };
 
@@ -129,153 +138,173 @@ export default function Profile() {
     "Составь NDA для разработчика",
   ];
 
-  return (
-    <div className="min-h-screen w-full bg-black text-white relative flex flex-col overflow-hidden font-sans">
-      {/* Фоновое свечение */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[500px] bg-gradient-to-b from-[#24A1DE]/30 via-[#24A1DE]/10 to-transparent blur-[80px] pointer-events-none z-0"></div>
+  const formatRecentDateShort = (chat: any) => {
+    const dateStr = chat.created_at || chat.createdAt || chat.updated_at;
+    if (!dateStr) return "";
+    const date = new Date(dateStr);
 
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Сегодня";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Вчера";
+    }
+    return date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+  };
+
+  return (
+    <div className="min-h-screen w-full bg-white text-black relative flex flex-col font-sans overflow-x-hidden">
       {/* Header */}
-      <div className="relative z-10 flex items-center justify-between px-6 pt-12 pb-4">
-        {/* Левая часть: Профиль */}
+      <div className="flex items-center justify-between px-4 pt-6 pb-4 relative z-20">
         <div
           className="flex items-center gap-3 cursor-pointer"
           onClick={() => navigate("/settings")}
         >
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#24A1DE] to-[#24A1DE] p-[2px]">
-            <div className="w-full h-full bg-[#1C1C1D] rounded-full flex items-center justify-center">
-              <User size={20} className="text-[#24A1DE]" />
-            </div>
+          <div className="w-10 h-10 rounded-full bg-[#3390EC] flex items-center justify-center text-white font-medium text-lg shadow-sm">
+            {firstName.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <p className="text-[12px] text-white/60 font-medium">Доброе утро</p>
-            <p className="text-[16px] font-semibold">{firstName}</p>
-          </div>
-        </div>
-
-        {/* Правая часть: Токены + Меню */}
-        <div className="flex items-center gap-3">
-          {/* Индикатор использования токенов */}
-          <div className="relative flex items-center justify-center w-10 h-10 group cursor-help">
-            <svg width="40" height="40" className="transform -rotate-90">
-              <circle
-                cx="20"
-                cy="20"
-                r="16"
-                stroke="currentColor"
-                strokeWidth="3"
-                fill="transparent"
-                className="text-white/10"
-              />
-              <circle
-                cx="20"
-                cy="20"
-                r="16"
-                stroke="currentColor"
-                strokeWidth="3"
-                fill="transparent"
-                strokeDasharray={2 * Math.PI * 16}
-                strokeDashoffset={
-                  2 * Math.PI * 16 - (33 / 100) * (2 * Math.PI * 16)
-                } // 33% заполнено
-                strokeLinecap="round"
-                className="text-[#24A1DE] transition-all duration-1000 ease-out"
-              />
-            </svg>
-            <span className="absolute text-[9px] font-bold text-white">
-              33%
+          <div className="flex flex-col">
+            <span className="text-[16px] font-semibold leading-tight text-black">
+              {firstName}
             </span>
-            {/* Tooltip */}
-            <div className="absolute top-12 right-0 w-36 p-3 bg-[#1C1C1D] border border-white/10 rounded-xl text-[11px] text-white/80 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none text-center shadow-2xl z-50">
-              Использовано токенов: 33%
-            </div>
+            <span className="text-[13px] text-[#8E8E93]">Доброе утро</span>
           </div>
         </div>
+        <TokenCircleMenu percent={33} />
       </div>
 
-      <div className="relative z-10 px-6 flex-1 flex flex-col">
-        {/* Заголовок */}
-        <h1 className="text-4xl font-bold mt-6 mb-8 leading-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+      <div className="px-4 flex-1 flex flex-col">
+        <h1 className="text-3xl font-bold mt-2 mb-6 tracking-tight text-black">
           Выберите стиль
           <br />
           вашего AI-юриста
         </h1>
 
         {/* Сетка Агентов */}
-        <div className="grid grid-cols-2 grid-rows-2 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 mb-6">
           {agents.map((agent) => {
             const isSelected = selectedAgent === agent.id;
             const Icon = agent.icon;
+
             return (
               <div
                 key={agent.id}
                 onClick={() => setSelectedAgent(agent.id)}
                 className={`
-                  col-span-1 rounded-3xl p-4 flex flex-col justify-end relative overflow-hidden group cursor-pointer border-2 transition-all duration-300
-                  ${agent.size === "large" ? "row-span-2" : "justify-center"}
-                  ${
-                    isSelected
-                      ? "border-sky-500/80 shadow-lg shadow-sky-900/40"
-                      : "border-white/10 bg-[#1C1C1D] hover:bg-[#2C2C2E] hover:border-white/20"
-                  }
+                  rounded-2xl p-4 flex flex-col relative transition-all cursor-pointer border
+                  ${agent.size === "large" ? "col-span-1 row-span-2 min-h-[160px]" : "col-span-1"}
+                  ${isSelected ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-[#F2F2F7] border-transparent hover:bg-[#E5E5EA]"}
                 `}
-                style={
-                  isSelected
-                    ? {
-                        background:
-                          "linear-gradient(180deg, rgba(44,44,46,0.5) 0%, rgba(36,161,222,0.2) 100%), #1C1C1D",
-                      }
-                    : {}
-                }
               >
-                <div
-                  className={`w-8 h-8 rounded-full bg-white/10 flex items-center justify-center ${agent.size === "large" ? "absolute top-4 left-4" : "mb-3"}`}
-                >
-                  <Icon
-                    size={16}
-                    className={isSelected ? "text-[#24A1DE]" : "text-white/70"}
+                {isSelected && (
+                  <CheckCircle2
+                    size={18}
+                    className="absolute top-3 right-3 text-[#3390EC]"
+                    fill="white"
                   />
+                )}
+                <div
+                  className={`
+                  w-10 h-10 rounded-full mb-auto flex items-center justify-center
+                  ${isSelected ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-white text-[#8E8E93] shadow-sm"}
+                `}
+                >
+                  <Icon size={20} />
                 </div>
-                {isSelected && agent.size === "large" && (
-                  <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-[#24A1DE]/30 blur-[40px]"></div>
-                )}
-                <h3 className="text-[16px] font-semibold relative z-10">
-                  {agent.title}
-                </h3>
-                {agent.size === "large" && (
-                  <p className="text-[12px] text-white/60 relative z-10 mt-1">
-                    {agent.description}
-                  </p>
-                )}
+                <div className="mt-4">
+                  <h3 className="text-[16px] font-semibold leading-tight text-black">
+                    {agent.title}
+                  </h3>
+                  {agent.description && (
+                    <p
+                      className={`text-[13px] mt-1 line-clamp-2 ${isSelected ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
+                    >
+                      {agent.description}
+                    </p>
+                  )}
+                </div>
               </div>
             );
           })}
         </div>
 
+        {/* Последние чаты ИЛИ Пустое состояние */}
+        <div className="mb-auto w-full">
+          {isLoadingRecent ? (
+            <div className="grid grid-cols-3 gap-2 w-full">
+              <div className="h-[96px] bg-[#F2F2F7] rounded-2xl animate-pulse"></div>
+              <div className="h-[96px] bg-[#F2F2F7] rounded-2xl animate-pulse"></div>
+              <div className="h-[96px] bg-[#F2F2F7] rounded-2xl animate-pulse"></div>
+            </div>
+          ) : recentChats.length > 0 ? (
+            <div>
+              <h4 className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider mb-2 ml-1">
+                Продолжить
+              </h4>
+
+              {/* ОБНОВЛЕННАЯ СЕТКА: 3 карточки в ряд, ширина совпадает с быстрыми запросами */}
+              <div className="grid grid-cols-3 gap-2 w-full">
+                {recentChats.map((chat) => (
+                  <div
+                    key={chat.id}
+                    onClick={() => navigate(`/chat/${chat.id}`)}
+                    className="h-[96px] bg-[#F8F9FA] rounded-2xl p-2.5 border border-[#E5E5EA] flex flex-col justify-between cursor-pointer active:bg-[#E5E5EA] transition-colors overflow-hidden"
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <Clock size={12} className="text-[#3390EC] shrink-0" />
+                      <span className="text-[10px] font-semibold text-[#8E8E93] uppercase tracking-wider truncate">
+                        {formatRecentDateShort(chat)}
+                      </span>
+                    </div>
+                    <span className="text-[12px] font-semibold text-black leading-tight line-clamp-2">
+                      {chat.title || "Новая консультация"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-7 px-4 bg-[#F8F9FA] rounded-2xl border border-[#E5E5EA] border-dashed text-center">
+              <div className="w-12 h-12 rounded-full bg-[#E5E5EA] flex items-center justify-center mb-3">
+                <MessageSquare size={24} className="text-[#8E8E93]" />
+              </div>
+              <span className="text-[15px] font-semibold text-black mb-1">
+                Здесь пока пусто
+              </span>
+              <span className="text-[13px] text-[#8E8E93] leading-snug max-w-[240px]">
+                Здесь будут отображаться ваши последние консультации с AI.
+              </span>
+            </div>
+          )}
+        </div>
+
         {/* Быстрые Промпты */}
-        <div className="mt-auto mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-[15px] font-medium text-white/80">
-              Быстрые запросы
-            </h4>
-          </div>
-          <div className="space-y-3">
+        <div className="mb-4 mt-6">
+          <h4 className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider mb-2 ml-1">
+            Быстрые запросы
+          </h4>
+          <div className="bg-[#F2F2F7] rounded-2xl overflow-hidden w-full">
             {quickPrompts.map((prompt, idx) => (
               <div
                 key={idx}
                 onClick={() => startNewChat(prompt)}
-                className="flex items-center justify-between p-1 pr-4 bg-[#1C1C1D] rounded-full border border-white/5 cursor-pointer hover:bg-white/5 transition-colors"
+                className={`
+                  flex items-center justify-between p-4 cursor-pointer active:bg-[#E5E5EA] transition-colors
+                  ${idx !== quickPrompts.length - 1 ? "border-b border-[#E5E5EA]" : ""}
+                `}
               >
-                <div className="flex items-center gap-3 truncate pr-4">
-                  <div className="w-10 h-10 rounded-full bg-[#24A1DE]/20 flex items-center justify-center shrink-0">
-                    <MessageSquare size={16} className="text-[#24A1DE]" />
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
+                    <MessageSquare size={16} className="text-[#3390EC]" />
                   </div>
-                  <span className="text-[14px] text-white/90 truncate">
+                  <span className="text-[15px] font-medium text-black truncate pr-2">
                     {prompt}
                   </span>
                 </div>
-                <div className="w-8 h-8 rounded-full bg-[#2C2C2E] flex items-center justify-center shrink-0">
-                  <ArrowUpRight size={16} className="text-white/50" />
-                </div>
+                <ChevronRight size={20} className="text-[#C7C7CC] shrink-0" />
               </div>
             ))}
           </div>
@@ -283,21 +312,31 @@ export default function Profile() {
       </div>
 
       {/* Поле ввода снизу */}
-      <div className="relative z-10 px-6 pb-8 pt-2">
-        <div className="flex items-center bg-[#1C1C1D] rounded-full p-2 border border-white/10 focus-within:border-[#24A1DE]/50 transition-colors">
-          <input
-            type="text"
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && startNewChat()}
-            placeholder="Спроси что угодно..."
-            className="flex-1 bg-transparent border-none outline-none text-white px-4 text-[15px] placeholder:text-white/40"
-          />
+      <div className="px-4 pb-6 pt-2 bg-white border-t border-[#F2F2F7]">
+        <div className="flex items-end gap-2 w-full">
+          <div className="flex-1 bg-[#F2F2F7] border border-[#E5E5EA] rounded-3xl min-h-[44px] flex items-center px-4 py-1 focus-within:border-[#3390EC] transition-colors">
+            <input
+              type="text"
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && startNewChat()}
+              placeholder="Спроси что угодно..."
+              className="flex-1 bg-transparent border-none outline-none text-black text-[16px] placeholder:text-[#8E8E93]"
+            />
+          </div>
           <button
             onClick={() => startNewChat()}
-            className="w-10 h-10 rounded-full bg-[#24A1DE] flex items-center justify-center transition-transform active:scale-95 shadow-lg shadow-sky-500/20"
+            disabled={!inputText.trim()}
+            className={`
+              w-[44px] h-[44px] shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-sm
+              ${
+                inputText.trim()
+                  ? "bg-[#3390EC] text-white shadow-blue-500/30"
+                  : "bg-[#E5E5EA] text-[#8E8E93] cursor-not-allowed"
+              }
+            `}
           >
-            <Mic size={18} className="text-white" />
+            <ArrowUp size={20} strokeWidth={2.5} />
           </button>
         </div>
       </div>

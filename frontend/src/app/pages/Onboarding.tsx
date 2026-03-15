@@ -1,6 +1,6 @@
 // src/app/pages/Onboarding.tsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router"; // Убедись, что импорт из react-router-dom
+import { useNavigate } from "react-router";
 import { apiClient } from "../api/client";
 import { TELEGRAM_USER } from "../../utils/telegram";
 import { Scale, Shield, FileText, ArrowRight, Loader2 } from "lucide-react";
@@ -9,9 +9,7 @@ export default function Onboarding() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
-  // --- ВОТ ЛОГИКА ИЗ ТВОЕГО ПРИМЕРА, НО С УЛУЧШЕНИЕМ ---
   const handleStart = async () => {
-    // Проверяем, есть ли вообще данные от Telegram
     if (!TELEGRAM_USER?.id) {
       alert(
         "Не удалось получить данные Telegram. Пожалуйста, перезапустите приложение.",
@@ -21,26 +19,16 @@ export default function Onboarding() {
 
     setLoading(true);
     try {
-      // 1. Сначала авторизуем или регистрируем пользователя на бэкенде.
-      // Бэкенд сам разберется, новый это юзер или нет.
       await apiClient.auth({
         telegram_id: TELEGRAM_USER.id,
         username: TELEGRAM_USER.username || `user_${TELEGRAM_USER.id}`,
         first_name: TELEGRAM_USER.first_name || "User",
       });
-
-      // 2. Затем получаем полный профиль пользователя (с его внутренним ID из БД).
-      // Это ВАЖНЫЙ шаг, чтобы другие страницы работали корректно.
       const fullProfile = await apiClient.getUser(TELEGRAM_USER.id);
-
-      // 3. Сохраняем ПОЛНОГО юзера, а не только данные из Telegram.
       localStorage.setItem("user", JSON.stringify(fullProfile));
-
-      // 4. Отправляем в профиль.
       navigate("/profile", { replace: true });
     } catch (e) {
       console.error("Ошибка при старте и регистрации:", e);
-      // Можно показать пользователю сообщение об ошибке
       alert("Произошла ошибка при входе. Попробуйте еще раз.");
     } finally {
       setLoading(false);
@@ -48,46 +36,49 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen w-full relative flex flex-col justify-between bg-black p-8 font-sans overflow-hidden">
-      {/* Свечение */}
-      <div className="absolute -top-20 -left-20 w-[300px] h-[300px] bg-[#24A1DE] rounded-full blur-[120px] opacity-20"></div>
-
-      <div className="mt-16 flex flex-col items-center text-center z-10">
-        <div className="w-24 h-24 bg-gradient-to-tr from-[#24A1DE] to-[#24A1DE] rounded-3xl flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(36,161,222,0.3)] rotate-3">
-          <Scale size={48} color="white" />
+    // Белый фон, вертикальный flex, отступы p-6
+    <div className="min-h-screen w-full bg-white text-black flex flex-col justify-between p-6 font-sans">
+      {/* Верхняя часть (Контент) */}
+      <div className="flex flex-col items-center text-center mt-16">
+        {/* Иконка в стиле iOS/Telegram */}
+        <div className="w-24 h-24 bg-[#F0F8FF] rounded-full flex items-center justify-center mb-6 shadow-sm">
+          <Scale size={48} className="text-[#3390EC]" />
         </div>
 
-        <h1 className="text-white text-4xl font-bold mb-4 tracking-tight">
-          Legal Expert AI
+        <h1 className="text-black text-3xl font-bold mb-3 tracking-tight">
+          Ваш AI-юрист в Telegram
         </h1>
-        <p className="text-white/60 text-[17px] leading-relaxed mb-12 max-w-[280px]">
-          Ваш персональный юрист с искусственным интеллектом внутри Telegram.
+        <p className="text-[#8E8E93] text-[17px] leading-relaxed mb-10 max-w-xs">
+          Анализируйте документы, проверяйте договоры и получайте консультации.
         </p>
 
-        <div className="w-full flex flex-col gap-6 text-left">
-          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-sm">
-            <div className="p-3 bg-[#24A1DE]/20 rounded-xl">
-              <FileText size={24} color="#24A1DE" />
+        {/* Список фичей в виде карточки (как в настройках) */}
+        <div className="w-full bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
+          {/* 1. Анализ документов */}
+          <div className="flex items-center gap-4 p-4 border-b border-[#E5E5EA]">
+            <div className="w-10 h-10 flex-shrink-0 bg-[#F0F8FF] rounded-lg flex items-center justify-center">
+              <FileText size={22} className="text-[#3390EC]" />
             </div>
             <div>
-              <p className="text-white font-semibold text-[17px]">
+              <p className="text-black font-semibold text-[16px]">
                 Анализ документов
               </p>
-              <p className="text-white/50 text-sm">
+              <p className="text-[#8E8E93] text-sm mt-0.5">
                 Проверка контрактов и поиск рисков
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-sm">
-            <div className="p-3 bg-[#24A1DE]/20 rounded-xl">
-              <Shield size={24} color="#24A1DE" />
+          {/* 2. Безопасность */}
+          <div className="flex items-center gap-4 p-4">
+            <div className="w-10 h-10 flex-shrink-0 bg-[#F0F8FF] rounded-lg flex items-center justify-center">
+              <Shield size={22} className="text-[#3390EC]" />
             </div>
             <div>
-              <p className="text-white font-semibold text-[17px]">
+              <p className="text-black font-semibold text-[16px]">
                 Безопасно и приватно
               </p>
-              <p className="text-white/50 text-sm">
+              <p className="text-[#8E8E93] text-sm mt-0.5">
                 Все данные строго конфиденциальны
               </p>
             </div>
@@ -95,19 +86,13 @@ export default function Onboarding() {
         </div>
       </div>
 
+      {/* Нижняя часть (Кнопка) */}
       <button
         onClick={handleStart}
         disabled={loading}
-        className="w-full py-4 mb-4 rounded-2xl font-semibold text-[17px] text-white flex items-center justify-center gap-2 bg-gradient-to-r from-[#24A1DE] to-[#24A1DE] shadow-lg shadow-[#24A1DE]/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+        className="w-full py-4 mb-2 rounded-2xl font-semibold text-[17px] text-white flex items-center justify-center gap-2 bg-[#3390EC] shadow-md shadow-blue-500/30 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
       >
-        {loading ? (
-          <Loader2 className="animate-spin" size={20} />
-        ) : (
-          <>
-            Начать знакомство
-            <ArrowRight size={20} />
-          </>
-        )}
+        {loading ? <Loader2 className="animate-spin" size={20} /> : "Начать"}
       </button>
     </div>
   );

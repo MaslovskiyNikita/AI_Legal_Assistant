@@ -6,24 +6,40 @@ import {
   ChevronLeft,
   MoreVertical,
   Paperclip,
-  Send,
-  Shield,
+  ArrowUp,
   Scale,
-  CheckCircle2,
+  CheckCheck,
   X,
   Download,
   FileText,
   Trash2,
   Share2,
+  Loader2,
+  Copy,
+  Check,
 } from "lucide-react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import { apiClient } from "../api/client";
 import { exportToDocx, exportToPdf } from "../../utils/exportUtils";
 
-const COLORS = {
-  bg: "#000000",
-  surface: "#1C1C1D",
-  primary: "#24A1DE", // Маджента/Пурпурный как на скринах
+// Вспомогательная функция для форматирования дат в стиле Telegram
+const formatDateLabel = (dateString: string) => {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  if (date.toDateString() === today.toDateString()) {
+    return "Сегодня";
+  } else if (date.toDateString() === yesterday.toDateString()) {
+    return "Вчера";
+  } else {
+    return date.toLocaleDateString("ru-RU", {
+      day: "numeric",
+      month: "long",
+    });
+  }
 };
 
 export default function Chat() {
@@ -42,14 +58,19 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isCreatingChat = useRef(false);
   const hasHandledInitialPrompt = useRef(false);
-  // --- Состояния для сравнения файлов ---
+
+  // --- Состояния для плавающей даты ---
+  const [isScrolling, setIsScrolling] = useState(false);
+  const [floatingDate, setFloatingDate] = useState<string | null>(null);
+  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollCheck = useRef<number>(0);
+
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [oldFile, setOldFile] = useState<File | null>(null);
   const [newFile, setNewFile] = useState<File | null>(null);
   const [isComparing, setIsComparing] = useState(false);
   const [compareError, setCompareError] = useState("");
 
-  // --- Состояния для меню, скачивания и УДАЛЕНИЯ ---
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -71,6 +92,10 @@ export default function Chat() {
   };
 
   useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  useEffect(() => {
     if (currentChatId && currentChatId !== "new") {
       if (isCreatingChat.current) {
         isCreatingChat.current = false;
@@ -83,14 +108,16 @@ export default function Chat() {
       ])
         .then(([chatRes, docsRes]) => {
           const historicalMessages = (chatRes.messages || []).map(
-            (msg: any) => ({ ...msg, isComplete: true }),
+            (msg: any) => ({
+              ...msg,
+              isComplete: true,
+            }),
           );
           setMessages(historicalMessages);
           setChatDocuments(docsRes || []);
         })
         .catch((err) => console.error("Failed to load chat or documents", err));
     } else if (currentChatId === "new") {
-      // Очищаем историю только если мы не в процессе отправки стартового промпта!
       if (!hasHandledInitialPrompt.current) {
         setMessages([]);
         setChatDocuments([]);
@@ -99,18 +126,10 @@ export default function Chat() {
   }, [currentChatId]);
 
   useEffect(() => {
-    // Получаем промпт из роутера
     const prompt = location.state?.initialPrompt;
-
-    // Если промпт есть, и мы еще его не отправляли
     if (prompt && currentChatId === "new" && !hasHandledInitialPrompt.current) {
-      hasHandledInitialPrompt.current = true; // Блокируем повторную отправку
-
-      // Тихо очищаем историю браузера, чтобы при обновлении страницы сообщение не ушло второй раз.
-      // (Это не вызывает багованный ре-рендер, в отличие от navigate!)
+      hasHandledInitialPrompt.current = true;
       window.history.replaceState({}, document.title);
-
-      // Отправляем сообщение с микро-задержкой, чтобы интерфейс успел прогрузиться
       setTimeout(async () => {
         await handleSend(prompt);
       }, 150);
@@ -154,7 +173,7 @@ export default function Chat() {
 
   const handleCompareFiles = async () => {
     if (!oldFile || !newFile || !internalUserId) {
-      setCompareError("Please select both files.");
+      setCompareError("Пожалуйста, выберите оба файла.");
       return;
     }
     setIsComparing(true);
@@ -167,10 +186,7 @@ export default function Chat() {
           title: `Сравнение: ${oldFile.name.substring(0, 10)}...`,
         });
         targetChatId = newChat.id.toString();
-
-        // ВАЖНО: Добавлено, чтобы useEffect не стер локальные сообщения при создании чата!
         isCreatingChat.current = true;
-
         setCurrentChatId(targetChatId);
         navigate(`/chat/${targetChatId}`, { replace: true });
       }
@@ -193,14 +209,11 @@ export default function Chat() {
       ]);
 
       const promptText = "Пожалуйста, проанализируй и сравни эти документы.";
-
-      // 1. Генерируем 100% уникальные ID (чтобы текст ИИ не приклеился к юзеру)
       const baseTime = Date.now();
       const userMsg1Id = `msg_${baseTime}_user1`;
       const userMsg2Id = `msg_${baseTime}_user2`;
       const assistantMsgId = `msg_${baseTime}_ai`;
 
-      // 2. Добавляем все 3 сообщения за ОДИН вызов setMessages, чтобы избежать багов React batching
       setMessages((prev) => [
         ...prev,
         {
@@ -243,7 +256,6 @@ export default function Chat() {
           msg.id === assistantMsgId ? { ...msg, isComplete: true } : msg,
         ),
       );
-
       setOldFile(null);
       setNewFile(null);
     } catch (err) {
@@ -253,7 +265,7 @@ export default function Chat() {
         {
           id: `msg_err_${Date.now()}`,
           role: "ai",
-          text: "❌ Произошла ошибка при загрузке или анализе документов. Попробуйте еще раз.",
+          text: "❌ Произошла ошибка при анализе.",
           created_at: new Date().toISOString(),
           isComplete: true,
         },
@@ -269,7 +281,6 @@ export default function Chat() {
     if (!textToSend.trim() || isTyping) return;
     setInputText("");
 
-    // Генерируем уникальный ID для сообщения пользователя
     const userMsgId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}_user`;
 
     setMessages((prev) => [
@@ -283,6 +294,7 @@ export default function Chat() {
     ]);
     setIsTyping(true);
     let activeChatId = currentChatId;
+
     try {
       if (activeChatId === "new" || !activeChatId) {
         if (!internalUserId) throw new Error("User ID not found");
@@ -296,7 +308,6 @@ export default function Chat() {
         navigate(`/chat/${activeChatId}`, { replace: true });
       }
 
-      // Генерируем уникальный ID для ответа ИИ
       const assistantMsgId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}_ai`;
 
       setMessages((prev) => [
@@ -309,6 +320,7 @@ export default function Chat() {
           isComplete: false,
         },
       ]);
+
       await apiClient.sendMessageStream(
         Number(activeChatId),
         { text: textToSend },
@@ -334,86 +346,189 @@ export default function Chat() {
       setIsTyping(false);
     }
   };
+
+  const groupedMessages: { label: string; messages: any[] }[] = [];
+  let currentGroup: { label: string; messages: any[] } | null = null;
+
+  messages.forEach((msg) => {
+    const dateLabel = formatDateLabel(msg.created_at);
+    if (!currentGroup || currentGroup.label !== dateLabel) {
+      currentGroup = { label: dateLabel, messages: [] };
+      groupedMessages.push(currentGroup);
+    }
+    currentGroup.messages.push(msg);
+  });
+
+  useEffect(() => {
+    if (groupedMessages.length > 0 && !floatingDate) {
+      setFloatingDate(groupedMessages[groupedMessages.length - 1].label);
+    }
+  }, [groupedMessages, floatingDate]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setIsScrolling(true);
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => setIsScrolling(false), 1200);
+
+    const now = Date.now();
+    if (now - lastScrollCheck.current > 100) {
+      lastScrollCheck.current = now;
+      const container = e.currentTarget;
+      const groups = container.querySelectorAll(".message-group");
+      let foundDate = floatingDate;
+
+      for (let i = groups.length - 1; i >= 0; i--) {
+        const rect = groups[i].getBoundingClientRect();
+        if (rect.top <= 120) {
+          foundDate = groups[i].getAttribute("data-date");
+          break;
+        }
+      }
+
+      if (!foundDate && groups.length > 0) {
+        foundDate = groups[0].getAttribute("data-date");
+      }
+
+      if (foundDate && foundDate !== floatingDate) {
+        setFloatingDate(foundDate);
+      }
+    }
+  };
+
   const renderMessage = (msg: any) => {
     const isUser = msg.role === "user";
-    const timeString = new Date(msg.created_at).toLocaleTimeString([], {
+    const timeString = new Date(msg.created_at).toLocaleTimeString("ru-RU", {
       hour: "2-digit",
       minute: "2-digit",
     });
     const textContent = msg.text || msg.content || "";
     const showFooter = isUser || msg.isComplete;
 
+    const spaceForTimeClass = isUser
+      ? "last:after:content-[''] last:after:inline-block last:after:w-[54px] last:after:h-[10px]"
+      : "last:after:content-[''] last:after:inline-block last:after:w-[68px] last:after:h-[10px]";
+
     return (
       <div
         key={msg.id}
-        className={`flex ${isUser ? "justify-end" : "justify-start"} z-10 relative`}
+        className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"} mb-3`}
       >
         <div
-          className={`max-w-[90%] px-4 py-3 text-[15px] leading-relaxed text-white shadow-sm ${
-            isUser
-              ? "rounded-3xl rounded-tr-sm bg-[#1C1C1D] border border-white/5"
-              : "rounded-3xl rounded-tl-sm bg-[#1C1C1D]/80 backdrop-blur-md border border-white/10"
-          }`}
+          className={`relative max-w-[85%] sm:max-w-[75%] flex items-end min-w-0 ${isUser ? "ml-auto" : "mr-auto"}`}
         >
-          <div className="text-[15px] break-words">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              components={{
-                table: ({ node, ref, ...props }) => (
-                  <div className="overflow-x-auto my-3 border border-white/10 rounded-xl">
-                    <table className="w-full text-left text-sm" {...props} />
-                  </div>
-                ),
-                th: ({ node, ref, ...props }) => (
-                  <th
-                    className="bg-white/5 p-2 font-semibold border-b border-white/10"
-                    {...props}
-                  />
-                ),
-                td: ({ node, ref, ...props }) => (
-                  <td
-                    className="p-2 border-b border-white/5 last:border-0"
-                    {...props}
-                  />
-                ),
-                p: ({ node, ref, ...props }) => (
-                  <p className="mb-2 last:mb-0" {...props} />
-                ),
-                a: ({ node, ref, ...props }) => (
-                  <a
-                    className="text-[#24A1DE] underline hover:text-[#24A1DE]"
-                    {...props}
-                  />
-                ),
-              }}
+          {!isUser && (
+            <svg
+              viewBox="0 0 8 13"
+              width="8"
+              height="13"
+              className="absolute -left-[7px] bottom-0 text-[#F2F2F7] fill-current shrink-0"
             >
-              {textContent}
-            </ReactMarkdown>
+              <path d="M8 0v13H0c3.9 0 8-4.2 8-13z" />
+            </svg>
+          )}
+
+          <div
+            className={`relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words [word-break:break-word]
+              ${
+                isUser
+                  ? "bg-[#3390EC] text-white rounded-[18px] rounded-br-none"
+                  : "bg-[#F2F2F7] text-black rounded-[18px] rounded-bl-none"
+              }`}
+          >
+            <div className="w-full min-w-0">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  p: ({ node, ref, ...props }) => (
+                    <p
+                      className={`mb-1 last:mb-0 whitespace-pre-wrap break-words [word-break:break-word] inline-block w-full
+                        ${showFooter ? spaceForTimeClass : ""}
+                      `}
+                      {...props}
+                    />
+                  ),
+                  table: ({ node, ref, ...props }) => (
+                    <div
+                      className={`overflow-x-auto my-2 rounded-xl bg-white text-black ${showFooter ? "last:mb-5" : ""}`}
+                    >
+                      <table className="w-full text-left text-sm" {...props} />
+                    </div>
+                  ),
+                  ul: ({ node, ref, ...props }) => (
+                    <ul
+                      className={`list-disc ml-5 mb-1 ${showFooter ? "last:mb-5" : ""}`}
+                      {...props}
+                    />
+                  ),
+                  ol: ({ node, ref, ...props }) => (
+                    <ol
+                      className={`list-decimal ml-5 mb-1 ${showFooter ? "last:mb-5" : ""}`}
+                      {...props}
+                    />
+                  ),
+                  th: ({ node, ref, ...props }) => (
+                    <th
+                      className="bg-[#F8F9FA] p-2 font-semibold border-b border-[#E5E5EA]"
+                      {...props}
+                    />
+                  ),
+                  td: ({ node, ref, ...props }) => (
+                    <td
+                      className="p-2 border-b border-[#E5E5EA] last:border-0"
+                      {...props}
+                    />
+                  ),
+                  a: ({ node, ref, ...props }) => (
+                    <a
+                      className={`${isUser ? "text-white underline" : "text-[#3390EC] underline"} break-all`}
+                      {...props}
+                    />
+                  ),
+                  li: ({ node, ref, ...props }) => (
+                    <li className="mb-1 break-words" {...props} />
+                  ),
+                  strong: ({ node, ref, ...props }) => (
+                    <strong className="font-semibold" {...props} />
+                  ),
+                }}
+              >
+                {textContent}
+              </ReactMarkdown>
+            </div>
+
+            {showFooter && (
+              <div
+                className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none
+                  ${isUser ? "text-blue-100" : "text-[#8E8E93]"}`}
+              >
+                {!isUser && textContent && (
+                  <button
+                    onClick={() => handleCopy(textContent, msg.id)}
+                    className="flex items-center hover:text-[#3390EC] transition-colors cursor-pointer mr-0.5"
+                    title="Копировать"
+                  >
+                    {copiedMessageId === msg.id ? (
+                      <Check size={14} className="text-[#3390EC]" />
+                    ) : (
+                      <Copy size={13} />
+                    )}
+                  </button>
+                )}
+                <span>{timeString}</span>
+                {isUser && <CheckCheck size={14} className="text-white" />}
+              </div>
+            )}
           </div>
 
-          {showFooter && (
-            <div
-              className={`flex items-center justify-end gap-3 mt-2 ${isUser ? "text-white/50" : "text-white/50"}`}
+          {isUser && (
+            <svg
+              viewBox="0 0 8 13"
+              width="8"
+              height="13"
+              className="absolute -right-[7px] bottom-0 text-[#3390EC] fill-current shrink-0"
             >
-              {!isUser && textContent && (
-                <button
-                  onClick={() => handleCopy(textContent, msg.id)}
-                  className={`text-[11px] font-semibold transition-opacity cursor-pointer uppercase ${
-                    copiedMessageId === msg.id
-                      ? "text-green-400"
-                      : "text-white/60 hover:text-[#24A1DE]"
-                  }`}
-                >
-                  {copiedMessageId === msg.id ? "Copied!" : "Copy"}
-                </button>
-              )}
-              <div className="flex items-center gap-1 text-[11px]">
-                {timeString}
-                {isUser && (
-                  <CheckCircle2 size={12} className="inline text-[#24A1DE]" />
-                )}
-              </div>
-            </div>
+              <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" />
+            </svg>
           )}
         </div>
       </div>
@@ -421,29 +536,26 @@ export default function Chat() {
   };
 
   return (
-    <div className="h-[100dvh] w-full relative flex flex-col bg-black overflow-hidden font-sans">
-      {/* Фоновое пурпурное свечение */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-[#24A1DE]/20 to-transparent blur-[80px] pointer-events-none z-0"></div>
-
-      {/* Header как на втором скриншоте */}
-      <div className="h-16 px-4 flex items-center justify-between sticky top-0 z-20 bg-black/40 backdrop-blur-xl border-b border-white/5">
+    <div className="h-[100dvh] w-full relative flex flex-col bg-[#FFFFFF] overflow-hidden font-sans">
+      <div className="h-14 px-4 flex items-center justify-between sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#E5E5EA]">
         <button
           onClick={() => navigate("/profile")}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors cursor-pointer"
+          className="flex items-center text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer"
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={24} className="-ml-1" />
+          <span className="text-[17px]">Назад</span>
         </button>
 
-        <span className="text-[17px] font-medium text-white/90">
+        <span className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-black">
           Legal Expert
         </span>
 
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/10 text-white transition-colors cursor-pointer"
+            className="w-8 h-8 flex items-center justify-end text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer"
           >
-            <MoreVertical size={18} />
+            <MoreVertical size={24} />
           </button>
 
           {isMenuOpen && (
@@ -452,39 +564,38 @@ export default function Chat() {
                 className="fixed inset-0 z-40"
                 onClick={() => setIsMenuOpen(false)}
               />
-              <div className="absolute right-0 top-12 w-56 bg-[#1C1C1D] border border-white/10 rounded-2xl shadow-2xl z-50 overflow-hidden py-1 backdrop-blur-xl">
+              <div className="absolute right-0 top-10 w-56 bg-white border border-[#E5E5EA] rounded-2xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
                     setIsDownloadModalOpen(true);
                   }}
-                  className="w-full text-left px-4 py-3 text-[14px] font-medium text-white hover:bg-white/5 transition-colors flex items-center gap-3 cursor-pointer"
+                  className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
                 >
-                  <Download size={18} className="text-[#24A1DE]" />
-                  Chat Documents
+                  <Download size={18} className="text-[#3390EC]" /> Документы
+                  чата
                 </button>
                 <button
                   onClick={() => {
                     setIsMenuOpen(false);
                     setIsExportModalOpen(true);
                   }}
-                  className="w-full text-left px-4 py-3 text-[14px] font-medium text-white hover:bg-white/5 transition-colors flex items-center gap-3 cursor-pointer"
+                  className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
                 >
-                  <Share2 size={18} className="text-[#24A1DE]" />
-                  Export Chat
+                  <Share2 size={18} className="text-[#3390EC]" /> Экспорт
+                  переписки
                 </button>
                 {currentChatId && currentChatId !== "new" && (
                   <>
-                    <div className="h-[1px] bg-white/5 mx-2 my-1" />
+                    <div className="h-[1px] bg-[#E5E5EA] mx-4 my-1" />
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
                         setIsDeleteModalOpen(true);
                       }}
-                      className="w-full text-left px-4 py-3 text-[14px] font-medium text-[#FF3B30] hover:bg-white/5 transition-colors flex items-center gap-3 cursor-pointer"
+                      className="w-full text-left px-4 py-3 text-[15px] font-medium text-[#FF3B30] active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
                     >
-                      <Trash2 size={18} />
-                      Delete Chat
+                      <Trash2 size={18} /> Удалить чат
                     </button>
                   </>
                 )}
@@ -494,63 +605,132 @@ export default function Chat() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 pb-32 z-10 relative">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-white/60 mt-10">
-            <div className="w-20 h-20 bg-gradient-to-tr from-[#24A1DE]/20 to-[#24A1DE]/20 rounded-full flex items-center justify-center mb-6 border border-[#24A1DE]/30">
-              <Scale size={36} className="text-[#24A1DE]" />
+      <div
+        className="flex-1 overflow-y-auto px-4 pt-2 pb-[140px] z-10 relative bg-white scroll-smooth"
+        onScroll={handleScroll}
+      >
+        {groupedMessages.length > 0 && (
+          <div
+            className={`sticky top-2 z-30 flex justify-center pointer-events-none transition-opacity duration-300 ${
+              isScrolling && floatingDate ? "opacity-100" : "opacity-0"
+            }`}
+          >
+            <span className="bg-black/15 backdrop-blur-md text-white text-[12px] font-medium px-3 py-1 rounded-full shadow-sm">
+              {floatingDate}
+            </span>
+          </div>
+        )}
+
+        {groupedMessages.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center text-black mt-10">
+            <div className="w-20 h-20 bg-[#F0F8FF] rounded-full flex items-center justify-center mb-4 shadow-sm">
+              <Scale size={36} className="text-[#3390EC]" />
             </div>
-            <p className="text-[18px] font-medium text-white mb-2">
+            <p className="text-[20px] font-semibold text-black mb-2">
               Готов помочь
             </p>
-            <p className="text-[14px] max-w-[250px] leading-relaxed">
+            <p className="text-[15px] text-[#8E8E93] max-w-[260px] leading-relaxed">
               Задайте юридический вопрос или прикрепите документ для анализа.
             </p>
           </div>
         ) : (
           <>
-            {messages.length > 0 && (
-              <p className="text-center text-[12px] font-medium text-white/40 mb-2 mt-1">
-                Chat History
-              </p>
-            )}
-            {messages.map((msg: any, index: number) => (
-              <React.Fragment
-                key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
+            {groupedMessages.map((group, groupIndex) => (
+              <div
+                key={`group-${group.label}-${groupIndex}`}
+                className="flex flex-col relative pb-2 message-group"
+                data-date={group.label}
               >
-                {renderMessage(msg)}
-              </React.Fragment>
+                {/* --- ИЗМЕНЕНИЕ ЗДЕСЬ --- */}
+                {/* Статичная дата скрывается для самого первого блока вверху, чтобы не было дублирования */}
+                {groupIndex !== 0 && (
+                  <div className="flex justify-center my-3">
+                    <span className="bg-black/10 text-black/60 text-[12px] font-medium px-3 py-1 rounded-full">
+                      {group.label}
+                    </span>
+                  </div>
+                )}
+
+                {group.messages.map((msg, index) => (
+                  <React.Fragment
+                    key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
+                  >
+                    {renderMessage(msg)}
+                  </React.Fragment>
+                ))}
+              </div>
             ))}
             <div ref={messagesEndRef} />
           </>
         )}
       </div>
 
-      {/* Модалки (Стилизованы под новую тему) */}
+      <div className="absolute bottom-0 left-0 w-full flex flex-col pt-2 pb-6 px-4 backdrop-blur-xl bg-white/90 border-t border-[#E5E5EA] z-20">
+        <div className="flex items-end gap-2">
+          <button
+            onClick={() => setIsCompareModalOpen(true)}
+            className="w-10 h-10 mb-1 flex items-center justify-center rounded-full text-[#8E8E93] hover:text-[#3390EC] transition-colors shrink-0 cursor-pointer"
+          >
+            <Paperclip size={24} className="rotate-45" />
+          </button>
+
+          <div className="flex-1 bg-[#F2F2F7] border border-[#E5E5EA] rounded-3xl min-h-[44px] max-h-[120px] flex items-end px-4 py-1.5 focus-within:border-[#3390EC] transition-colors">
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Напишите сообщение..."
+              rows={1}
+              className="flex-1 max-h-[100px] bg-transparent border-none outline-none text-black text-[16px] placeholder:text-[#8E8E93] resize-none py-1.5"
+            />
+          </div>
+
+          <button
+            onClick={() => handleSend()}
+            disabled={isTyping || !inputText.trim()}
+            className={`w-[44px] h-[44px] shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-sm mb-0.5
+              ${
+                inputText.trim()
+                  ? "bg-[#3390EC] text-white shadow-blue-500/30"
+                  : "bg-[#E5E5EA] text-[#8E8E93] cursor-not-allowed"
+              }
+            `}
+          >
+            <ArrowUp size={20} strokeWidth={2.5} />
+          </button>
+        </div>
+      </div>
+
+      {/* --- МОДАЛКИ (Без изменений) --- */}
+
       {isDeleteModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-          <div className="bg-[#1C1C1D] rounded-3xl p-6 w-full max-w-xs border border-white/10 shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
-            <div className="w-14 h-14 bg-red-500/10 rounded-full flex items-center justify-center mb-4">
-              <Trash2 size={28} className="text-[#FF3B30]" />
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-[300px] flex flex-col items-center text-center overflow-hidden animate-in zoom-in-95 duration-200 shadow-2xl">
+            <div className="p-6 pb-5">
+              <h2 className="text-[17px] font-semibold text-black mb-1.5">
+                Удалить чат?
+              </h2>
+              <p className="text-[13px] text-[#8E8E93] leading-snug">
+                Это действие нельзя будет отменить.
+              </p>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">
-              Удалить чат
-            </h2>
-            <p className="text-[14px] text-white/60 mb-6">
-              Это действие нельзя будет отменить.
-            </p>
-            <div className="flex w-full gap-3">
-              <button
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="flex-1 py-3 rounded-xl font-medium bg-white/5 text-white hover:bg-white/10 transition-colors"
-              >
-                Отмена
-              </button>
+            <div className="flex flex-col w-full border-t border-[#E5E5EA]">
               <button
                 onClick={executeDeleteChat}
-                className="flex-1 py-3 rounded-xl font-medium bg-[#FF3B30] text-white hover:bg-red-600 transition-colors"
+                className="w-full py-3.5 text-[17px] font-normal text-[#FF3B30] border-b border-[#E5E5EA] active:bg-[#F2F2F7] transition-colors"
               >
                 Удалить
+              </button>
+              <button
+                onClick={() => setIsDeleteModalOpen(false)}
+                className="w-full py-3.5 text-[17px] font-semibold text-[#3390EC] active:bg-[#F2F2F7] transition-colors"
+              >
+                Отмена
               </button>
             </div>
           </div>
@@ -558,36 +738,36 @@ export default function Chat() {
       )}
 
       {isDownloadModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-          <div className="bg-[#1C1C1D] rounded-3xl p-6 w-full max-w-sm border border-white/10 shadow-2xl flex flex-col max-h-[80vh]">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl flex flex-col max-h-[80vh]">
             <div className="flex justify-between items-center mb-4 shrink-0">
-              <h2 className="text-lg font-semibold text-white">
-                Chat Documents
+              <h2 className="text-[17px] font-semibold text-black">
+                Документы чата
               </h2>
               <button
                 onClick={() => setIsDownloadModalOpen(false)}
-                className="text-white/50 hover:text-white transition-colors p-1"
+                className="text-[#8E8E93] hover:text-black transition-colors bg-[#F2F2F7] rounded-full p-1"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
             <div className="flex-1 overflow-y-auto space-y-2 pr-1">
               {chatDocuments.length === 0 ? (
-                <div className="text-center py-8 text-white/40 text-sm bg-black/30 rounded-2xl border border-white/5">
-                  No documents found
+                <div className="text-center py-8 text-[#8E8E93] text-[15px]">
+                  Нет прикрепленных документов
                 </div>
               ) : (
                 chatDocuments.map((doc, idx) => (
                   <div
                     key={doc.id || idx}
-                    className="flex items-center justify-between bg-black/30 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-colors"
+                    className="flex items-center justify-between bg-[#F2F2F7] p-3 rounded-2xl"
                   >
                     <div className="flex items-center gap-3 overflow-hidden pr-3">
-                      <div className="p-2 bg-[#24A1DE]/10 rounded-xl shrink-0">
-                        <FileText size={20} className="text-[#24A1DE]" />
+                      <div className="p-2 bg-white rounded-xl shrink-0 shadow-sm border border-[#E5E5EA]">
+                        <FileText size={20} className="text-[#3390EC]" />
                       </div>
-                      <span className="text-[14px] font-medium text-white truncate">
-                        {doc.filename || doc.name || `Document #${doc.id}`}
+                      <span className="text-[15px] font-medium text-black truncate">
+                        {doc.filename || doc.name || `Документ #${doc.id}`}
                       </span>
                     </div>
                     <button
@@ -597,7 +777,7 @@ export default function Chat() {
                           doc.filename || "document",
                         )
                       }
-                      className="p-2 text-white/50 hover:text-[#24A1DE] bg-white/5 rounded-xl transition-colors shrink-0"
+                      className="p-2 text-[#3390EC] bg-white rounded-xl shadow-sm border border-[#E5E5EA] active:bg-[#F2F2F7] transition-colors shrink-0"
                     >
                       <Download size={18} />
                     </button>
@@ -610,36 +790,38 @@ export default function Chat() {
       )}
 
       {isExportModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-          <div className="bg-[#1C1C1D] rounded-3xl p-6 w-full max-w-xs border border-white/10 shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
-            <div className="w-14 h-14 bg-[#24A1DE]/10 rounded-full flex items-center justify-center mb-4">
-              <Share2 size={28} className="text-[#24A1DE]" />
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-[300px] flex flex-col items-center text-center overflow-hidden shadow-2xl">
+            <div className="p-6 pb-5 w-full">
+              <div className="w-14 h-14 bg-[#F0F8FF] rounded-full flex items-center justify-center mx-auto mb-4">
+                <Share2 size={28} className="text-[#3390EC]" />
+              </div>
+              <h2 className="text-[17px] font-semibold text-black mb-1.5">
+                Экспорт чата
+              </h2>
+              <p className="text-[13px] text-[#8E8E93] leading-snug mb-2">
+                Сохранить историю переписки на устройство.
+              </p>
             </div>
-            <h2 className="text-xl font-semibold text-white mb-2">
-              Экспорт чата
-            </h2>
-            <p className="text-[14px] text-white/60 mb-6">
-              Сохранить историю переписки.
-            </p>
-            <div className="flex flex-col w-full gap-3">
+            <div className="flex flex-col w-full border-t border-[#E5E5EA]">
               <button
                 onClick={() => handleExport("docx")}
                 disabled={isExporting}
-                className="w-full py-3 rounded-xl font-medium bg-white/5 text-white hover:bg-white/10 transition-colors"
+                className="w-full py-3.5 text-[17px] font-normal text-black border-b border-[#E5E5EA] active:bg-[#F2F2F7] transition-colors"
               >
                 {isExporting ? "Экспорт..." : "Скачать в .DOCX"}
               </button>
               <button
                 onClick={() => handleExport("pdf")}
                 disabled={isExporting}
-                className="w-full py-3 rounded-xl font-medium bg-white/5 text-white hover:bg-white/10 transition-colors"
+                className="w-full py-3.5 text-[17px] font-normal text-black border-b border-[#E5E5EA] active:bg-[#F2F2F7] transition-colors"
               >
                 {isExporting ? "Экспорт..." : "Скачать в .PDF"}
               </button>
               <button
                 onClick={() => setIsExportModalOpen(false)}
                 disabled={isExporting}
-                className="w-full mt-2 text-sm text-white/50 hover:text-white transition-colors"
+                className="w-full py-3.5 text-[17px] font-semibold text-[#FF3B30] active:bg-[#F2F2F7] transition-colors"
               >
                 Отмена
               </button>
@@ -649,98 +831,61 @@ export default function Chat() {
       )}
 
       {isCompareModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md">
-          <div className="bg-[#1C1C1D] rounded-3xl p-6 w-full max-w-sm border border-white/10 shadow-2xl">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-semibold text-white">
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-[#E5E5EA]">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-[17px] font-semibold text-black">
                 Сравнение документов
               </h2>
               <button
                 onClick={() => setIsCompareModalOpen(false)}
-                className="text-white/50 hover:text-white p-1"
+                className="text-[#8E8E93] hover:text-black bg-[#F2F2F7] rounded-full p-1 transition-colors"
               >
-                <X size={24} />
+                <X size={20} />
               </button>
             </div>
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium text-white/70 block mb-2">
+                <label className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider block mb-2">
                   Старая версия
                 </label>
                 <input
                   type="file"
                   onChange={(e) => setOldFile(e.target.files?.[0] || null)}
-                  className="w-full text-sm text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
+                  className="w-full text-sm text-black file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-[#F2F2F7] file:text-[#3390EC] hover:file:bg-[#E5E5EA] cursor-pointer"
                 />
               </div>
+              <div className="h-[1px] bg-[#E5E5EA]" />
               <div>
-                <label className="text-sm font-medium text-white/70 block mb-2">
+                <label className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider block mb-2">
                   Новая версия
                 </label>
                 <input
                   type="file"
                   onChange={(e) => setNewFile(e.target.files?.[0] || null)}
-                  className="w-full text-sm text-white/70 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-white/10 file:text-white hover:file:bg-white/20 cursor-pointer"
+                  className="w-full text-sm text-black file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-[#F2F2F7] file:text-[#3390EC] hover:file:bg-[#E5E5EA] cursor-pointer"
                 />
               </div>
             </div>
             {compareError && (
-              <p className="text-sm text-red-500 mt-4">{compareError}</p>
+              <p className="text-[14px] text-[#FF3B30] mt-4 text-center">
+                {compareError}
+              </p>
             )}
             <button
               onClick={handleCompareFiles}
               disabled={!oldFile || !newFile || isComparing}
-              className="w-full bg-[#24A1DE] text-white font-medium py-3 rounded-xl mt-6 disabled:opacity-50 hover:bg-[#24A1DE] transition-colors"
+              className="w-full bg-[#3390EC] text-white font-semibold text-[16px] py-3.5 rounded-xl mt-6 disabled:opacity-50 active:bg-blue-600 transition-colors shadow-sm shadow-blue-500/30 flex items-center justify-center gap-2"
             >
-              {isComparing ? "Анализ..." : "Сравнить файлы"}
+              {isComparing ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                "Сравнить файлы"
+              )}
             </button>
           </div>
         </div>
       )}
-
-      <div className="absolute bottom-0 left-0 w-full flex flex-col pt-4 pb-6 px-4 backdrop-blur-xl bg-black/60 border-t border-white/5 z-40">
-        <div className="flex overflow-x-auto gap-2 pb-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-          {["Анализ Договора", "Риски", "Сводка"].map((text) => (
-            <button
-              key={text}
-              onClick={() => handleSend(text)}
-              disabled={isTyping}
-              className="whitespace-nowrap px-4 py-1.5 rounded-full text-[13px] font-medium text-white/80 bg-white/5 border border-white/10 hover:bg-white/10 transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              {text}
-            </button>
-          ))}
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setIsCompareModalOpen(true)}
-            className="w-12 h-12 flex items-center justify-center rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white transition-colors shrink-0 cursor-pointer"
-          >
-            <Paperclip size={20} className="rotate-45" />
-          </button>
-
-          <div className="flex-1 bg-[#1C1C1D] border border-white/10 rounded-full flex items-center pl-5 pr-1 py-1 h-12">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSend();
-              }}
-              placeholder="Ask anything..."
-              className="flex-1 bg-transparent border-none outline-none text-white text-[15px] placeholder:text-white/40"
-            />
-            <button
-              onClick={handleSend}
-              disabled={isTyping || !inputText.trim()}
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-[#24A1DE] transition-transform active:scale-95 disabled:opacity-50 cursor-pointer ml-2"
-            >
-              <Send size={18} className="text-white ml-0.5" />
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
