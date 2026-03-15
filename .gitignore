@@ -244,3 +244,7 @@ Thumbs.db
 *.njsproj
 *.sln
 *.sw?
+
+# Игнорируем все индексы (бинарные файлы FAISS и pickle)
+backend-llm/indexes/*
+!backend-llm/indexes/.gitkeep

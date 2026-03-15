@@ -5,7 +5,7 @@ from typing import List
 import httpx
 from pydantic import BaseModel
 
-from .settings import openrouter_settings
+from .settings import settings
 from .models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis
 
 
@@ -70,7 +70,7 @@ class AiRiskAnalyzer:
 
     @staticmethod
     async def analyze_diff(diff_text: str) -> FullDocumentAnalysis:
-        api_key = openrouter_settings.api_key
+        api_key = settings.OPENROUTER_API_KEY
 
         # Если ключа нет — сразу идём по эвристике, чтобы не падать
         if not api_key or api_key == "ВАШ_КЛЮЧ":
@@ -111,17 +111,17 @@ class AiRiskAnalyzer:
 
         headers = {
             "Authorization": f"Bearer {api_key}",
-            "HTTP-Referer": openrouter_settings.http_referer,
-            "X-Title": openrouter_settings.title,
+            "HTTP-Referer": settings.OPENROUTER_HTTP_REFERER,
+            "X-Title": settings.OPENROUTER_TITLE,
         }
 
         try:
-            async with httpx.AsyncClient(timeout=openrouter_settings.timeout_seconds) as client:
+            async with httpx.AsyncClient(timeout=settings.OPENROUTER_TIMEOUT) as client:
                 response = await client.post(
-                    openrouter_settings.url,
+                    settings.OPENROUTER_URL,
                     headers=headers,
                     json={
-                        "model": openrouter_settings.model,
+                        "model": settings.OPENROUTER_MODEL,
                         "messages": [{"role": "user", "content": prompt}],
                         "response_format": {"type": "json_object"}
                     },
@@ -146,7 +146,7 @@ class AiRiskAnalyzer:
         """
         Отвечает на вопрос по документу, используя контекст чата и результаты анализа.
         """
-        api_key = openrouter_settings.api_key
+        api_key = settings.OPENROUTER_API_KEY
 
         if not api_key or api_key == "ВАШ_КЛЮЧ":
             return "Извините, сервис LLM недоступен. Попробуйте позже."
@@ -181,17 +181,17 @@ class AiRiskAnalyzer:
 
         headers = {
             "Authorization": f"Bearer {api_key}",
-            "HTTP-Referer": openrouter_settings.http_referer,
-            "X-Title": openrouter_settings.title,
+            "HTTP-Referer": settings.OPENROUTER_HTTP_REFERER,
+            "X-Title": settings.OPENROUTER_TITLE,
         }
 
         try:
-            async with httpx.AsyncClient(timeout=openrouter_settings.timeout_seconds) as client:
+            async with httpx.AsyncClient(timeout=settings.OPENROUTER_TIMEOUT) as client:
                 response = await client.post(
-                    openrouter_settings.url,
+                    settings.OPENROUTER_URL,
                     headers=headers,
                     json={
-                        "model": openrouter_settings.model,
+                        "model": settings.OPENROUTER_MODEL,
                         "messages": [{"role": "user", "content": prompt}],
                     },
                 )
