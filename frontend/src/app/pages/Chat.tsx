@@ -109,14 +109,12 @@ const formatDateLabel = (dateString: string) => {
 
 export default function Chat() {
   const navigate = useNavigate();
+  // Берём chatId только из URL, чтобы не было гонки стейтов
   const { chatId } = useParams();
   const userStr = localStorage.getItem("user");
   const internalUserId = userStr ? JSON.parse(userStr).id : null;
   const location = useLocation();
 
-  const [currentChatId, setCurrentChatId] = useState<string | undefined>(
-    chatId,
-  );
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
@@ -130,6 +128,7 @@ export default function Chat() {
   const lastScrollCheck = useRef<number>(0);
 
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
+  const [isFileLimitModalOpen, setIsFileLimitModalOpen] = useState(false);
   const [oldFile, setOldFile] = useState<File | null>(null);
   const [newFile, setNewFile] = useState<File | null>(null);
 
@@ -147,7 +146,6 @@ export default function Chat() {
   const isFilesAttachedToChat = chatDocuments.length >= 2;
   const canAttachFiles = !isFilesAttachedToChat;
 
-  // Иконка стопки файлов будет отображаться если файлы выбраны СЕЙЧАС или УЖЕ загружены в этот чат
   const shouldShowAttachedIcon = hasAttachedFiles || isFilesAttachedToChat;
 
   const handleCopy = (text: string, id: number | string) => {
@@ -164,15 +162,28 @@ export default function Chat() {
     scrollToBottom();
   }, [messages, isTyping, oldFile, newFile]);
 
+  // Единый UseEffect для управления загрузкой и сбросом чата
   useEffect(() => {
-    if (currentChatId && currentChatId !== "new") {
+    if (chatId === "new") {
+      // Сбрасываем стейты при переходе в новый чат
+      setMessages([]);
+      setChatDocuments([]);
+      setOldFile(null);
+      setNewFile(null);
+      setInputText("");
+      hasHandledInitialPrompt.current = false;
+      isCreatingChat.current = false;
+    } else if (chatId) {
+      // Если чат только что создан в handleSend - пропускаем фетч (чтобы не затереть оптимистичный UI)
       if (isCreatingChat.current) {
         isCreatingChat.current = false;
         return;
       }
+
+      // Загружаем существующий чат
       Promise.all([
-        apiClient.getChat(Number(currentChatId)),
-        apiClient.getChatDocuments(Number(currentChatId)),
+        apiClient.getChat(Number(chatId)),
+        apiClient.getChatDocuments(Number(chatId)),
       ])
         .then(([chatRes, docsRes]) => {
           const historicalMessages = (chatRes.messages || []).map(
@@ -185,29 +196,37 @@ export default function Chat() {
           setChatDocuments(docsRes || []);
         })
         .catch((err) => console.error("Failed to load chat or documents", err));
-    } else if (currentChatId === "new") {
-      if (!hasHandledInitialPrompt.current) {
-        setMessages([]);
-        setChatDocuments([]);
-      }
     }
-  }, [currentChatId]);
+  }, [chatId]);
 
+  // Обработка initialPrompt (быстрые ответы)
   useEffect(() => {
     const prompt = location.state?.initialPrompt;
-    if (prompt && currentChatId === "new" && !hasHandledInitialPrompt.current) {
+    if (prompt && chatId === "new" && !hasHandledInitialPrompt.current) {
       hasHandledInitialPrompt.current = true;
-      window.history.replaceState({}, document.title);
+      const state = { ...location.state };
+      delete state.initialPrompt;
+      window.history.replaceState(state, document.title);
       setTimeout(async () => {
         await handleSend(prompt);
       }, 150);
     }
-  }, [location.state?.initialPrompt, currentChatId]);
+  }, [location.state?.initialPrompt, chatId]);
+
+  // Обработка автоматического открытия модалки
+  useEffect(() => {
+    if (location.state?.openCompareModal) {
+      setIsCompareModalOpen(true);
+      const state = { ...location.state };
+      delete state.openCompareModal;
+      window.history.replaceState(state, document.title);
+    }
+  }, [location.state]);
 
   const executeDeleteChat = async () => {
-    if (!currentChatId || currentChatId === "new") return;
+    if (!chatId || chatId === "new") return;
     try {
-      await apiClient.deleteChat(Number(currentChatId));
+      await apiClient.deleteChat(Number(chatId));
       setIsDeleteModalOpen(false);
       navigate("/profile", { replace: true });
     } catch (error) {
@@ -250,8 +269,7 @@ export default function Chat() {
     setIsTyping(true);
 
     const finalPrompt = textToSend.trim();
-
-    let activeChatId = currentChatId;
+    let activeChatId = chatId;
 
     try {
       if (activeChatId === "new" || !activeChatId) {
@@ -266,15 +284,13 @@ export default function Chat() {
           title: chatTitle,
         });
         activeChatId = newChat.id.toString();
-        isCreatingChat.current = true;
-        setCurrentChatId(activeChatId);
+        isCreatingChat.current = true; // Блокирует фетч в useEffect при смене роута
         navigate(`/chat/${activeChatId}`, { replace: true });
       }
 
       const userMsgId = `msg_${Date.now()}_user`;
       let userTextForUI = finalPrompt;
 
-      // Формируем текст сообщения, не добавляя лишнего системного текста, если пользователь ничего не написал
       if (hasAttachedFiles && oldFile && newFile) {
         userTextForUI = `Прикреплены документы для сравнения: 1. ${oldFile.name} 2. ${newFile.name}`;
         if (finalPrompt) {
@@ -433,7 +449,6 @@ export default function Chat() {
     );
     const isFileStack = isUser && fileMatch;
 
-    // Если сообщение со стопкой файлов, достаем только реальный текст комментария (без префикса)
     let remainingText = "";
     if (isFileStack) {
       remainingText = textContent
@@ -469,7 +484,6 @@ export default function Chat() {
                 onClick={() => setIsDownloadModalOpen(true)}
               />
 
-              {/* Показываем пузырь с текстом только если пользователь действительно что-то написал */}
               {remainingText && (
                 <div className="mt-2 relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words [word-break:break-word] bg-[#3390EC] text-white rounded-[18px] rounded-br-none">
                   <ReactMarkdown
@@ -653,7 +667,7 @@ export default function Chat() {
                   <Share2 size={18} className="text-[#3390EC]" /> Экспорт
                   переписки
                 </button>
-                {currentChatId && currentChatId !== "new" && (
+                {chatId && chatId !== "new" && (
                   <>
                     <div className="h-[1px] bg-[#E5E5EA] mx-4 my-1" />
                     <button
@@ -759,13 +773,10 @@ export default function Chat() {
         )}
 
         <div className="flex items-end gap-2">
-          {/* Скрепка всегда на месте. Меняет вид, если файлы прикреплены. */}
           <button
             onClick={() => {
               if (!canAttachFiles) {
-                alert(
-                  "В этом чате уже прикреплены документы.\nДля сравнения новых файлов, пожалуйста, создайте новый чат.",
-                );
+                setIsFileLimitModalOpen(true);
                 return;
               }
               setIsCompareModalOpen(true);
@@ -988,6 +999,38 @@ export default function Chat() {
               className="w-full bg-[#3390EC] text-white font-semibold text-[16px] py-3.5 rounded-xl mt-6 disabled:opacity-50 active:bg-blue-600 transition-colors shadow-sm shadow-blue-500/30 flex items-center justify-center gap-2"
             >
               Сохранить выбор
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Модалка лимита файлов */}
+      {isFileLimitModalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-[#E5E5EA]">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-[17px] font-semibold text-black">
+                Лимит документов
+              </h2>
+              <button
+                onClick={() => setIsFileLimitModalOpen(false)}
+                className="text-[#8E8E93] hover:text-black bg-[#F2F2F7] rounded-full p-1 transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-[14px] text-[#8E8E93] leading-snug mb-6">
+              В этом чате уже прикреплены документы. Для сравнения новых файлов,
+              пожалуйста, создайте новый чат.
+            </p>
+            <button
+              onClick={() => {
+                setIsFileLimitModalOpen(false);
+                navigate("/chat/new", { state: { openCompareModal: true } });
+              }}
+              className="w-full bg-[#3390EC] text-white font-semibold text-[16px] py-3.5 rounded-xl active:bg-blue-600 transition-colors shadow-sm shadow-blue-500/30 flex items-center justify-center gap-2"
+            >
+              Создать новый чат
             </button>
           </div>
         </div>

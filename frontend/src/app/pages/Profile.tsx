@@ -11,7 +11,7 @@ import {
   ArrowUp,
   Clock,
   Loader2,
-  Paperclip, // <-- 1. Добавили импорт Paperclip
+  Paperclip,
 } from "lucide-react";
 
 import { apiClient } from "../api/client";
@@ -91,11 +91,21 @@ export default function Profile() {
   const [selectedAgent, setSelectedAgent] = useState("strict");
   const [recentChats, setRecentChats] = useState<any[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
+  const [greeting, setGreeting] = useState("Доброе утро");
 
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
   const internalUserId = user?.id || null;
   const firstName = user?.first_name || "User";
+
+  // Динамическое время суток
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 5 && hour < 12) setGreeting("Доброе утро");
+    else if (hour >= 12 && hour < 18) setGreeting("Добрый день");
+    else if (hour >= 18 && hour < 23) setGreeting("Добрый вечер");
+    else setGreeting("Доброй ночи");
+  }, []);
 
   useEffect(() => {
     if (internalUserId) {
@@ -171,7 +181,7 @@ export default function Profile() {
             <span className="text-[16px] font-semibold leading-tight text-black">
               {firstName}
             </span>
-            <span className="text-[13px] text-[#8E8E93]">Доброе утро</span>
+            <span className="text-[13px] text-[#8E8E93]">{greeting}</span>
           </div>
         </div>
         <TokenCircleMenu percent={33} />
@@ -184,7 +194,7 @@ export default function Profile() {
           вашего AI-юриста
         </h1>
 
-        {/* Сетка Агентов */}
+        {/* Сетка Агентов - Возвращена к изначальному коду, шрифты 14px/12px */}
         <div className="grid grid-cols-2 gap-3 mb-6">
           {agents.map((agent) => {
             const isSelected = selectedAgent === agent.id;
@@ -209,19 +219,19 @@ export default function Profile() {
                 )}
                 <div
                   className={`
-                  w-10 h-10 rounded-full mb-auto flex items-center justify-center
+                  w-10 h-10 rounded-full mb-auto flex items-center justify-center shrink-0
                   ${isSelected ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-white text-[#8E8E93] shadow-sm"}
                 `}
                 >
                   <Icon size={20} />
                 </div>
                 <div className="mt-4">
-                  <h3 className="text-[16px] font-semibold leading-tight text-black">
+                  <h3 className="text-[14px] font-semibold leading-tight text-black">
                     {agent.title}
                   </h3>
                   {agent.description && (
                     <p
-                      className={`text-[13px] mt-1 line-clamp-2 ${isSelected ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
+                      className={`text-[12px] mt-1 line-clamp-2 ${isSelected ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
                     >
                       {agent.description}
                     </p>
@@ -232,7 +242,7 @@ export default function Profile() {
           })}
         </div>
 
-        {/* Последние чаты ИЛИ Пустое состояние */}
+        {/* Последние чаты - Возвращены в 1 строку (3 колонки), шрифты 14px/12px */}
         <div className="mb-auto w-full">
           {isLoadingRecent ? (
             <div className="grid grid-cols-3 gap-2 w-full">
@@ -246,21 +256,20 @@ export default function Profile() {
                 Продолжить
               </h4>
 
-              {/* ОБНОВЛЕННАЯ СЕТКА: 3 карточки в ряд */}
               <div className="grid grid-cols-3 gap-2 w-full">
                 {recentChats.map((chat) => (
                   <div
                     key={chat.id}
                     onClick={() => navigate(`/chat/${chat.id}`)}
-                    className="h-[96px] bg-[#F8F9FA] rounded-2xl p-2.5 border border-[#E5E5EA] flex flex-col justify-between cursor-pointer active:bg-[#E5E5EA] transition-colors overflow-hidden"
+                    className="min-h-[96px] bg-[#F8F9FA] rounded-2xl p-2.5 border border-[#E5E5EA] flex flex-col justify-between cursor-pointer active:bg-[#E5E5EA] transition-colors overflow-hidden"
                   >
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 mb-1">
                       <Clock size={12} className="text-[#3390EC] shrink-0" />
-                      <span className="text-[10px] font-semibold text-[#8E8E93] uppercase tracking-wider truncate">
+                      <span className="text-[12px] font-semibold text-[#8E8E93] uppercase tracking-wider truncate">
                         {formatRecentDateShort(chat)}
                       </span>
                     </div>
-                    <span className="text-[12px] font-semibold text-black leading-tight line-clamp-2">
+                    <span className="text-[14px] font-semibold text-black leading-tight line-clamp-2">
                       {chat.title || "Новая консультация"}
                     </span>
                   </div>
@@ -315,7 +324,6 @@ export default function Profile() {
       {/* Поле ввода снизу */}
       <div className="px-4 pb-6 pt-2 bg-white border-t border-[#F2F2F7]">
         <div className="flex items-end gap-2 w-full">
-          {/* --- 2. Добавили кнопку скрепки, стилизованную как в чате --- */}
           <button
             onClick={() =>
               navigate("/chat/new", { state: { openCompareModal: true } })
