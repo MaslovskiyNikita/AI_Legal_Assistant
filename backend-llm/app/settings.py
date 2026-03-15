@@ -15,7 +15,7 @@ class Settings:
     EMBEDDINGS_MODEL: str = os.getenv("EMBEDDINGS_MODEL", "intfloat/multilingual-e5-large")
 
     # --- OPENROUTER ---
-    OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash-lite")
+    OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
     OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "ВАШ_КЛЮЧ")
     OPENROUTER_URL: str = os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1/chat/completions")
     OPENROUTER_HTTP_REFERER: str = os.getenv("OPENROUTER_HTTP_REFERER", "https://science.bsuir.by/ru/aihackathon")

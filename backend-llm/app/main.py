@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 from .models import DocumentBlock, BlockDiff, ChangeType, Chat, Message, FullDocumentAnalysis
 from .parser import DocxParser
-from .diff_service import DiffService
+from .diff_service import DiffService, SmartDiffService
 from .ai_service import AiRiskAnalyzer, RiskAnalysis
 from .export_service import ExportService
 from .chat_service import ChatService
@@ -31,25 +31,34 @@ async def parse_document(file: UploadFile = File(...)):
 
 @app.post("/api/v1/documents/compare")
 async def compare_documents(oldFile: UploadFile = File(...), newFile: UploadFile = File(...)):
-    # 1. Получаем чистый текст
+    # 1. Получаем бинарные данные
     old_content = await oldFile.read()
     new_content = await newFile.read()
     
-    old_text = DocxParser.parse_to_text(BytesIO(old_content))
-    new_text = DocxParser.parse_to_text(BytesIO(new_content))
+    # 2. Парсим на блоки (Smart Alignment)
+    old_blocks = DocxParser.parse(BytesIO(old_content))
+    new_blocks = DocxParser.parse(BytesIO(new_content))
     
-    # 2. Генерируем "Гит-подобный" Дифф
-    diff_output = DiffService.get_unified_diff(old_text, new_text)
+    # 3. Сравниваем блоки и получаем структурированный diff
+    diff_blocks = SmartDiffService.compare(old_blocks, new_blocks)
     
-    if not diff_output:
-        return {"message": "Изменений не найдено", "overall_risk": "GREEN"}
+    # 4. Выделяем только значимые изменения для AI-анализа
+    meaningful_diffs = [b for b in diff_blocks if b.change_type != ChangeType.UNCHANGED]
+    
+    if not meaningful_diffs:
+        analysis = FullDocumentAnalysis(overall_risk="GREEN", summary="Изменений не найдено или они незначительны", details=[])
+        return {
+            "diff_blocks": [],
+            "analysis": analysis.model_dump()
+        }
 
-    # 3. Скармливаем всё нейронке целиком
-    analysis = await AiRiskAnalyzer.analyze_diff(diff_output)
+    # 5. Анализируем изменения батчами с RAG
+    # передаем только meaningful_diffs
+    analysis = await AiRiskAnalyzer.analyze_changes(meaningful_diffs)
     
     return {
-        "diff": diff_output, # Возвращаем сам текст с +++ --- для фронта
-        "analysis": analysis # Структурированный JSON с рисками
+        "diff_blocks": [b.model_dump() for b in meaningful_diffs],
+        "analysis": analysis.model_dump()
     }
 
 @app.post("/api/v1/chat/create")
@@ -96,14 +105,13 @@ async def get_chat(chat_id: int):
     return chat.model_dump()
 
 @app.post("/api/v1/documents/export")
-async def export_report(diff_text: str = Form(...), analysis: str = Form(...)):
+async def export_report(diff_blocks: str = Form(...), analysis: str = Form(...)):
     try:
-        # Парсим analysis из JSON строки
         import json
         analysis_dict = json.loads(analysis)
         analysis_obj = FullDocumentAnalysis(**analysis_dict)
         
-        docx_buf = ExportService.generate_docx_report(diff_text, analysis_obj)
+        docx_buf = ExportService.generate_docx_report(diff_blocks, analysis_obj)
         return StreamingResponse(
             docx_buf,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
