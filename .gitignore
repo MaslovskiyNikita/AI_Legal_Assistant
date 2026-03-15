@@ -226,6 +226,7 @@ pnpm-debug.log*
 .env.development.local
 .env.test.local
 .env.production.local
+backend-llm/.env
 
 # Кэш Vite (тот самый, который у тебя вылез в корне до этого)
 .vite/
@@ -244,4 +245,7 @@ Thumbs.db
 *.sln
 *.sw?
 
+# Игнорируем все индексы (бинарные файлы FAISS и pickle)
+backend-llm/indexes/*
+!backend-llm/indexes/.gitkeep
 backend/uploads/
