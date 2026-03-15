@@ -1,4 +1,3 @@
-// src/app/pages/Profile.tsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -6,12 +5,14 @@ import {
   Scale,
   Briefcase,
   FileSearch,
-  ChevronRight,
   CheckCircle2,
-  ArrowUp,
   Clock,
   Loader2,
-  Paperclip,
+  Plus,
+  // Иконки для сводки
+  AlertTriangle,
+  FileText,
+  PenSquare,
 } from "lucide-react";
 
 import { apiClient } from "../api/client";
@@ -87,7 +88,6 @@ const TokenCircleMenu = ({ percent }: { percent: number }) => {
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [inputText, setInputText] = useState("");
   const [selectedAgent, setSelectedAgent] = useState("strict");
   const [recentChats, setRecentChats] = useState<any[]>([]);
   const [isLoadingRecent, setIsLoadingRecent] = useState(true);
@@ -98,7 +98,6 @@ export default function Profile() {
   const internalUserId = user?.id || null;
   const firstName = user?.first_name || "User";
 
-  // Динамическое время суток
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour >= 5 && hour < 12) setGreeting("Доброе утро");
@@ -131,23 +130,11 @@ export default function Profile() {
     }
   }, [internalUserId]);
 
-  const startNewChat = (promptText?: string | React.MouseEvent) => {
-    const actualText = typeof promptText === "string" ? promptText : inputText;
-    if (!actualText.trim()) {
-      navigate("/chat/new");
-      return;
-    }
+  const startNewChat = () => {
     const agentPrompt =
       agents.find((agent) => agent.id === selectedAgent)?.prompt || "";
-    const textToSend = agentPrompt + actualText;
-    navigate("/chat/new", { state: { initialPrompt: textToSend } });
+    navigate("/chat/new", { state: { initialPrompt: agentPrompt } });
   };
-
-  const quickPrompts = [
-    "Проверь договор аренды на риски",
-    "Объясни штрафы по ГК РФ простым языком",
-    "Составь NDA для разработчика",
-  ];
 
   const formatRecentDateShort = (chat: any) => {
     const dateStr = chat.created_at || chat.createdAt || chat.updated_at;
@@ -166,10 +153,16 @@ export default function Profile() {
     return date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
   };
 
+  const weeklyStats = {
+    criticalRisks: 7,
+    pagesAnalyzed: 128,
+    commonEdits: "Сроки, Штрафы",
+  };
+
   return (
     <div className="min-h-screen w-full bg-white text-black relative flex flex-col font-sans overflow-x-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-6 pb-4 relative z-20">
+      <div className="flex items-center justify-between px-4 pt-4 pb-3 relative z-20">
         <div
           className="flex items-center gap-3 cursor-pointer"
           onClick={() => navigate("/settings")}
@@ -188,14 +181,15 @@ export default function Profile() {
       </div>
 
       <div className="px-4 flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mt-2 mb-6 tracking-tight text-black">
+        {/* Заголовок */}
+        <h1 className="text-3xl font-bold mt-2 mb-4 tracking-tight text-black">
           Выберите стиль
           <br />
           вашего AI-юриста
         </h1>
 
-        {/* Сетка Агентов - Возвращена к изначальному коду, шрифты 14px/12px */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
+        {/* Сетка Агентов */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
           {agents.map((agent) => {
             const isSelected = selectedAgent === agent.id;
             const Icon = agent.icon;
@@ -242,8 +236,8 @@ export default function Profile() {
           })}
         </div>
 
-        {/* Последние чаты - Возвращены в 1 строку (3 колонки), шрифты 14px/12px */}
-        <div className="mb-auto w-full">
+        {/* Последние чаты */}
+        <div className="w-full">
           {isLoadingRecent ? (
             <div className="grid grid-cols-3 gap-2 w-full">
               <div className="h-[96px] bg-[#F2F2F7] rounded-2xl animate-pulse"></div>
@@ -277,89 +271,74 @@ export default function Profile() {
               </div>
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-7 px-4 bg-[#F8F9FA] rounded-2xl border border-[#E5E5EA] border-dashed text-center">
-              <div className="w-12 h-12 rounded-full bg-[#E5E5EA] flex items-center justify-center mb-3">
-                <MessageSquare size={24} className="text-[#8E8E93]" />
-              </div>
-              <span className="text-[15px] font-semibold text-black mb-1">
-                Здесь пока пусто
-              </span>
-              <span className="text-[13px] text-[#8E8E93] leading-snug max-w-[240px]">
-                Здесь будут отображаться ваши последние консультации с AI.
-              </span>
-            </div>
+            // Этот блок можно будет убрать, когда всегда будут чаты
+            <div className="h-[100px]"></div>
           )}
         </div>
 
-        {/* Быстрые Промпты */}
-        <div className="mb-4 mt-6">
+        {/* Аналитическая сводка */}
+        <div className="mb-4 mt-4">
           <h4 className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider mb-2 ml-1">
-            Быстрые запросы
+            Сводка за неделю
           </h4>
-          <div className="bg-[#F2F2F7] rounded-2xl overflow-hidden w-full">
-            {quickPrompts.map((prompt, idx) => (
-              <div
-                key={idx}
-                onClick={() => startNewChat(prompt)}
-                className={`
-                  flex items-center justify-between p-4 cursor-pointer active:bg-[#E5E5EA] transition-colors
-                  ${idx !== quickPrompts.length - 1 ? "border-b border-[#E5E5EA]" : ""}
-                `}
-              >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-sm">
-                    <MessageSquare size={16} className="text-[#3390EC]" />
-                  </div>
-                  <span className="text-[15px] font-medium text-black truncate pr-2">
-                    {prompt}
-                  </span>
+          <div className="bg-[#F2F2F7] rounded-2xl overflow-hidden w-full p-2 space-y-2">
+            {/* Карточка 1: Риски */}
+            <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+                  <AlertTriangle size={16} className="text-[#3390EC]" />
                 </div>
-                <ChevronRight size={20} className="text-[#C7C7CC] shrink-0" />
+                <span className="font-semibold text-sm text-black">
+                  Критических рисков
+                </span>
               </div>
-            ))}
+              <span className="font-bold text-lg text-[#3390EC]">
+                {weeklyStats.criticalRisks}
+              </span>
+            </div>
+
+            {/* Карточка 2: Страницы */}
+            <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+                  <FileText size={16} className="text-[#3390EC]" />
+                </div>
+                <span className="font-semibold text-sm text-black">
+                  Проанализировано страниц
+                </span>
+              </div>
+              <span className="font-bold text-lg text-[#3390EC]">
+                {weeklyStats.pagesAnalyzed}
+              </span>
+            </div>
+
+            {/* Карточка 3: Частые правки */}
+            <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+                  <PenSquare size={16} className="text-[#3390EC]" />
+                </div>
+                <span className="font-semibold text-sm text-black">
+                  Частые точки правок
+                </span>
+              </div>
+              <span className="font-semibold text-sm text-[#3390EC] truncate">
+                {weeklyStats.commonEdits}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Поле ввода снизу */}
-      <div className="px-4 pb-6 pt-2 bg-white border-t border-[#F2F2F7]">
-        <div className="flex items-end gap-2 w-full">
-          <button
-            onClick={() =>
-              navigate("/chat/new", { state: { openCompareModal: true } })
-            }
-            className="w-10 h-10 mb-0.5 flex items-center justify-center rounded-full transition-colors shrink-0 cursor-pointer text-[#8E8E93] hover:text-[#3390EC]"
-            title="Прикрепить документы"
-          >
-            <Paperclip size={24} className="rotate-45" />
-          </button>
-
-          <div className="flex-1 bg-[#F2F2F7] border border-[#E5E5EA] rounded-3xl min-h-[44px] flex items-center px-4 py-1 focus-within:border-[#3390EC] transition-colors">
-            <input
-              type="text"
-              value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && startNewChat()}
-              placeholder="Напишите сообщение..."
-              className="flex-1 bg-transparent border-none outline-none text-black text-[16px] placeholder:text-[#8E8E93]"
-            />
-          </div>
-
-          <button
-            onClick={() => startNewChat()}
-            disabled={!inputText.trim()}
-            className={`
-              w-[44px] h-[44px] shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-sm mb-0.5
-              ${
-                inputText.trim()
-                  ? "bg-[#3390EC] text-white shadow-blue-500/30"
-                  : "bg-[#E5E5EA] text-[#8E8E93] cursor-not-allowed"
-              }
-            `}
-          >
-            <ArrowUp size={20} strokeWidth={2.5} />
-          </button>
-        </div>
+      {/* Кнопка "Начать чат" */}
+      <div className="px-4 pb-6 pt-3 bg-white border-t border-[#F2F2F7]">
+        <button
+          onClick={startNewChat}
+          className="w-full bg-[#3390EC] hover:bg-[#2879c7] text-white font-semibold text-[16px] py-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(51,144,236,0.3)]"
+        >
+          <Plus size={22} strokeWidth={2.5} />
+          Начать новый чат
+        </button>
       </div>
     </div>
   );
