@@ -38,6 +38,8 @@ export default function Settings() {
   const [chats, setChats] = useState<any[]>([]);
   const [documentsCount, setDocumentsCount] = useState<number>(0);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [theme, setTheme] = useState(user?.theme || "dark");
+  const [notifications, setNotifications] = useState(user?.notifications_enabled ?? true);
 
   // null = Показать все чаты. Date = фильтр по конкретному дню
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -98,10 +100,7 @@ export default function Settings() {
     setIsClearing(true);
     try {
       if (chats.length > 0) {
-        const deletePromises = chats.map((chat: any) =>
-          apiClient.deleteChat(chat.id),
-        );
-        await Promise.all(deletePromises);
+        await apiClient.deleteAllChats(internalUserId);
         setChats([]);
         setDocumentsCount(0); // Сбрасываем и счетчик документов
       }
@@ -111,6 +110,32 @@ export default function Settings() {
       alert("Не удалось очистить историю. Пожалуйста, попробуйте еще раз.");
     } finally {
       setIsClearing(false);
+    }
+  };
+
+  const toggleTheme = async () => {
+    if (!internalUserId) return;
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
+    try {
+      const updatedUser = await apiClient.updateSettings(internalUserId, { theme: newTheme });
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Failed to update theme", error);
+      setTheme(theme);
+    }
+  };
+
+  const toggleNotifications = async () => {
+    if (!internalUserId) return;
+    const newNotifications = !notifications;
+    setNotifications(newNotifications);
+    try {
+      const updatedUser = await apiClient.updateSettings(internalUserId, { notifications_enabled: newNotifications });
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+    } catch (error) {
+      console.error("Failed to update notifications", error);
+      setNotifications(notifications);
     }
   };
 
@@ -377,8 +402,11 @@ export default function Settings() {
                 <Moon size={20} className="text-[#d946ef]" />
                 <span className="font-medium text-[15px]">Темная тема</span>
               </div>
-              <div className="w-12 h-7 bg-[#d946ef] rounded-full relative cursor-pointer shadow-[0_0_10px_rgba(217,70,239,0.3)]">
-                <div className="absolute right-1 top-1 w-5 h-5 bg-white rounded-full shadow-sm" />
+              <div 
+                onClick={toggleTheme}
+                className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors ${theme === 'dark' ? 'bg-[#d946ef] shadow-[0_0_10px_rgba(217,70,239,0.3)]' : 'bg-white/10'}`}
+              >
+                <div className={`absolute top-1 w-5 h-5 rounded-full shadow-sm transition-all ${theme === 'dark' ? 'right-1 bg-white' : 'left-1 bg-white/50'}`} />
               </div>
             </div>
             <div className="flex items-center justify-between px-5 py-4">
@@ -386,8 +414,11 @@ export default function Settings() {
                 <Bell size={20} className="text-white/50" />
                 <span className="font-medium text-[15px]">Уведомления</span>
               </div>
-              <div className="w-12 h-7 bg-white/10 rounded-full relative cursor-pointer">
-                <div className="absolute left-1 top-1 w-5 h-5 bg-white/50 rounded-full" />
+              <div 
+                onClick={toggleNotifications}
+                className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors ${notifications ? 'bg-[#d946ef] shadow-[0_0_10px_rgba(217,70,239,0.3)]' : 'bg-white/10'}`}
+              >
+                <div className={`absolute top-1 w-5 h-5 rounded-full shadow-sm transition-all ${notifications ? 'right-1 bg-white' : 'left-1 bg-white/50'}`} />
               </div>
             </div>
           </div>

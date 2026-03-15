@@ -111,8 +111,8 @@ export default function Chat() {
       window.history.replaceState({}, document.title);
 
       // Отправляем сообщение с микро-задержкой, чтобы интерфейс успел прогрузиться
-      setTimeout(() => {
-        handleSend(prompt);
+      setTimeout(async () => {
+        await handleSend(prompt);
       }, 150);
     }
   }, [location.state?.initialPrompt, currentChatId]);
@@ -145,7 +145,7 @@ export default function Chat() {
       console.error("Export failed", error);
       alert("Не удалось экспортировать чат.");
     } finally {
-      setTimeout(() => {
+      setTimeout(async () => {
         setIsExporting(false);
         setIsExportModalOpen(false);
       }, 500);

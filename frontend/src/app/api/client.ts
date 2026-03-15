@@ -69,6 +69,16 @@ export const apiClient = {
     return r.json();
   },
 
+  async updateSettings(user_id: number, payload: { theme?: string; notifications_enabled?: boolean }) {
+    const r = await fetch(`${BASE_URL}/users/${user_id}/settings`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error(`updateSettings failed: ${r.status}`);
+    return r.json();
+  },
+
   async createChat(payload: { user_id: number; title?: string }) {
     const r = await fetch(`${BASE_URL}/chats/`, {
       method: "POST",
@@ -102,6 +112,22 @@ export const apiClient = {
   },
 
   // НОВЫЙ МЕТОД ДЛЯ УДАЛЕНИЯ ЧАТА
+  async deleteAllChats(user_id: number) {
+    const r = await fetch(`${BASE_URL}/chats/?user_id=${user_id}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!r.ok) {
+      let errorDetail = `deleteAllChats failed: ${r.status}`;
+      try {
+        const errorData = await r.json();
+        if (errorData.detail) errorDetail = errorData.detail;
+      } catch (e) {}
+      throw new Error(errorDetail);
+    }
+    return r.json();
+  },
+
   async deleteChat(chat_id: number) {
     const r = await fetch(`${BASE_URL}/chats/${chat_id}`, {
       method: "DELETE",

@@ -84,7 +84,6 @@ function AuthRouter() {
     <Routes>
       <Route path="/" element={<Onboarding />} />
       <Route path="/profile" element={<Profile />} />
-      <Route path="/chat/new" element={<Chat />} />
       <Route path="/chat/:chatId" element={<Chat />} />
       <Route path="/settings" element={<Settings />} />
     </Routes>
