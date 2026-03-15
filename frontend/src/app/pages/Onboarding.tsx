@@ -50,10 +50,10 @@ export default function Onboarding() {
   return (
     <div className="min-h-screen w-full relative flex flex-col justify-between bg-black p-8 font-sans overflow-hidden">
       {/* Свечение */}
-      <div className="absolute -top-20 -left-20 w-[300px] h-[300px] bg-[#d946ef] rounded-full blur-[120px] opacity-20"></div>
+      <div className="absolute -top-20 -left-20 w-[300px] h-[300px] bg-[#24A1DE] rounded-full blur-[120px] opacity-20"></div>
 
       <div className="mt-16 flex flex-col items-center text-center z-10">
-        <div className="w-24 h-24 bg-gradient-to-tr from-[#d946ef] to-[#a855f7] rounded-3xl flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(217,70,239,0.3)] rotate-3">
+        <div className="w-24 h-24 bg-gradient-to-tr from-[#24A1DE] to-[#24A1DE] rounded-3xl flex items-center justify-center mb-8 shadow-[0_0_40px_rgba(36,161,222,0.3)] rotate-3">
           <Scale size={48} color="white" />
         </div>
 
@@ -66,8 +66,8 @@ export default function Onboarding() {
 
         <div className="w-full flex flex-col gap-6 text-left">
           <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-sm">
-            <div className="p-3 bg-[#d946ef]/20 rounded-xl">
-              <FileText size={24} color="#d946ef" />
+            <div className="p-3 bg-[#24A1DE]/20 rounded-xl">
+              <FileText size={24} color="#24A1DE" />
             </div>
             <div>
               <p className="text-white font-semibold text-[17px]">
@@ -80,8 +80,8 @@ export default function Onboarding() {
           </div>
 
           <div className="flex items-center gap-4 bg-white/5 p-4 rounded-2xl border border-white/5 backdrop-blur-sm">
-            <div className="p-3 bg-[#a855f7]/20 rounded-xl">
-              <Shield size={24} color="#a855f7" />
+            <div className="p-3 bg-[#24A1DE]/20 rounded-xl">
+              <Shield size={24} color="#24A1DE" />
             </div>
             <div>
               <p className="text-white font-semibold text-[17px]">
@@ -98,7 +98,7 @@ export default function Onboarding() {
       <button
         onClick={handleStart}
         disabled={loading}
-        className="w-full py-4 mb-4 rounded-2xl font-semibold text-[17px] text-white flex items-center justify-center gap-2 bg-gradient-to-r from-[#d946ef] to-[#a855f7] shadow-lg shadow-[#d946ef]/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+        className="w-full py-4 mb-4 rounded-2xl font-semibold text-[17px] text-white flex items-center justify-center gap-2 bg-gradient-to-r from-[#24A1DE] to-[#24A1DE] shadow-lg shadow-[#24A1DE]/20 hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
       >
         {loading ? (
           <Loader2 className="animate-spin" size={20} />

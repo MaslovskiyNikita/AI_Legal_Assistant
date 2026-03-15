@@ -177,7 +177,7 @@ export default function Settings() {
   return (
     <div className="min-h-screen w-full bg-black text-white flex flex-col pb-10 relative font-sans overflow-x-hidden">
       {/* Фоновое пурпурное свечение */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[400px] bg-gradient-to-b from-[#d946ef]/20 via-[#a855f7]/5 to-transparent blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[150%] h-[400px] bg-gradient-to-b from-[#24A1DE]/20 via-[#24A1DE]/5 to-transparent blur-[80px] pointer-events-none z-0"></div>
 
       {/* Header */}
       <div className="h-16 px-4 flex items-center border-b border-white/5 sticky top-0 bg-black/40 backdrop-blur-xl z-20">
@@ -194,9 +194,9 @@ export default function Settings() {
         {/* Карточка профиля */}
         <div className="flex flex-col items-center justify-center pt-2">
           {/* Аватарка: градиент изменен на 100% фиолетовый/маджентовый */}
-          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#a855f7] to-[#d946ef] p-[3px] mb-4 shadow-[0_0_30px_rgba(217,70,239,0.3)]">
+          <div className="w-24 h-24 rounded-full bg-gradient-to-tr from-[#24A1DE] to-[#24A1DE] p-[3px] mb-4 shadow-[0_0_30px_rgba(36,161,222,0.3)]">
             <div className="w-full h-full bg-[#1C1C1D] rounded-full flex items-center justify-center">
-              <User size={40} className="text-[#d946ef]" />
+              <User size={40} className="text-[#24A1DE]" />
             </div>
           </div>
           <h1 className="text-2xl font-bold text-white mb-1">{firstName}</h1>
@@ -206,8 +206,8 @@ export default function Settings() {
           <div className="w-full flex gap-3">
             {/* Карточка 1: Консультации */}
             <div className="flex-1 bg-[#1C1C1D] border border-white/5 rounded-3xl p-4 flex flex-col items-center justify-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-[#d946ef]/10 blur-[20px] rounded-full"></div>
-              <MessageSquare size={20} className="text-[#d946ef] mb-2" />
+              <div className="absolute top-0 right-0 w-16 h-16 bg-[#24A1DE]/10 blur-[20px] rounded-full"></div>
+              <MessageSquare size={20} className="text-[#24A1DE] mb-2" />
               <span className="text-2xl font-bold text-white mb-0.5">
                 {isLoadingStats ? (
                   <Loader2 size={24} className="animate-spin text-white/30" />
@@ -222,8 +222,8 @@ export default function Settings() {
 
             {/* Карточка 2: Документы (Синий изменен на пурпурный) */}
             <div className="flex-1 bg-[#1C1C1D] border border-white/5 rounded-3xl p-4 flex flex-col items-center justify-center relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-16 h-16 bg-[#a855f7]/10 blur-[20px] rounded-full"></div>
-              <FileText size={20} className="text-[#a855f7] mb-2" />
+              <div className="absolute top-0 right-0 w-16 h-16 bg-[#24A1DE]/10 blur-[20px] rounded-full"></div>
+              <FileText size={20} className="text-[#24A1DE] mb-2" />
               <span className="text-2xl font-bold text-white mb-0.5">
                 {isLoadingStats ? (
                   <Loader2 size={24} className="animate-spin text-white/30" />
@@ -242,7 +242,7 @@ export default function Settings() {
         <section>
           <div className="flex items-center justify-between mb-4 px-1">
             <div className="flex items-center gap-2 text-white/90">
-              <CalendarDays size={20} className="text-[#d946ef]" />
+              <CalendarDays size={20} className="text-[#24A1DE]" />
               <h3 className="text-[16px] font-semibold">История запросов</h3>
             </div>
             <span className="text-[13px] text-white/40 bg-white/5 px-2 py-1 rounded-lg">
@@ -260,7 +260,7 @@ export default function Settings() {
               }}
               className={`flex flex-col items-center justify-center min-w-[56px] h-[70px] rounded-2xl border transition-all cursor-pointer shrink-0 ${
                 selectedDate === null
-                  ? "bg-[#d946ef] border-[#d946ef] text-white shadow-[0_0_15px_rgba(217,70,239,0.4)]"
+                  ? "bg-[#24A1DE] border-[#24A1DE] text-white shadow-[0_0_15px_rgba(36,161,222,0.4)]"
                   : "bg-[#1C1C1D] border-white/5 text-white/60 hover:bg-[#2C2C2E]"
               }`}
             >
@@ -293,7 +293,7 @@ export default function Settings() {
                   }}
                   className={`flex flex-col items-center justify-center min-w-[56px] h-[70px] rounded-2xl border transition-all cursor-pointer shrink-0 ${
                     isSelected
-                      ? "bg-[#d946ef] border-[#d946ef] text-white shadow-[0_0_15px_rgba(217,70,239,0.4)]"
+                      ? "bg-[#24A1DE] border-[#24A1DE] text-white shadow-[0_0_15px_rgba(36,161,222,0.4)]"
                       : "bg-[#1C1C1D] border-white/5 text-white/60 hover:bg-[#2C2C2E]"
                   }`}
                 >
@@ -316,7 +316,7 @@ export default function Settings() {
           <div className="bg-[#1C1C1D] rounded-3xl border border-white/5 overflow-hidden flex flex-col min-h-[120px]">
             {isLoadingStats ? (
               <div className="flex-1 flex items-center justify-center py-8">
-                <Loader2 size={24} className="animate-spin text-[#d946ef]" />
+                <Loader2 size={24} className="animate-spin text-[#24A1DE]" />
               </div>
             ) : chats.length === 0 ? (
               <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
@@ -356,8 +356,8 @@ export default function Settings() {
                       className="w-full flex items-center justify-between px-5 py-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer text-left last:border-0"
                     >
                       <div className="flex items-center gap-4 overflow-hidden pr-4">
-                        <div className="w-10 h-10 rounded-full bg-[#d946ef]/10 flex items-center justify-center shrink-0">
-                          <MessageSquare size={18} className="text-[#d946ef]" />
+                        <div className="w-10 h-10 rounded-full bg-[#24A1DE]/10 flex items-center justify-center shrink-0">
+                          <MessageSquare size={18} className="text-[#24A1DE]" />
                         </div>
                         <div className="flex flex-col overflow-hidden">
                           <span className="font-medium text-[15px] text-white/90 truncate">
@@ -379,7 +379,7 @@ export default function Settings() {
                 {filteredChats.length > 5 && (
                   <button
                     onClick={() => setShowAllChats(!showAllChats)}
-                    className="w-full py-3 text-[13px] font-medium text-[#d946ef] hover:bg-white/5 transition-colors cursor-pointer border-t border-white/5"
+                    className="w-full py-3 text-[13px] font-medium text-[#24A1DE] hover:bg-white/5 transition-colors cursor-pointer border-t border-white/5"
                   >
                     {showAllChats
                       ? "Скрыть"
@@ -399,12 +399,12 @@ export default function Settings() {
           <div className="bg-[#1C1C1D] rounded-3xl border border-white/5 overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
               <div className="flex items-center gap-4 text-white/90">
-                <Moon size={20} className="text-[#d946ef]" />
+                <Moon size={20} className="text-[#24A1DE]" />
                 <span className="font-medium text-[15px]">Темная тема</span>
               </div>
               <div 
                 onClick={toggleTheme}
-                className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors ${theme === 'dark' ? 'bg-[#d946ef] shadow-[0_0_10px_rgba(217,70,239,0.3)]' : 'bg-white/10'}`}
+                className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors ${theme === 'dark' ? 'bg-[#24A1DE] shadow-[0_0_10px_rgba(36,161,222,0.3)]' : 'bg-white/10'}`}
               >
                 <div className={`absolute top-1 w-5 h-5 rounded-full shadow-sm transition-all ${theme === 'dark' ? 'right-1 bg-white' : 'left-1 bg-white/50'}`} />
               </div>
@@ -416,7 +416,7 @@ export default function Settings() {
               </div>
               <div 
                 onClick={toggleNotifications}
-                className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors ${notifications ? 'bg-[#d946ef] shadow-[0_0_10px_rgba(217,70,239,0.3)]' : 'bg-white/10'}`}
+                className={`w-12 h-7 rounded-full relative cursor-pointer transition-colors ${notifications ? 'bg-[#24A1DE] shadow-[0_0_10px_rgba(36,161,222,0.3)]' : 'bg-white/10'}`}
               >
                 <div className={`absolute top-1 w-5 h-5 rounded-full shadow-sm transition-all ${notifications ? 'right-1 bg-white' : 'left-1 bg-white/50'}`} />
               </div>

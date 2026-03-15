@@ -23,7 +23,7 @@ import { exportToDocx, exportToPdf } from "../../utils/exportUtils";
 const COLORS = {
   bg: "#000000",
   surface: "#1C1C1D",
-  primary: "#d946ef", // Маджента/Пурпурный как на скринах
+  primary: "#24A1DE", // Маджента/Пурпурный как на скринах
 };
 
 export default function Chat() {
@@ -381,7 +381,7 @@ export default function Chat() {
                 ),
                 a: ({ node, ref, ...props }) => (
                   <a
-                    className="text-[#d946ef] underline hover:text-[#a855f7]"
+                    className="text-[#24A1DE] underline hover:text-[#24A1DE]"
                     {...props}
                   />
                 ),
@@ -401,7 +401,7 @@ export default function Chat() {
                   className={`text-[11px] font-semibold transition-opacity cursor-pointer uppercase ${
                     copiedMessageId === msg.id
                       ? "text-green-400"
-                      : "text-white/60 hover:text-[#d946ef]"
+                      : "text-white/60 hover:text-[#24A1DE]"
                   }`}
                 >
                   {copiedMessageId === msg.id ? "Copied!" : "Copy"}
@@ -410,7 +410,7 @@ export default function Chat() {
               <div className="flex items-center gap-1 text-[11px]">
                 {timeString}
                 {isUser && (
-                  <CheckCircle2 size={12} className="inline text-[#d946ef]" />
+                  <CheckCircle2 size={12} className="inline text-[#24A1DE]" />
                 )}
               </div>
             </div>
@@ -423,7 +423,7 @@ export default function Chat() {
   return (
     <div className="h-[100dvh] w-full relative flex flex-col bg-black overflow-hidden font-sans">
       {/* Фоновое пурпурное свечение */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-[#d946ef]/20 to-transparent blur-[80px] pointer-events-none z-0"></div>
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-[#24A1DE]/20 to-transparent blur-[80px] pointer-events-none z-0"></div>
 
       {/* Header как на втором скриншоте */}
       <div className="h-16 px-4 flex items-center justify-between sticky top-0 z-20 bg-black/40 backdrop-blur-xl border-b border-white/5">
@@ -460,7 +460,7 @@ export default function Chat() {
                   }}
                   className="w-full text-left px-4 py-3 text-[14px] font-medium text-white hover:bg-white/5 transition-colors flex items-center gap-3 cursor-pointer"
                 >
-                  <Download size={18} className="text-[#d946ef]" />
+                  <Download size={18} className="text-[#24A1DE]" />
                   Chat Documents
                 </button>
                 <button
@@ -470,7 +470,7 @@ export default function Chat() {
                   }}
                   className="w-full text-left px-4 py-3 text-[14px] font-medium text-white hover:bg-white/5 transition-colors flex items-center gap-3 cursor-pointer"
                 >
-                  <Share2 size={18} className="text-[#d946ef]" />
+                  <Share2 size={18} className="text-[#24A1DE]" />
                   Export Chat
                 </button>
                 {currentChatId && currentChatId !== "new" && (
@@ -497,8 +497,8 @@ export default function Chat() {
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-4 pb-32 z-10 relative">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-white/60 mt-10">
-            <div className="w-20 h-20 bg-gradient-to-tr from-[#d946ef]/20 to-[#a855f7]/20 rounded-full flex items-center justify-center mb-6 border border-[#d946ef]/30">
-              <Scale size={36} className="text-[#d946ef]" />
+            <div className="w-20 h-20 bg-gradient-to-tr from-[#24A1DE]/20 to-[#24A1DE]/20 rounded-full flex items-center justify-center mb-6 border border-[#24A1DE]/30">
+              <Scale size={36} className="text-[#24A1DE]" />
             </div>
             <p className="text-[18px] font-medium text-white mb-2">
               Готов помочь
@@ -583,8 +583,8 @@ export default function Chat() {
                     className="flex items-center justify-between bg-black/30 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-colors"
                   >
                     <div className="flex items-center gap-3 overflow-hidden pr-3">
-                      <div className="p-2 bg-[#d946ef]/10 rounded-xl shrink-0">
-                        <FileText size={20} className="text-[#d946ef]" />
+                      <div className="p-2 bg-[#24A1DE]/10 rounded-xl shrink-0">
+                        <FileText size={20} className="text-[#24A1DE]" />
                       </div>
                       <span className="text-[14px] font-medium text-white truncate">
                         {doc.filename || doc.name || `Document #${doc.id}`}
@@ -597,7 +597,7 @@ export default function Chat() {
                           doc.filename || "document",
                         )
                       }
-                      className="p-2 text-white/50 hover:text-[#d946ef] bg-white/5 rounded-xl transition-colors shrink-0"
+                      className="p-2 text-white/50 hover:text-[#24A1DE] bg-white/5 rounded-xl transition-colors shrink-0"
                     >
                       <Download size={18} />
                     </button>
@@ -612,8 +612,8 @@ export default function Chat() {
       {isExportModalOpen && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 backdrop-blur-md">
           <div className="bg-[#1C1C1D] rounded-3xl p-6 w-full max-w-xs border border-white/10 shadow-2xl flex flex-col items-center text-center animate-in fade-in zoom-in duration-200">
-            <div className="w-14 h-14 bg-[#d946ef]/10 rounded-full flex items-center justify-center mb-4">
-              <Share2 size={28} className="text-[#d946ef]" />
+            <div className="w-14 h-14 bg-[#24A1DE]/10 rounded-full flex items-center justify-center mb-4">
+              <Share2 size={28} className="text-[#24A1DE]" />
             </div>
             <h2 className="text-xl font-semibold text-white mb-2">
               Экспорт чата
@@ -690,7 +690,7 @@ export default function Chat() {
             <button
               onClick={handleCompareFiles}
               disabled={!oldFile || !newFile || isComparing}
-              className="w-full bg-[#d946ef] text-white font-medium py-3 rounded-xl mt-6 disabled:opacity-50 hover:bg-[#a855f7] transition-colors"
+              className="w-full bg-[#24A1DE] text-white font-medium py-3 rounded-xl mt-6 disabled:opacity-50 hover:bg-[#24A1DE] transition-colors"
             >
               {isComparing ? "Анализ..." : "Сравнить файлы"}
             </button>
@@ -734,7 +734,7 @@ export default function Chat() {
             <button
               onClick={handleSend}
               disabled={isTyping || !inputText.trim()}
-              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-[#d946ef] transition-transform active:scale-95 disabled:opacity-50 cursor-pointer ml-2"
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-[#24A1DE] transition-transform active:scale-95 disabled:opacity-50 cursor-pointer ml-2"
             >
               <Send size={18} className="text-white ml-0.5" />
             </button>

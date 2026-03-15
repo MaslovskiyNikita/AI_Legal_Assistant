@@ -74,8 +74,8 @@ function AuthRouter() {
   if (loading) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-[#1C1C1D]">
-        <div className="absolute top-[30%] w-32 h-32 bg-[#3390EC] rounded-full blur-[80px] opacity-30" />
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#3390EC] z-10"></div>
+        <div className="absolute top-[30%] w-32 h-32 bg-[#24A1DE] rounded-full blur-[80px] opacity-30" />
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#24A1DE] z-10"></div>
       </div>
     );
   }
