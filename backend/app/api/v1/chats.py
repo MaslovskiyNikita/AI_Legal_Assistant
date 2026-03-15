@@ -66,3 +66,9 @@ async def get_chat_documents(chat_id: int, db: AsyncSession = Depends(get_db)):
     return documents
 
 
+@router.get("/{user_id}/all_documents", response_model=List[DocumentResponse])
+async def get_user_documents(user_id: int, db: AsyncSession = Depends(get_db)): 
+    documents = await chat_service.get_user_documents(db, user_id)
+    return documents
+
+

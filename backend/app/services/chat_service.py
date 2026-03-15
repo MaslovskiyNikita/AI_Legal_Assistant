@@ -4,6 +4,7 @@ from sqlalchemy.orm import selectinload
 from app.models.chat import Chat, Message
 from app.schemas.chat import ChatCreateRequest
 from app.models.user import User
+from app.models.document import Document
 
 async def create_chat(session: AsyncSession, chat_data: ChatCreateRequest) -> Chat:
 
@@ -52,6 +53,11 @@ async def get_chat_documents(session: AsyncSession, chat_id: int) -> list:
         documents.extend(msg.documents)
     
     return documents
+
+async def get_user_documents(session: AsyncSession, user_id: int) -> list:
+    query = (select(Document).where(Document.user_id == user_id))
+    result = await session.execute(query)
+    return result.scalars().all()
 
 async def add_message_to_chat(request, chat_id: int, session) -> Message:
     user_message = Message(chat_id=chat_id, role="user", text=request.text)
