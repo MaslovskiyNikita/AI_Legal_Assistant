@@ -103,20 +103,6 @@ class SmartDiffService:
 
 class DiffService:
     @staticmethod
-    def get_unified_diff(old_text: str, new_text: str) -> str:
-        old_lines = old_text.splitlines()
-        new_lines = new_text.splitlines()
-        
-        diff = difflib.unified_diff(
-            old_lines, 
-            new_lines, 
-            fromfile='Старая версия', 
-            tofile='Новая версия', 
-            lineterm=''
-        )
-        return "\n".join(list(diff))
-
-    @staticmethod
     def generate_inline_diff(old_text: str, new_text: str) -> str:
         if not old_text: return f"<ins>{new_text}</ins>"
         if not new_text: return f"<del>{old_text}</del>"

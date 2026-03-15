@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 
 from .models import DocumentBlock, BlockDiff, ChangeType, Chat, Message, FullDocumentAnalysis
 from .parser import DocxParser
-from .diff_service import DiffService, SmartDiffService
-from .ai_service import AiRiskAnalyzer, RiskAnalysis
+from .diff_service import SmartDiffService
+from .ai_service import AiRiskAnalyzer
 from .export_service import ExportService
 from .chat_service import ChatService
 
