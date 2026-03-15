@@ -8,6 +8,8 @@ from pydantic import BaseModel
 from .settings import settings
 from .models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis
 
+from .rag_service import rag_service
+
 
 class RiskAnalysis(BaseModel):
     risk: str  # "GREEN", "YELLOW", "RED"

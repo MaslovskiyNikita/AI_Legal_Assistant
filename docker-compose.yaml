@@ -25,7 +25,7 @@ services:
 
 
   db-backend:
-    image: postgres:15-alpine
+    image: pgvector/pgvector:pg15
     restart: always
     command: -p 6432
     environment:
@@ -36,4 +36,3 @@ services:
       - "6432:6432"
     env_file:            
       - ./backend/.env     
-    
