@@ -47,19 +47,27 @@ async def compare_documents(oldFile: UploadFile = File(...), newFile: UploadFile
     
     if not meaningful_diffs:
         analysis = FullDocumentAnalysis(overall_risk="GREEN", summary="Изменений не найдено или они незначительны", details=[])
-        return {
+        result = {
             "diff_blocks": [],
             "analysis": analysis.model_dump()
         }
+        return Response(
+            content=json.dumps(jsonable_encoder(result), ensure_ascii=False, indent=2),
+            media_type="application/json"
+        )
 
     # 5. Анализируем изменения батчами с RAG
     # передаем только meaningful_diffs
     analysis = await AiRiskAnalyzer.analyze_changes(meaningful_diffs)
     
-    return {
+    result = {
         "diff_blocks": [b.model_dump() for b in meaningful_diffs],
         "analysis": analysis.model_dump()
     }
+    return Response(
+        content=json.dumps(jsonable_encoder(result), ensure_ascii=False, indent=2),
+        media_type="application/json"
+    )
 
 @app.post("/api/v1/chat/create")
 async def create_chat(
