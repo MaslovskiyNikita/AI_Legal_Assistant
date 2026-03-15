@@ -23,6 +23,13 @@ class UserProfileResponse(BaseModel):
     created_at: datetime
     documents_analyzed: int
     consultations_count: int
+    
+    theme: str
+    notifications_enabled: bool
 
     class Config:
         from_attributes = True  
+        
+class UserSettingsUpdateRequest(BaseModel):
+    theme: Optional[str] = None
+    notifications_enabled: Optional[bool] = None

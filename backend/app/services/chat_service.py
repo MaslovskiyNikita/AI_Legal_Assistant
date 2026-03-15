@@ -38,7 +38,45 @@ async def get_chat_with_messages(session: AsyncSession, chat_id: int) -> Chat | 
     return result.scalar_one_or_none()
 
 
-async def add_message_to_chat(request, chat_id: int, db) -> Message:
+async def get_chat_documents(session: AsyncSession, chat_id: int) -> list:
+    query = (
+        select(Message)
+        .where(Message.chat_id == chat_id)
+        .options(selectinload(Message.documents))
+    )
+    result = await session.execute(query)
+    messages = result.scalars().all()
+    
+    documents = []
+    for msg in messages:
+        documents.extend(msg.documents)
+    
+    return documents
+
+async def add_message_to_chat(request, chat_id: int, session) -> Message:
     user_message = Message(chat_id=chat_id, role="user", text=request.text)
-    db.add(user_message)
-    await db.commit()
+    session.add(user_message)
+    await session.commit()
+    
+async def delete_chat(session: AsyncSession, chat_id: int) -> bool:
+
+    chat = await session.get(Chat, chat_id)
+    
+    if not chat:
+        return False
+        
+    await session.delete(chat)
+    await session.commit()
+    
+    return True
+
+async def delete_all_chats_for_user(session: AsyncSession, user_id: int) -> None:
+    query = select(Chat).where(Chat.user_id == user_id)
+    result = await session.execute(query)
+    chats = result.scalars().all()
+    
+    for chat in chats:
+        await session.delete(chat)
+    
+    await session.commit()
+    

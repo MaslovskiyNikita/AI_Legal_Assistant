@@ -248,3 +248,4 @@ Thumbs.db
 # Игнорируем все индексы (бинарные файлы FAISS и pickle)
 backend-llm/indexes/*
 !backend-llm/indexes/.gitkeep
+backend/uploads/

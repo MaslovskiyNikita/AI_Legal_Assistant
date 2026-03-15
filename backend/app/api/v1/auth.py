@@ -1,8 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.api.dependencies import get_db
-from app.schemas.user import UserAuthRequest, UserAuthResponse, UserProfileResponse
+from app.schemas.user import UserAuthRequest, UserAuthResponse, UserProfileResponse, UserSettingsUpdateRequest
 from app.services import user_service
 
 router = APIRouter(prefix="/api/v1", tags=["Users & Auth"])
@@ -15,10 +14,15 @@ async def login_or_register(request: UserAuthRequest, db: AsyncSession = Depends
 
 @router.get("/users/{telegram_id}", response_model=UserProfileResponse)
 async def get_profile(telegram_id: int, db: AsyncSession = Depends(get_db)):
-
     user = await user_service.get_user_by_telegram_id(db, telegram_id)
-    
     if not user:
         raise HTTPException(status_code=404, detail="Пользователь не найден")
-        
     return user
+
+
+@router.patch("/users/{user_id}/settings", response_model=UserProfileResponse)
+async def update_settings(user_id: int, settings: UserSettingsUpdateRequest, db: AsyncSession = Depends(get_db)):
+    updated_user = await user_service.update_user_settings(db, user_id, settings)
+    if not updated_user:
+        raise HTTPException(status_code=404, detail="Пользователь не найден")
+    return updated_user
