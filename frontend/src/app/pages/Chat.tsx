@@ -21,7 +21,79 @@ import {
 import { useNavigate, useParams, useLocation } from "react-router";
 import { apiClient } from "../api/client";
 import { exportToDocx, exportToPdf } from "../../utils/exportUtils";
+// Иконка файла (белый квадрат с цветным текстом)
+// Иконка файла (остается без изменений)
+// Иконка файла (остается без изменений)
+const FileIcon = ({ filename }: { filename: string }) => {
+  const ext = filename?.split(".").pop()?.toLowerCase();
+  let color = "text-[#3390EC]";
+  let label = "DOC";
 
+  if (ext === "pdf") {
+    color = "text-[#FF3B30]";
+    label = "PDF";
+  } else if (ext === "docx" || ext === "doc") {
+    color = "text-[#3390EC]";
+    label = "DOCX";
+  }
+
+  return (
+    <div className="w-11 h-11 bg-white rounded-[12px] flex items-center justify-center shrink-0 shadow-sm">
+      <span className={`${color} font-bold text-[11px]`}>{label}</span>
+    </div>
+  );
+};
+
+// Обновленная стопка файлов
+// Обновленная стопка файлов (статичная, без вылета при наведении)
+const StackedFiles = ({
+  file1,
+  file2,
+  onClick,
+}: {
+  file1: string;
+  file2: string;
+  onClick: () => void;
+}) => {
+  return (
+    <div className="flex flex-col items-end my-1 mt-10 relative z-20">
+      {/* 
+        Весь блок теперь кликабелен (cursor-pointer).
+        При нажатии будет легкое потускнение (active:opacity-80) для обратной связи.
+      */}
+      <div
+        onClick={onClick}
+        className="relative inline-flex cursor-pointer active:opacity-80 transition-opacity"
+      >
+        {/* Задняя карточка (просто статично сдвинута и повернута) */}
+        <div className="absolute inset-0 bg-[#297acc] rounded-[20px] p-2.5 pr-5 flex items-center shadow-md border border-white/20 transform origin-bottom-right rotate-[4deg] -translate-y-5 translate-x-2 z-0">
+          <FileIcon filename={file1} />
+          <div className="ml-3 flex flex-col flex-1 min-w-0">
+            <span className="text-white text-[15px] font-medium truncate">
+              {file1.replace(/\.(pdf|docx?)$/i, "")}
+            </span>
+            <span className="text-blue-100/80 text-[13px] mt-0.5">
+              Старая версия
+            </span>
+          </div>
+        </div>
+
+        {/* Передняя карточка */}
+        <div className="relative min-w-[200px] max-w-[280px] bg-[#3390EC] rounded-[20px] p-2.5 pr-5 flex items-center shadow-lg border border-white/20 z-10">
+          <FileIcon filename={file2} />
+          <div className="ml-3 flex flex-col flex-1 min-w-0">
+            <span className="text-white text-[16px] font-medium truncate shadow-sm">
+              {file2.replace(/\.(pdf|docx?)$/i, "")}
+            </span>
+            <span className="text-blue-100/80 text-[13px] mt-0.5">
+              Новая версия
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 // Вспомогательная функция для форматирования дат в стиле Telegram
 const formatDateLabel = (dateString: string) => {
   if (!dateString) return "";
@@ -85,6 +157,23 @@ export default function Chat() {
     navigator.clipboard.writeText(text);
     setCopiedMessageId(id);
     setTimeout(() => setCopiedMessageId(null), 2000);
+  };
+
+  // --- ДОБАВИТЬ ЭТОТ БЛОК ---
+  const handleFileClick = (filename: string) => {
+    // Ищем документ в состоянии chatDocuments по имени
+    const doc = chatDocuments.find(
+      (d) => d.filename === filename || d.name === filename,
+    );
+
+    if (doc && doc.id) {
+      // Если нашли, вызываем API для скачивания
+      apiClient.downloadDocument(doc.id, filename);
+    } else {
+      // Если документ не найден (на случай непредвиденной ошибки)
+      console.warn("Не удалось найти ID документа:", filename);
+      alert("Не удалось скачать файл. Документ не найден на сервере.");
+    }
   };
 
   const scrollToBottom = () => {
@@ -408,15 +497,22 @@ export default function Chat() {
       ? "last:after:content-[''] last:after:inline-block last:after:w-[54px] last:after:h-[10px]"
       : "last:after:content-[''] last:after:inline-block last:after:w-[68px] last:after:h-[10px]";
 
+    const fileMatch = textContent.match(
+      /Прикреплены документы для сравнения:\s*1\.\s*(.*?)\s*2\.\s*(.*)/,
+    );
+    const isFileStack = isUser && fileMatch;
+
     return (
       <div
         key={msg.id}
-        className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"} mb-3`}
+        // --- ИЗМЕНЕНИЕ 1: ДОБАВЛЕН relative z-20 ---
+        className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"} mb-3 relative z-20`}
       >
         <div
-          className={`relative max-w-[85%] sm:max-w-[75%] flex items-end min-w-0 ${isUser ? "ml-auto" : "mr-auto"}`}
+          className={`relative flex items-end min-w-0 ${isUser ? "ml-auto" : "mr-auto"} ${!isFileStack ? "max-w-[85%] sm:max-w-[75%]" : ""}`}
         >
-          {!isUser && (
+          {/* Хвостик для AI */}
+          {!isUser && !isFileStack && (
             <svg
               viewBox="0 0 8 13"
               width="8"
@@ -427,100 +523,114 @@ export default function Chat() {
             </svg>
           )}
 
-          <div
-            className={`relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words [word-break:break-word]
-              ${
-                isUser
-                  ? "bg-[#3390EC] text-white rounded-[18px] rounded-br-none"
-                  : "bg-[#F2F2F7] text-black rounded-[18px] rounded-bl-none"
-              }`}
-          >
-            <div className="w-full min-w-0">
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  p: ({ node, ref, ...props }) => (
-                    <p
-                      className={`mb-1 last:mb-0 whitespace-pre-wrap break-words [word-break:break-word] inline-block w-full
-                        ${showFooter ? spaceForTimeClass : ""}
-                      `}
-                      {...props}
-                    />
-                  ),
-                  table: ({ node, ref, ...props }) => (
-                    <div
-                      className={`overflow-x-auto my-2 rounded-xl bg-white text-black ${showFooter ? "last:mb-5" : ""}`}
-                    >
-                      <table className="w-full text-left text-sm" {...props} />
-                    </div>
-                  ),
-                  ul: ({ node, ref, ...props }) => (
-                    <ul
-                      className={`list-disc ml-5 mb-1 ${showFooter ? "last:mb-5" : ""}`}
-                      {...props}
-                    />
-                  ),
-                  ol: ({ node, ref, ...props }) => (
-                    <ol
-                      className={`list-decimal ml-5 mb-1 ${showFooter ? "last:mb-5" : ""}`}
-                      {...props}
-                    />
-                  ),
-                  th: ({ node, ref, ...props }) => (
-                    <th
-                      className="bg-[#F8F9FA] p-2 font-semibold border-b border-[#E5E5EA]"
-                      {...props}
-                    />
-                  ),
-                  td: ({ node, ref, ...props }) => (
-                    <td
-                      className="p-2 border-b border-[#E5E5EA] last:border-0"
-                      {...props}
-                    />
-                  ),
-                  a: ({ node, ref, ...props }) => (
-                    <a
-                      className={`${isUser ? "text-white underline" : "text-[#3390EC] underline"} break-all`}
-                      {...props}
-                    />
-                  ),
-                  li: ({ node, ref, ...props }) => (
-                    <li className="mb-1 break-words" {...props} />
-                  ),
-                  strong: ({ node, ref, ...props }) => (
-                    <strong className="font-semibold" {...props} />
-                  ),
-                }}
-              >
-                {textContent}
-              </ReactMarkdown>
+          {isFileStack ? (
+            <div className="flex flex-col items-end">
+              <StackedFiles
+                file1={fileMatch[1]}
+                file2={fileMatch[2]}
+                // --- ОТКРЫВАЕМ МОДАЛКУ ---
+                onClick={() => setIsDownloadModalOpen(true)}
+              />
             </div>
-
-            {showFooter && (
-              <div
-                className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none
-                  ${isUser ? "text-blue-100" : "text-[#8E8E93]"}`}
-              >
-                {!isUser && textContent && (
-                  <button
-                    onClick={() => handleCopy(textContent, msg.id)}
-                    className="flex items-center hover:text-[#3390EC] transition-colors cursor-pointer mr-0.5"
-                    title="Копировать"
-                  >
-                    {copiedMessageId === msg.id ? (
-                      <Check size={14} className="text-[#3390EC]" />
-                    ) : (
-                      <Copy size={13} />
-                    )}
-                  </button>
-                )}
-                <span>{timeString}</span>
-                {isUser && <CheckCheck size={14} className="text-white" />}
+          ) : (
+            /* СТАНДАРТНОЕ СООБЩЕНИЕ ... */
+            <div
+              className={`relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words [word-break:break-word]
+                ${
+                  isUser
+                    ? "bg-[#3390EC] text-white rounded-[18px] rounded-br-none"
+                    : "bg-[#F2F2F7] text-black rounded-[18px] rounded-bl-none"
+                }`}
+            >
+              <div className="w-full min-w-0">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ node, ref, ...props }) => (
+                      <p
+                        className={`mb-1 last:mb-0 whitespace-pre-wrap break-words [word-break:break-word] inline-block w-full ${showFooter ? spaceForTimeClass : ""}`}
+                        {...props}
+                      />
+                    ),
+                    table: ({ node, ref, ...props }) => (
+                      <div
+                        className={`overflow-x-auto my-2 rounded-xl bg-white text-black ${showFooter ? "last:mb-5" : ""}`}
+                      >
+                        <table
+                          className="w-full text-left text-sm"
+                          {...props}
+                        />
+                      </div>
+                    ),
+                    ul: ({ node, ref, ...props }) => (
+                      <ul
+                        className={`list-disc ml-5 mb-1 ${showFooter ? "last:mb-5" : ""}`}
+                        {...props}
+                      />
+                    ),
+                    ol: ({ node, ref, ...props }) => (
+                      <ol
+                        className={`list-decimal ml-5 mb-1 ${showFooter ? "last:mb-5" : ""}`}
+                        {...props}
+                      />
+                    ),
+                    th: ({ node, ref, ...props }) => (
+                      <th
+                        className="bg-[#F8F9FA] p-2 font-semibold border-b border-[#E5E5EA]"
+                        {...props}
+                      />
+                    ),
+                    td: ({ node, ref, ...props }) => (
+                      <td
+                        className="p-2 border-b border-[#E5E5EA] last:border-0"
+                        {...props}
+                      />
+                    ),
+                    a: ({ node, ref, ...props }) => (
+                      <a
+                        className={`${isUser ? "text-white underline" : "text-[#3390EC] underline"} break-all`}
+                        {...props}
+                      />
+                    ),
+                    li: ({ node, ref, ...props }) => (
+                      <li className="mb-1 break-words" {...props} />
+                    ),
+                    strong: ({ node, ref, ...props }) => (
+                      <strong className="font-semibold" {...props} />
+                    ),
+                  }}
+                >
+                  {textContent}
+                </ReactMarkdown>
               </div>
-            )}
-          </div>
 
-          {isUser && (
+              {showFooter && (
+                <div
+                  className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none
+                    ${isUser ? "text-blue-100" : "text-[#8E8E93]"}`}
+                >
+                  {!isUser && textContent && (
+                    <button
+                      onClick={() => handleCopy(textContent, msg.id)}
+                      className="flex items-center hover:text-[#3390EC] transition-colors cursor-pointer mr-0.5"
+                      title="Копировать"
+                    >
+                      {copiedMessageId === msg.id ? (
+                        <Check size={14} className="text-[#3390EC]" />
+                      ) : (
+                        <Copy size={13} />
+                      )}
+                    </button>
+                  )}
+                  <span>{timeString}</span>
+                  {isUser && <CheckCheck size={14} className="text-white" />}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Хвостик для пользователя (скрыт, если это стопка файлов) */}
+          {isUser && !isFileStack && (
             <svg
               viewBox="0 0 8 13"
               width="8"
@@ -763,9 +873,9 @@ export default function Chat() {
                     className="flex items-center justify-between bg-[#F2F2F7] p-3 rounded-2xl"
                   >
                     <div className="flex items-center gap-3 overflow-hidden pr-3">
-                      <div className="p-2 bg-white rounded-xl shrink-0 shadow-sm border border-[#E5E5EA]">
-                        <FileText size={20} className="text-[#3390EC]" />
-                      </div>
+                      {/* --- ИСПОЛЬЗУЕМ НАШУ КРУТУЮ ИКОНКУ --- */}
+                      <FileIcon filename={doc.filename || doc.name || ""} />
+
                       <span className="text-[15px] font-medium text-black truncate">
                         {doc.filename || doc.name || `Документ #${doc.id}`}
                       </span>
