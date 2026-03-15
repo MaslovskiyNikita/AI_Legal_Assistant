@@ -56,7 +56,7 @@ export default function Settings() {
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
   const [showAllChats, setShowAllChats] = useState(false);
-
+  const [showAllDocuments, setShowAllDocuments] = useState(false);
   const getChatDateStr = (chat: any) =>
     chat.created_at || chat.createdAt || chat.updated_at || null;
 
@@ -245,6 +245,11 @@ export default function Settings() {
     ),
   );
 
+  // Добавляем обрезку списка до 5 штук
+  const displayedDocuments = showAllDocuments
+    ? filteredDocuments
+    : filteredDocuments.slice(0, 5);
+
   // Массив конфигурации фильтров для рендера
   const filters = [
     { id: "all", label: "Все", icon: Layers },
@@ -362,6 +367,7 @@ export default function Settings() {
                   onClick={() => {
                     setFilterPeriod(filter.id as any);
                     setShowAllChats(false);
+                    setShowAllDocuments(false);
                   }}
                   className={`flex flex-col items-center justify-center h-[70px] rounded-2xl border transition-all cursor-pointer
                     ${isSelected ? "bg-[#3390EC] border-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-white border-[#E5E5EA] text-[#8E8E93] active:bg-[#F2F2F7]"}`}
@@ -493,62 +499,74 @@ export default function Settings() {
                 </p>
               </div>
             ) : (
-              filteredDocuments.map((doc: any, idx) => {
-                const isDownloading = downloadingDocId === doc.id;
-                const docDateStr =
-                  doc.created_at ||
-                  doc.createdAt ||
-                  doc.updated_at ||
-                  doc.chatDate;
-                const displayDate = docDateStr
-                  ? new Date(docDateStr).toLocaleDateString("ru-RU", {
-                      day: "numeric",
-                      month: "short",
-                    })
-                  : "Документ из чата";
-                return (
-                  <div
-                    key={doc.id}
-                    onClick={() => navigate(`/chat/${doc.chatId}`)}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 bg-white hover:bg-[#F9FAFB] active:bg-[#F2F2F7] transition-colors cursor-pointer text-left ${idx !== filteredDocuments.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden pr-2">
-                      <div className="w-10 h-10 rounded-lg bg-[#F0F8FF] border border-[#E5E5EA] flex items-center justify-center shrink-0">
-                        <FileText size={18} className="text-[#3390EC]" />
-                      </div>
-                      <div className="flex flex-col overflow-hidden">
-                        <span className="font-semibold text-[15px] text-black truncate">
-                          {doc.filename || `Документ #${doc.id}`}
-                        </span>
-                        <span className="text-[12px] text-[#8E8E93] mt-0.5 truncate">
-                          {displayDate} • {doc.chatTitle || "Консультация"}
-                        </span>
-                      </div>
-                    </div>
-                    <button
-                      onClick={(e) =>
-                        handleDownload(
-                          e,
-                          doc.id,
-                          doc.filename || "document.pdf",
-                        )
-                      }
-                      disabled={isDownloading}
-                      className="w-9 h-9 shrink-0 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#3390EC] hover:bg-[#E5E5EA] active:scale-95 transition-all"
+              <>
+                {displayedDocuments.map((doc: any, idx) => {
+                  const isDownloading = downloadingDocId === doc.id;
+                  const docDateStr =
+                    doc.created_at ||
+                    doc.createdAt ||
+                    doc.updated_at ||
+                    doc.chatDate;
+                  const displayDate = docDateStr
+                    ? new Date(docDateStr).toLocaleDateString("ru-RU", {
+                        day: "numeric",
+                        month: "short",
+                      })
+                    : "Документ из чата";
+                  return (
+                    <div
+                      key={doc.id}
+                      onClick={() => navigate(`/chat/${doc.chatId}`)}
+                      className={`w-full flex items-center justify-between px-4 py-3.5 bg-white hover:bg-[#F9FAFB] active:bg-[#F2F2F7] transition-colors cursor-pointer text-left ${idx !== displayedDocuments.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
                     >
-                      {isDownloading ? (
-                        <Loader2 size={16} className="animate-spin" />
-                      ) : (
-                        <Download size={16} />
-                      )}
-                    </button>
-                  </div>
-                );
-              })
+                      <div className="flex items-center gap-3 overflow-hidden pr-2">
+                        <div className="w-10 h-10 rounded-lg bg-[#F0F8FF] border border-[#E5E5EA] flex items-center justify-center shrink-0">
+                          <FileText size={18} className="text-[#3390EC]" />
+                        </div>
+                        <div className="flex flex-col overflow-hidden">
+                          <span className="font-semibold text-[15px] text-black truncate">
+                            {doc.filename || `Документ #${doc.id}`}
+                          </span>
+                          <span className="text-[12px] text-[#8E8E93] mt-0.5 truncate">
+                            {displayDate} • {doc.chatTitle || "Консультация"}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={(e) =>
+                          handleDownload(
+                            e,
+                            doc.id,
+                            doc.filename || "document.pdf",
+                          )
+                        }
+                        disabled={isDownloading}
+                        className="w-9 h-9 shrink-0 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#3390EC] hover:bg-[#E5E5EA] active:scale-95 transition-all"
+                      >
+                        {isDownloading ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Download size={16} />
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
+                {/* Кнопка Показать все для документов */}
+                {filteredDocuments.length > 5 && (
+                  <button
+                    onClick={() => setShowAllDocuments(!showAllDocuments)}
+                    className="w-full py-3.5 text-[15px] font-medium text-[#3390EC] bg-white active:bg-[#F2F2F7] transition-colors cursor-pointer border-t border-[#E5E5EA]"
+                  >
+                    {showAllDocuments
+                      ? "Скрыть"
+                      : `Показать все (${filteredDocuments.length})`}
+                  </button>
+                )}
+              </>
             )}
           </div>
         </section>
-
         {/* --- Раздел: Основные --- */}
         <section className="px-4 pt-4 shrink-0">
           <h3 className="text-[#8E8E93] text-[13px] font-medium uppercase tracking-wider ml-1 mb-2">

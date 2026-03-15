@@ -11,6 +11,7 @@ import {
   ArrowUp,
   Clock,
   Loader2,
+  Paperclip, // <-- 1. Добавили импорт Paperclip
 } from "lucide-react";
 
 import { apiClient } from "../api/client";
@@ -245,7 +246,7 @@ export default function Profile() {
                 Продолжить
               </h4>
 
-              {/* ОБНОВЛЕННАЯ СЕТКА: 3 карточки в ряд, ширина совпадает с быстрыми запросами */}
+              {/* ОБНОВЛЕННАЯ СЕТКА: 3 карточки в ряд */}
               <div className="grid grid-cols-3 gap-2 w-full">
                 {recentChats.map((chat) => (
                   <div
@@ -314,21 +315,33 @@ export default function Profile() {
       {/* Поле ввода снизу */}
       <div className="px-4 pb-6 pt-2 bg-white border-t border-[#F2F2F7]">
         <div className="flex items-end gap-2 w-full">
+          {/* --- 2. Добавили кнопку скрепки, стилизованную как в чате --- */}
+          <button
+            onClick={() =>
+              navigate("/chat/new", { state: { openCompareModal: true } })
+            }
+            className="w-10 h-10 mb-0.5 flex items-center justify-center rounded-full transition-colors shrink-0 cursor-pointer text-[#8E8E93] hover:text-[#3390EC]"
+            title="Прикрепить документы"
+          >
+            <Paperclip size={24} className="rotate-45" />
+          </button>
+
           <div className="flex-1 bg-[#F2F2F7] border border-[#E5E5EA] rounded-3xl min-h-[44px] flex items-center px-4 py-1 focus-within:border-[#3390EC] transition-colors">
             <input
               type="text"
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && startNewChat()}
-              placeholder="Спроси что угодно..."
+              placeholder="Напишите сообщение..."
               className="flex-1 bg-transparent border-none outline-none text-black text-[16px] placeholder:text-[#8E8E93]"
             />
           </div>
+
           <button
             onClick={() => startNewChat()}
             disabled={!inputText.trim()}
             className={`
-              w-[44px] h-[44px] shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-sm
+              w-[44px] h-[44px] shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-sm mb-0.5
               ${
                 inputText.trim()
                   ? "bg-[#3390EC] text-white shadow-blue-500/30"

@@ -17,13 +17,13 @@ import {
   Loader2,
   Copy,
   Check,
+  Files,
 } from "lucide-react";
 import { useNavigate, useParams, useLocation } from "react-router";
 import { apiClient } from "../api/client";
 import { exportToDocx, exportToPdf } from "../../utils/exportUtils";
-// Иконка файла (белый квадрат с цветным текстом)
-// Иконка файла (остается без изменений)
-// Иконка файла (остается без изменений)
+
+// Иконка формата файла
 const FileIcon = ({ filename }: { filename: string }) => {
   const ext = filename?.split(".").pop()?.toLowerCase();
   let color = "text-[#3390EC]";
@@ -44,8 +44,7 @@ const FileIcon = ({ filename }: { filename: string }) => {
   );
 };
 
-// Обновленная стопка файлов
-// Обновленная стопка файлов (статичная, без вылета при наведении)
+// Компонент стопки файлов в чате
 const StackedFiles = ({
   file1,
   file2,
@@ -57,15 +56,10 @@ const StackedFiles = ({
 }) => {
   return (
     <div className="flex flex-col items-end my-1 mt-10 relative z-20">
-      {/* 
-        Весь блок теперь кликабелен (cursor-pointer).
-        При нажатии будет легкое потускнение (active:opacity-80) для обратной связи.
-      */}
       <div
         onClick={onClick}
         className="relative inline-flex cursor-pointer active:opacity-80 transition-opacity"
       >
-        {/* Задняя карточка (просто статично сдвинута и повернута) */}
         <div className="absolute inset-0 bg-[#297acc] rounded-[20px] p-2.5 pr-5 flex items-center shadow-md border border-white/20 transform origin-bottom-right rotate-[4deg] -translate-y-5 translate-x-2 z-0">
           <FileIcon filename={file1} />
           <div className="ml-3 flex flex-col flex-1 min-w-0">
@@ -77,12 +71,10 @@ const StackedFiles = ({
             </span>
           </div>
         </div>
-
-        {/* Передняя карточка */}
         <div className="relative min-w-[200px] max-w-[280px] bg-[#3390EC] rounded-[20px] p-2.5 pr-5 flex items-center shadow-lg border border-white/20 z-10">
           <FileIcon filename={file2} />
           <div className="ml-3 flex flex-col flex-1 min-w-0">
-            <span className="text-white text-[16px] font-medium truncate shadow-sm">
+            <span className="text-white text-[16px] font-medium truncate">
               {file2.replace(/\.(pdf|docx?)$/i, "")}
             </span>
             <span className="text-blue-100/80 text-[13px] mt-0.5">
@@ -94,7 +86,8 @@ const StackedFiles = ({
     </div>
   );
 };
-// Вспомогательная функция для форматирования дат в стиле Telegram
+
+// Форматирование дат
 const formatDateLabel = (dateString: string) => {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -131,7 +124,6 @@ export default function Chat() {
   const isCreatingChat = useRef(false);
   const hasHandledInitialPrompt = useRef(false);
 
-  // --- Состояния для плавающей даты ---
   const [isScrolling, setIsScrolling] = useState(false);
   const [floatingDate, setFloatingDate] = useState<string | null>(null);
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -140,8 +132,6 @@ export default function Chat() {
   const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
   const [oldFile, setOldFile] = useState<File | null>(null);
   const [newFile, setNewFile] = useState<File | null>(null);
-  const [isComparing, setIsComparing] = useState(false);
-  const [compareError, setCompareError] = useState("");
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
@@ -153,27 +143,17 @@ export default function Chat() {
     number | string | null
   >(null);
 
+  const hasAttachedFiles = Boolean(oldFile && newFile);
+  const isFilesAttachedToChat = chatDocuments.length >= 2;
+  const canAttachFiles = !isFilesAttachedToChat;
+
+  // Иконка стопки файлов будет отображаться если файлы выбраны СЕЙЧАС или УЖЕ загружены в этот чат
+  const shouldShowAttachedIcon = hasAttachedFiles || isFilesAttachedToChat;
+
   const handleCopy = (text: string, id: number | string) => {
     navigator.clipboard.writeText(text);
     setCopiedMessageId(id);
     setTimeout(() => setCopiedMessageId(null), 2000);
-  };
-
-  // --- ДОБАВИТЬ ЭТОТ БЛОК ---
-  const handleFileClick = (filename: string) => {
-    // Ищем документ в состоянии chatDocuments по имени
-    const doc = chatDocuments.find(
-      (d) => d.filename === filename || d.name === filename,
-    );
-
-    if (doc && doc.id) {
-      // Если нашли, вызываем API для скачивания
-      apiClient.downloadDocument(doc.id, filename);
-    } else {
-      // Если документ не найден (на случай непредвиденной ошибки)
-      console.warn("Не удалось найти ID документа:", filename);
-      alert("Не удалось скачать файл. Документ не найден на сервере.");
-    }
   };
 
   const scrollToBottom = () => {
@@ -182,7 +162,7 @@ export default function Chat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isTyping]);
+  }, [messages, isTyping, oldFile, newFile]);
 
   useEffect(() => {
     if (currentChatId && currentChatId !== "new") {
@@ -190,7 +170,6 @@ export default function Chat() {
         isCreatingChat.current = false;
         return;
       }
-
       Promise.all([
         apiClient.getChat(Number(currentChatId)),
         apiClient.getChatDocuments(Number(currentChatId)),
@@ -253,143 +232,38 @@ export default function Chat() {
       console.error("Export failed", error);
       alert("Не удалось экспортировать чат.");
     } finally {
-      setTimeout(async () => {
+      setTimeout(() => {
         setIsExporting(false);
         setIsExportModalOpen(false);
       }, 500);
     }
   };
 
-  const handleCompareFiles = async () => {
-    if (!oldFile || !newFile || !internalUserId) {
-      setCompareError("Пожалуйста, выберите оба файла.");
-      return;
-    }
-    setIsComparing(true);
-    setCompareError("");
-    try {
-      let targetChatId = currentChatId;
-      if (!targetChatId || targetChatId === "new") {
-        const newChat = await apiClient.createChat({
-          user_id: internalUserId,
-          title: `Сравнение: ${oldFile.name.substring(0, 10)}...`,
-        });
-        targetChatId = newChat.id.toString();
-        isCreatingChat.current = true;
-        setCurrentChatId(targetChatId);
-        navigate(`/chat/${targetChatId}`, { replace: true });
-      }
-      setIsCompareModalOpen(false);
-
-      const uploadResponse = await apiClient.compareDocuments(
-        Number(targetChatId),
-        internalUserId,
-        oldFile,
-        newFile,
-      );
-
-      const comparisonId =
-        uploadResponse?.new_document_id || uploadResponse?.id;
-
-      setChatDocuments((prev) => [
-        ...prev,
-        { id: comparisonId - 1 || Date.now(), filename: oldFile.name },
-        { id: comparisonId || Date.now() + 1, filename: newFile.name },
-      ]);
-
-      const promptText = "Пожалуйста, проанализируй и сравни эти документы.";
-      const baseTime = Date.now();
-      const userMsg1Id = `msg_${baseTime}_user1`;
-      const userMsg2Id = `msg_${baseTime}_user2`;
-      const assistantMsgId = `msg_${baseTime}_ai`;
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: userMsg1Id,
-          role: "user",
-          text: `Прикреплены документы для сравнения: 1. ${oldFile.name} 2. ${newFile.name}`,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: userMsg2Id,
-          role: "user",
-          text: promptText,
-          created_at: new Date().toISOString(),
-        },
-        {
-          id: assistantMsgId,
-          role: "ai",
-          text: "",
-          created_at: new Date().toISOString(),
-          isComplete: false,
-        },
-      ]);
-
-      await apiClient.sendMessageStream(
-        Number(targetChatId),
-        { text: promptText, comparison_id: comparisonId },
-        (chunk) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? { ...msg, text: (msg.text || "") + chunk }
-                : msg,
-            ),
-          );
-        },
-      );
-
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMsgId ? { ...msg, isComplete: true } : msg,
-        ),
-      );
-      setOldFile(null);
-      setNewFile(null);
-    } catch (err) {
-      console.error(err);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: `msg_err_${Date.now()}`,
-          role: "ai",
-          text: "❌ Произошла ошибка при анализе.",
-          created_at: new Date().toISOString(),
-          isComplete: true,
-        },
-      ]);
-    } finally {
-      setIsComparing(false);
-    }
-  };
-
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
     const textToSend =
       typeof textOverride === "string" ? textOverride : inputText;
-    if (!textToSend.trim() || isTyping) return;
+
+    if (!textToSend.trim() && !hasAttachedFiles) return;
+    if (isTyping) return;
+
     setInputText("");
-
-    const userMsgId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}_user`;
-
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: userMsgId,
-        role: "user",
-        text: textToSend,
-        created_at: new Date().toISOString(),
-      },
-    ]);
     setIsTyping(true);
+
+    const finalPrompt = textToSend.trim();
+
     let activeChatId = currentChatId;
 
     try {
       if (activeChatId === "new" || !activeChatId) {
         if (!internalUserId) throw new Error("User ID not found");
+        const chatTitle =
+          hasAttachedFiles && oldFile
+            ? `Сравнение: ${oldFile.name.substring(0, 10)}...`
+            : finalPrompt.substring(0, 30) + "...";
+
         const newChat = await apiClient.createChat({
           user_id: internalUserId,
-          title: textToSend.substring(0, 30) + "...",
+          title: chatTitle,
         });
         activeChatId = newChat.id.toString();
         isCreatingChat.current = true;
@@ -397,8 +271,28 @@ export default function Chat() {
         navigate(`/chat/${activeChatId}`, { replace: true });
       }
 
-      const assistantMsgId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}_ai`;
+      const userMsgId = `msg_${Date.now()}_user`;
+      let userTextForUI = finalPrompt;
 
+      // Формируем текст сообщения, не добавляя лишнего системного текста, если пользователь ничего не написал
+      if (hasAttachedFiles && oldFile && newFile) {
+        userTextForUI = `Прикреплены документы для сравнения: 1. ${oldFile.name} 2. ${newFile.name}`;
+        if (finalPrompt) {
+          userTextForUI += `\n\n${finalPrompt}`;
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: userMsgId,
+          role: "user",
+          text: userTextForUI,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      const assistantMsgId = `msg_${Date.now()}_ai`;
       setMessages((prev) => [
         ...prev,
         {
@@ -410,9 +304,31 @@ export default function Chat() {
         },
       ]);
 
+      let comparisonId: number | undefined = undefined;
+
+      if (hasAttachedFiles && oldFile && newFile && internalUserId) {
+        const uploadResponse = await apiClient.compareDocuments(
+          Number(activeChatId),
+          internalUserId,
+          oldFile,
+          newFile,
+        );
+
+        comparisonId = uploadResponse?.new_document_id || uploadResponse?.id;
+
+        setChatDocuments((prev) => [
+          ...prev,
+          {
+            id: comparisonId ? comparisonId - 1 : Date.now(),
+            filename: oldFile.name,
+          },
+          { id: comparisonId || Date.now() + 1, filename: newFile.name },
+        ]);
+      }
+
       await apiClient.sendMessageStream(
         Number(activeChatId),
-        { text: textToSend },
+        { text: userTextForUI, comparison_id: comparisonId },
         (chunk) => {
           setMessages((prev) =>
             prev.map((msg) =>
@@ -423,14 +339,29 @@ export default function Chat() {
           );
         },
       );
+
       setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMsgId ? { ...msg, isComplete: true } : msg,
         ),
       );
+
+      if (hasAttachedFiles) {
+        setOldFile(null);
+        setNewFile(null);
+      }
     } catch (error) {
-      console.error("Error sending message:", error);
-      setMessages((prev) => prev.filter((msg) => msg.id !== userMsgId));
+      console.error("Error sending message or uploading files:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `msg_err_${Date.now()}`,
+          role: "ai",
+          text: "❌ Произошла ошибка при обработке запроса.",
+          created_at: new Date().toISOString(),
+          isComplete: true,
+        },
+      ]);
     } finally {
       setIsTyping(false);
     }
@@ -498,20 +429,27 @@ export default function Chat() {
       : "last:after:content-[''] last:after:inline-block last:after:w-[68px] last:after:h-[10px]";
 
     const fileMatch = textContent.match(
-      /Прикреплены документы для сравнения:\s*1\.\s*(.*?)\s*2\.\s*(.*)/,
+      /Прикреплены документы для сравнения:\s*1\.\s*(.*?)\s*2\.\s*([^\n]+)/,
     );
     const isFileStack = isUser && fileMatch;
+
+    // Если сообщение со стопкой файлов, достаем только реальный текст комментария (без префикса)
+    let remainingText = "";
+    if (isFileStack) {
+      remainingText = textContent
+        .replace(fileMatch[0], "")
+        .replace(/^\n+/, "")
+        .trim();
+    }
 
     return (
       <div
         key={msg.id}
-        // --- ИЗМЕНЕНИЕ 1: ДОБАВЛЕН relative z-20 ---
         className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"} mb-3 relative z-20`}
       >
         <div
           className={`relative flex items-end min-w-0 ${isUser ? "ml-auto" : "mr-auto"} ${!isFileStack ? "max-w-[85%] sm:max-w-[75%]" : ""}`}
         >
-          {/* Хвостик для AI */}
           {!isUser && !isFileStack && (
             <svg
               viewBox="0 0 8 13"
@@ -528,19 +466,44 @@ export default function Chat() {
               <StackedFiles
                 file1={fileMatch[1]}
                 file2={fileMatch[2]}
-                // --- ОТКРЫВАЕМ МОДАЛКУ ---
                 onClick={() => setIsDownloadModalOpen(true)}
               />
+
+              {/* Показываем пузырь с текстом только если пользователь действительно что-то написал */}
+              {remainingText && (
+                <div className="mt-2 relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words [word-break:break-word] bg-[#3390EC] text-white rounded-[18px] rounded-br-none">
+                  <ReactMarkdown
+                    components={{
+                      p: ({ node, ref, ...props }) => (
+                        <p
+                          className={`mb-1 last:mb-0 whitespace-pre-wrap break-words inline-block w-full ${spaceForTimeClass}`}
+                          {...props}
+                        />
+                      ),
+                    }}
+                  >
+                    {remainingText}
+                  </ReactMarkdown>
+
+                  <div className="absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none text-blue-100">
+                    <span>{timeString}</span>
+                    <CheckCheck size={14} className="text-white" />
+                  </div>
+
+                  <svg
+                    viewBox="0 0 8 13"
+                    width="8"
+                    height="13"
+                    className="absolute -right-[7px] bottom-0 text-[#3390EC] fill-current shrink-0"
+                  >
+                    <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" />
+                  </svg>
+                </div>
+              )}
             </div>
           ) : (
-            /* СТАНДАРТНОЕ СООБЩЕНИЕ ... */
             <div
-              className={`relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words [word-break:break-word]
-                ${
-                  isUser
-                    ? "bg-[#3390EC] text-white rounded-[18px] rounded-br-none"
-                    : "bg-[#F2F2F7] text-black rounded-[18px] rounded-bl-none"
-                }`}
+              className={`relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words [word-break:break-word] ${isUser ? "bg-[#3390EC] text-white rounded-[18px] rounded-br-none" : "bg-[#F2F2F7] text-black rounded-[18px] rounded-bl-none"}`}
             >
               <div className="w-full min-w-0">
                 <ReactMarkdown
@@ -548,7 +511,7 @@ export default function Chat() {
                   components={{
                     p: ({ node, ref, ...props }) => (
                       <p
-                        className={`mb-1 last:mb-0 whitespace-pre-wrap break-words [word-break:break-word] inline-block w-full ${showFooter ? spaceForTimeClass : ""}`}
+                        className={`mb-1 last:mb-0 whitespace-pre-wrap break-words inline-block w-full ${showFooter ? spaceForTimeClass : ""}`}
                         {...props}
                       />
                     ),
@@ -606,8 +569,7 @@ export default function Chat() {
 
               {showFooter && (
                 <div
-                  className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none
-                    ${isUser ? "text-blue-100" : "text-[#8E8E93]"}`}
+                  className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none ${isUser ? "text-blue-100" : "text-[#8E8E93]"}`}
                 >
                   {!isUser && textContent && (
                     <button
@@ -629,7 +591,6 @@ export default function Chat() {
             </div>
           )}
 
-          {/* Хвостик для пользователя (скрыт, если это стопка файлов) */}
           {isUser && !isFileStack && (
             <svg
               viewBox="0 0 8 13"
@@ -655,11 +616,9 @@ export default function Chat() {
           <ChevronLeft size={24} className="-ml-1" />
           <span className="text-[17px]">Назад</span>
         </button>
-
         <span className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-black">
           Legal Expert
         </span>
-
         <div className="relative">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -667,7 +626,6 @@ export default function Chat() {
           >
             <MoreVertical size={24} />
           </button>
-
           {isMenuOpen && (
             <>
               <div
@@ -716,14 +674,12 @@ export default function Chat() {
       </div>
 
       <div
-        className="flex-1 overflow-y-auto px-4 pt-2 pb-[140px] z-10 relative bg-white scroll-smooth"
+        className="flex-1 overflow-y-auto px-4 pt-2 pb-[160px] z-10 relative bg-white scroll-smooth"
         onScroll={handleScroll}
       >
         {groupedMessages.length > 0 && (
           <div
-            className={`sticky top-2 z-30 flex justify-center pointer-events-none transition-opacity duration-300 ${
-              isScrolling && floatingDate ? "opacity-100" : "opacity-0"
-            }`}
+            className={`sticky top-2 z-30 flex justify-center pointer-events-none transition-opacity duration-300 ${isScrolling && floatingDate ? "opacity-100" : "opacity-0"}`}
           >
             <span className="bg-black/15 backdrop-blur-md text-white text-[12px] font-medium px-3 py-1 rounded-full shadow-sm">
               {floatingDate}
@@ -751,8 +707,6 @@ export default function Chat() {
                 className="flex flex-col relative pb-2 message-group"
                 data-date={group.label}
               >
-                {/* --- ИЗМЕНЕНИЕ ЗДЕСЬ --- */}
-                {/* Статичная дата скрывается для самого первого блока вверху, чтобы не было дублирования */}
                 {groupIndex !== 0 && (
                   <div className="flex justify-center my-3">
                     <span className="bg-black/10 text-black/60 text-[12px] font-medium px-3 py-1 rounded-full">
@@ -760,7 +714,6 @@ export default function Chat() {
                     </span>
                   </div>
                 )}
-
                 {group.messages.map((msg, index) => (
                   <React.Fragment
                     key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
@@ -775,13 +728,59 @@ export default function Chat() {
         )}
       </div>
 
+      {/* --- ОБЛАСТЬ ВВОДА --- */}
       <div className="absolute bottom-0 left-0 w-full flex flex-col pt-2 pb-6 px-4 backdrop-blur-xl bg-white/90 border-t border-[#E5E5EA] z-20">
+        {oldFile && newFile && (
+          <div className="mb-3 w-full bg-[#F2F2F7] border border-[#E5E5EA] rounded-2xl p-3 flex flex-col gap-2 relative animate-in slide-in-from-bottom-2 duration-200 shadow-sm">
+            <button
+              onClick={() => {
+                setOldFile(null);
+                setNewFile(null);
+              }}
+              className="absolute top-2 right-2 p-1 text-[#8E8E93] hover:text-[#FF3B30] transition-colors rounded-full cursor-pointer bg-white shadow-sm"
+              title="Открепить файлы"
+            >
+              <X size={16} />
+            </button>
+            <span className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider pl-1">
+              Будут отправлены
+            </span>
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-2.5 text-[14px] text-black truncate pr-6 bg-white p-2 rounded-xl shadow-sm">
+                <FileText size={18} className="text-[#3390EC] shrink-0" />
+                <span className="truncate font-medium">{oldFile.name}</span>
+              </div>
+              <div className="flex items-center gap-2.5 text-[14px] text-black truncate pr-6 bg-white p-2 rounded-xl shadow-sm">
+                <FileText size={18} className="text-[#3390EC] shrink-0" />
+                <span className="truncate font-medium">{newFile.name}</span>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex items-end gap-2">
+          {/* Скрепка всегда на месте. Меняет вид, если файлы прикреплены. */}
           <button
-            onClick={() => setIsCompareModalOpen(true)}
-            className="w-10 h-10 mb-1 flex items-center justify-center rounded-full text-[#8E8E93] hover:text-[#3390EC] transition-colors shrink-0 cursor-pointer"
+            onClick={() => {
+              if (!canAttachFiles) {
+                alert(
+                  "В этом чате уже прикреплены документы.\nДля сравнения новых файлов, пожалуйста, создайте новый чат.",
+                );
+                return;
+              }
+              setIsCompareModalOpen(true);
+            }}
+            className={`w-10 h-10 mb-1 flex items-center justify-center rounded-full transition-colors shrink-0 cursor-pointer ${
+              shouldShowAttachedIcon
+                ? "text-[#3390EC] bg-[#E5F1FF]"
+                : "text-[#8E8E93] hover:text-[#3390EC]"
+            }`}
           >
-            <Paperclip size={24} className="rotate-45" />
+            {shouldShowAttachedIcon ? (
+              <Files size={22} />
+            ) : (
+              <Paperclip size={24} className="rotate-45" />
+            )}
           </button>
 
           <div className="flex-1 bg-[#F2F2F7] border border-[#E5E5EA] rounded-3xl min-h-[44px] max-h-[120px] flex items-end px-4 py-1.5 focus-within:border-[#3390EC] transition-colors">
@@ -794,7 +793,11 @@ export default function Chat() {
                   handleSend();
                 }
               }}
-              placeholder="Напишите сообщение..."
+              placeholder={
+                hasAttachedFiles
+                  ? "Напишите сообщение..."
+                  : "Напишите сообщение..."
+              }
               rows={1}
               className="flex-1 max-h-[100px] bg-transparent border-none outline-none text-black text-[16px] placeholder:text-[#8E8E93] resize-none py-1.5"
             />
@@ -802,22 +805,25 @@ export default function Chat() {
 
           <button
             onClick={() => handleSend()}
-            disabled={isTyping || !inputText.trim()}
+            disabled={isTyping || (!inputText.trim() && !hasAttachedFiles)}
             className={`w-[44px] h-[44px] shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-sm mb-0.5
               ${
-                inputText.trim()
+                inputText.trim() || hasAttachedFiles
                   ? "bg-[#3390EC] text-white shadow-blue-500/30"
                   : "bg-[#E5E5EA] text-[#8E8E93] cursor-not-allowed"
               }
             `}
           >
-            <ArrowUp size={20} strokeWidth={2.5} />
+            {isTyping ? (
+              <Loader2 size={20} className="animate-spin" />
+            ) : (
+              <ArrowUp size={20} strokeWidth={2.5} />
+            )}
           </button>
         </div>
       </div>
 
-      {/* --- МОДАЛКИ (Без изменений) --- */}
-
+      {/* --- МОДАЛКИ --- */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-[300px] flex flex-col items-center text-center overflow-hidden animate-in zoom-in-95 duration-200 shadow-2xl">
@@ -873,9 +879,7 @@ export default function Chat() {
                     className="flex items-center justify-between bg-[#F2F2F7] p-3 rounded-2xl"
                   >
                     <div className="flex items-center gap-3 overflow-hidden pr-3">
-                      {/* --- ИСПОЛЬЗУЕМ НАШУ КРУТУЮ ИКОНКУ --- */}
                       <FileIcon filename={doc.filename || doc.name || ""} />
-
                       <span className="text-[15px] font-medium text-black truncate">
                         {doc.filename || doc.name || `Документ #${doc.id}`}
                       </span>
@@ -945,7 +949,7 @@ export default function Chat() {
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl border border-[#E5E5EA]">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-[17px] font-semibold text-black">
-                Сравнение документов
+                Прикрепить файлы
               </h2>
               <button
                 onClick={() => setIsCompareModalOpen(false)}
@@ -977,21 +981,13 @@ export default function Chat() {
                 />
               </div>
             </div>
-            {compareError && (
-              <p className="text-[14px] text-[#FF3B30] mt-4 text-center">
-                {compareError}
-              </p>
-            )}
+
             <button
-              onClick={handleCompareFiles}
-              disabled={!oldFile || !newFile || isComparing}
+              onClick={() => setIsCompareModalOpen(false)}
+              disabled={!oldFile || !newFile}
               className="w-full bg-[#3390EC] text-white font-semibold text-[16px] py-3.5 rounded-xl mt-6 disabled:opacity-50 active:bg-blue-600 transition-colors shadow-sm shadow-blue-500/30 flex items-center justify-center gap-2"
             >
-              {isComparing ? (
-                <Loader2 size={20} className="animate-spin" />
-              ) : (
-                "Сравнить файлы"
-              )}
+              Сохранить выбор
             </button>
           </div>
         </div>
