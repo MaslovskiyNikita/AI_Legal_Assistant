@@ -1,6 +1,6 @@
 // src/api/client.ts
 
-const BASE_URL = "http://localhost:8023/api/v1/";
+const BASE_URL = "http://localhost:8023/api/v1";
 
 export const apiClient = {
   // Метод для сравнения (добавлены chatId и userId)
