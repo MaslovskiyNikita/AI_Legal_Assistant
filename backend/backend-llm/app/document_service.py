@@ -1,3 +1,4 @@
+import asyncio
 from io import BytesIO
 from typing import Dict, Any
 from .parser import DocxParser
@@ -13,11 +14,11 @@ class DocumentComparisonManager:
         Главная точка входа. Принимает байты, возвращает готовый словарь для API.
         """
         # 1. Парсинг
-        old_blocks = DocxParser.parse(BytesIO(old_file_content))
-        new_blocks = DocxParser.parse(BytesIO(new_file_content))
+        old_blocks = await asyncio.to_thread(DocxParser.parse, BytesIO(old_file_content))
+        new_blocks = await asyncio.to_thread(DocxParser.parse, BytesIO(new_file_content))
 
         # 2. Сравнение
-        diff_blocks = SmartDiffService.compare(old_blocks, new_blocks)
+        diff_blocks = await asyncio.to_thread(SmartDiffService.compare, old_blocks, new_blocks)
 
         # 3. Фильтрация значимых изменений
         meaningful_diffs = [b for b in diff_blocks if b.change_type != ChangeType.UNCHANGED]
@@ -36,7 +37,10 @@ class DocumentComparisonManager:
         # 4. AI Анализ
         analysis = await AiRiskAnalyzer.analyze_changes(meaningful_diffs)
 
-        return {
-            "diff_blocks": [b.model_dump() for b in meaningful_diffs],
-            "analysis": analysis.model_dump()
-        }
+        def prepare_response():
+            return {
+                "diff_blocks": [b.model_dump() for b in meaningful_diffs],
+                "analysis": analysis.model_dump()
+            }
+
+        return await asyncio.to_thread(prepare_response)

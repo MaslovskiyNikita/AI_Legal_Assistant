@@ -2,6 +2,7 @@ import re
 from io import BytesIO
 from docx import Document
 from ..models import DocumentBlock
+from docx.text.paragraph import Paragraph
 
 class DocxParser:
     STRUCTURAL_REGEX = re.compile(r"^(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.?)\s*", re.IGNORECASE)
@@ -16,7 +17,6 @@ class DocxParser:
         
         for element in doc.element.body:
             if element.tag.endswith('p'):  # Параграф
-                from docx.text.paragraph import Paragraph
                 p = Paragraph(element, doc)
                 text = p.text.strip()
                 if text:

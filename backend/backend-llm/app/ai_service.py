@@ -86,7 +86,7 @@ class AiRiskAnalyzer:
         query_text = " ".join(query_parts)
         
         try:
-            rag_docs = rag_service.search(query_text)
+            rag_docs = await rag_service.asearch(query_text)
         except Exception as e:
             print(f"RAG search error: {e}")
             rag_docs = []

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 from langchain_community.retrievers import BM25Retriever
@@ -90,6 +91,9 @@ class RagService:
                 final_docs.append(self.full_articles[key])
 
         return final_docs
+    async def asearch(self, query: str):
+        """Асинхронная обертка над синхронным поиском."""
+        return await asyncio.to_thread(self.search, query)
 
 
 rag_service = RagService()
