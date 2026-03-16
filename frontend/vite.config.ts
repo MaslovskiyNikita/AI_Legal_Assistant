@@ -17,7 +17,10 @@ export default defineConfig({
     },
   },
 
-  server: {},
+  // 👇 Вот здесь изменения 👇
+  server: {
+    allowedHosts: ["legal-assistant.kawun.su"],
+  },
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ["**/*.svg", "**/*.csv"],
