@@ -1,17 +1,14 @@
 // src/features/settings/components/SettingsHistory.tsx
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
   Clock,
-  CalendarDays,
-  CalendarRange,
-  Layers,
   MessageSquare,
   ChevronRight,
   FileText,
   Download,
-  Loader2,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import {
   SwipeableList,
@@ -19,7 +16,7 @@ import {
   SwipeAction,
   TrailingActions,
 } from "react-swipeable-list";
-import "react-swipeable-list/dist/styles.css"; // Обязательно импортируем стили!
+import "react-swipeable-list/dist/styles.css";
 
 interface SettingsHistoryProps {
   activeTab: "chats" | "documents";
@@ -44,7 +41,8 @@ interface SettingsHistoryProps {
     docId: number,
     filename: string,
   ) => void;
-  onDeleteChat?: (chatId: number) => void; // <-- Добавили проп для удаления
+  onDeleteChat?: (chatId: number) => void;
+  onDeleteDocument?: (docId: number) => void; // <-- Добавили проп
 }
 
 const filters = [
@@ -57,12 +55,35 @@ const filters = [
 export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
   const navigate = useNavigate();
 
-  // Функция, которая рендерит красную кнопку при свайпе влево
-  const trailingActions = (chatId: number) => (
+  // Стейт для анимации плавающего фона
+  const [activeIndex, setActiveIndex] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const index = filters.findIndex((f) => f.id === props.filterPeriod);
+    setActiveIndex(index !== -1 ? index : 0);
+  }, [props.filterPeriod]);
+
+  // Функция для красной кнопки свайпа (Чаты)
+  const trailingActionsChat = (chatId: number) => (
     <TrailingActions>
       <SwipeAction
-        destructive={true} // Анимация полного удаления при сильном свайпе
+        destructive={true}
         onClick={() => props.onDeleteChat && props.onDeleteChat(chatId)}
+      >
+        <div className="flex items-center justify-center w-20 bg-[#FF3B30] text-white h-full">
+          <Trash2 size={20} />
+        </div>
+      </SwipeAction>
+    </TrailingActions>
+  );
+
+  // Функция для красной кнопки свайпа (Документы)
+  const trailingActionsDoc = (docId: number) => (
+    <TrailingActions>
+      <SwipeAction
+        destructive={true}
+        onClick={() => props.onDeleteDocument && props.onDeleteDocument(docId)}
       >
         <div className="flex items-center justify-center w-20 bg-[#FF3B30] text-white h-full">
           <Trash2 size={20} />
@@ -81,9 +102,22 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </h3>
       </div>
 
-      {/* 1. НОВОЕ: Segmented Control (iOS Style) */}
+      {/* 1. ПЛАВНЫЙ SEGMENTED CONTROL */}
       <div className="px-4 mb-4">
-        <div className="flex items-center bg-[#E5E5EA] p-1 rounded-xl relative">
+        <div
+          ref={containerRef}
+          className="flex items-center bg-[#E5E5EA] p-1 rounded-xl relative"
+        >
+          {/* Плавающий белый фон */}
+          <div
+            className="absolute top-1 bottom-1 bg-white rounded-lg shadow-sm transition-transform duration-300 ease-out"
+            style={{
+              width: `calc(100% / ${filters.length} - 2px)`,
+              transform: `translateX(calc(${activeIndex * 100}% + ${activeIndex * 2}px))`,
+            }}
+          />
+
+          {/* Сами кнопки */}
           {filters.map((filter) => {
             const isSelected = props.filterPeriod === filter.id;
             return (
@@ -94,10 +128,8 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                   props.setShowAllChats(false);
                   props.setShowAllDocuments(false);
                 }}
-                className={`flex-1 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200 z-10 ${
-                  isSelected
-                    ? "text-black shadow-sm bg-white"
-                    : "text-[#8E8E93] hover:text-black"
+                className={`flex-1 py-1.5 text-[13px] font-medium rounded-lg transition-colors duration-300 z-10 ${
+                  isSelected ? "text-black" : "text-[#8E8E93] hover:text-black"
                 }`}
               >
                 {filter.label}
@@ -153,7 +185,6 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
             </div>
           ) : (
             <>
-              {/* 2. НОВОЕ: SwipeableList для чатов */}
               <SwipeableList threshold={0.5}>
                 {props.displayedChats.map((chat: any, idx) => {
                   const displayDate = chat.created_at
@@ -167,7 +198,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                   return (
                     <SwipeableListItem
                       key={chat.id}
-                      trailingActions={trailingActions(chat.id)}
+                      trailingActions={trailingActionsChat(chat.id)}
                       className={`w-full bg-white ${idx !== props.displayedChats.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
                     >
                       <div
@@ -212,7 +243,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
               )}
             </>
           )
-        ) : // Рендер документов (без свайпа, так как документы удаляются вместе с чатом)
+        ) : // 2. НОВОЕ: Свайп для документов
         props.allFilteredDocsCount === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
             <FileText size={32} className="text-[#C7C7CC] mb-3" />
@@ -220,58 +251,67 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
           </div>
         ) : (
           <>
-            {props.displayedDocuments.map((doc: any, idx) => {
-              const isDownloading = props.downloadingDocId === doc.id;
-              const docDateStr =
-                doc.created_at ||
-                doc.createdAt ||
-                doc.updated_at ||
-                doc.chatDate;
-              const displayDate = docDateStr
-                ? new Date(docDateStr).toLocaleDateString("ru-RU", {
-                    day: "numeric",
-                    month: "short",
-                  })
-                : "Документ из чата";
-              return (
-                <div
-                  key={doc.id}
-                  onClick={() => navigate(`/chat/${doc.chatId}`)}
-                  className={`w-full flex items-center justify-between px-4 py-3.5 bg-white hover:bg-[#F9FAFB] active:bg-[#F2F2F7] transition-colors cursor-pointer text-left ${idx !== props.displayedDocuments.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
-                >
-                  <div className="flex items-center gap-3 overflow-hidden pr-2">
-                    <div className="w-10 h-10 rounded-lg bg-[#F0F8FF] border border-[#E5E5EA] flex items-center justify-center shrink-0">
-                      <FileText size={18} className="text-[#3390EC]" />
-                    </div>
-                    <div className="flex flex-col overflow-hidden">
-                      <span className="font-semibold text-[15px] text-black truncate">
-                        {doc.filename || `Документ #${doc.id}`}
-                      </span>
-                      <span className="text-[12px] text-[#8E8E93] mt-0.5 truncate">
-                        {displayDate} • {doc.chatTitle || "Консультация"}
-                      </span>
-                    </div>
-                  </div>
-                  <button
-                    onClick={(e) =>
-                      props.handleDownload(
-                        e,
-                        doc.id,
-                        doc.filename || "document.pdf",
-                      )
-                    }
-                    disabled={isDownloading}
-                    className="w-9 h-9 shrink-0 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#3390EC] hover:bg-[#E5E5EA] active:scale-95 transition-all"
+            <SwipeableList threshold={0.5}>
+              {props.displayedDocuments.map((doc: any, idx) => {
+                const isDownloading = props.downloadingDocId === doc.id;
+                const docDateStr =
+                  doc.created_at ||
+                  doc.createdAt ||
+                  doc.updated_at ||
+                  doc.chatDate;
+                const displayDate = docDateStr
+                  ? new Date(docDateStr).toLocaleDateString("ru-RU", {
+                      day: "numeric",
+                      month: "short",
+                    })
+                  : "Документ из чата";
+                return (
+                  <SwipeableListItem
+                    key={doc.id}
+                    trailingActions={trailingActionsDoc(doc.id)}
+                    className={`w-full bg-white ${idx !== props.displayedDocuments.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
                   >
-                    {isDownloading ? (
-                      <Loader2 size={16} className="animate-spin" />
-                    ) : (
-                      <Download size={16} />
-                    )}
-                  </button>
-                </div>
-              );
-            })}
+                    <div
+                      onClick={() => navigate(`/chat/${doc.chatId}`)}
+                      className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[#F2F2F7] transition-colors cursor-pointer text-left"
+                    >
+                      <div className="flex items-center gap-3 overflow-hidden pr-2">
+                        <div className="w-10 h-10 rounded-lg bg-[#F0F8FF] border border-[#E5E5EA] flex items-center justify-center shrink-0">
+                          <FileText size={18} className="text-[#3390EC]" />
+                        </div>
+                        <div className="flex flex-col overflow-hidden">
+                          <span className="font-semibold text-[15px] text-black truncate">
+                            {doc.filename || `Документ #${doc.id}`}
+                          </span>
+                          <span className="text-[12px] text-[#8E8E93] mt-0.5 truncate">
+                            {displayDate} • {doc.chatTitle || "Консультация"}
+                          </span>
+                        </div>
+                      </div>
+                      {/* Кнопка скачивания (останавливаем всплытие клика, чтобы не переходить в чат) */}
+                      <button
+                        onClick={(e) =>
+                          props.handleDownload(
+                            e,
+                            doc.id,
+                            doc.filename || "document.pdf",
+                          )
+                        }
+                        disabled={isDownloading}
+                        className="w-9 h-9 shrink-0 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#3390EC] hover:bg-[#E5E5EA] active:scale-95 transition-all"
+                      >
+                        {isDownloading ? (
+                          <Loader2 size={16} className="animate-spin" />
+                        ) : (
+                          <Download size={16} />
+                        )}
+                      </button>
+                    </div>
+                  </SwipeableListItem>
+                );
+              })}
+            </SwipeableList>
+
             {props.allFilteredDocsCount > 5 && (
               <button
                 onClick={() =>
