@@ -1,15 +1,15 @@
 import json
 import re
-from typing import List
+from typing import List, Optional, Dict
 import asyncio
 
 import httpx
 from pydantic import BaseModel
 
-from .settings import settings
-from .models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis, BlockDiff, ChangeType
+from settings import settings
+from models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis, BlockDiff, ChangeType
 
-from .rag_service import rag_service
+from rag_service import rag_service
 
 
 class AiRiskAnalyzer:
@@ -229,42 +229,85 @@ class AiRiskAnalyzer:
         )
 
     @staticmethod
-    async def answer_question(document_text: str, question: str, chat_history: List[dict] = None, analysis_context: str = None) -> str:
+    async def answer_question(
+            question: str,
+            chat_history: List[Dict[str, str]],
+            document_text: Optional[str] = None,
+            analysis_summary: Optional[str] = None
+    ) -> str:
         """
-        Отвечает на вопрос по документу, используя контекст чата и результаты анализа.
+        Генерирует ответ LLM на основе вопроса пользователя, истории чата,
+        полного текста документа и результатов анализа рисков.
+
+        :param question: Текущий вопрос пользователя.
+        :param chat_history: История сообщений в формате [{"role": "user", "text": "..."}]
+        :param document_text: Полный текст актуального (нового) документа.
+        :param analysis_summary: Строка с выводами AI по рискам (если документ проверялся).
+        :return: Текст ответа ассистента.
         """
         api_key = settings.OPENROUTER_API_KEY
-
         if not api_key or api_key == "ВАШ_КЛЮЧ":
-            return "Извините, сервис LLM недоступен. Попробуйте позже."
+            return "Извините, сервис LLM временно недоступен. Проверьте настройки API."
 
+        # ==========================================
+        # 1. RAG: Поиск релевантных законов РБ
+        # ==========================================
+        rag_context = ""
+        try:
+            rag_docs = await rag_service.asearch(question)
+            if rag_docs:
+                rag_parts = []
+                for doc in rag_docs:
+                    article = doc.metadata.get('article', 'Б/Н')
+                    source = doc.metadata.get('source', 'Законодательство РБ')
+                    rag_parts.append(f"- {source}, Статья {article}:\n{doc.page_content}")
+                rag_context = "\n\n".join(rag_parts)
+        except Exception as e:
+            print(f"Ошибка RAG в чате: {e}")
+
+        # ==========================================
+        # 2. Подготовка истории чата (последние 5 сообщений)
+        # ==========================================
         history_text = ""
-        if chat_history:
-            for msg in chat_history[-10:]:  # Последние 10 сообщений
-                role = "Пользователь" if msg["role"] == "user" else "Ассистент"
-                history_text += f"{role}: {msg['content']}\n"
+        for msg in chat_history[-8:]:
+            role = msg.get("role", "user")
+            text = msg.get("text", "")
+            role_name = "Пользователь" if role == "user" else "Ассистент (Игорь Тикумс)"
+            history_text += f"{role_name}: {text}\n"
 
-        # Добавляем блок с анализом в промпт, если он есть
-        analysis_part = ""
-        if analysis_context:
-            analysis_part = f"\nРанее ты провел анализ этого документа и сделал следующие выводы:\n{analysis_context}\n"
+        if not history_text:
+            history_text = "Это первое сообщение в диалоге."
 
-        prompt = f"""
-Ты — Игорь Тикумс, ведущий юрисконсульт в Республике Беларусь.
-Отвечай на вопросы пользователя по документу и проведенному тобой анализу рисков.
+        # ==========================================
+        # 3. Формирование Системного Промпта
+        # ==========================================
+        system_prompt = f"""Ты — Игорь Тикумс, опытный, строгий и лаконичный юрисконсульт Республики Беларусь.
+Твоя задача — отвечать на вопросы пользователя, опираясь на предоставленный документ и законодательство РБ.
 
-Документ:
-{document_text}
-{analysis_part}
+--- БАЗА ЗНАНИЙ (Найденные законы) ---
+{rag_context if rag_context else "Специфических статей под этот вопрос не найдено. Опирайся на общие нормы права Республики Беларусь."}
 
-История чата:
-{history_text}
+--- ТЕКСТ ДОКУМЕНТА ---
+{document_text if document_text else "Документ не предоставлен."}
 
-Вопрос: {question}
+--- РЕЗУЛЬТАТЫ АНАЛИЗА РИСКОВ ПО ЭТОМУ ДОКУМЕНТУ ---
+{analysis_summary if analysis_summary else "Анализ рисков не проводился."}
 
-Инструкция: Если пользователь спрашивает про риски или твои оценки, опирайся на предоставленный блок анализа.
-Ответь кратко и по делу на русском языке.
-        """.strip()
+ИНСТРУКЦИЯ (СТРОГО СОБЛЮДАТЬ):
+1. Отвечай по существу вопроса. Без лишних вступлений ("Здравствуйте", "Конечно, я помогу").
+2. Если в "БАЗЕ ЗНАНИЙ" есть подходящая статья — обязательно ссылайся на неё. Если статьи нет, не выдумывай номера несуществующих законов.
+3. Если вопрос касается содержания документа, ищи ответ в блоке "ТЕКСТ ДОКУМЕНТА".
+4. Если пользователь спрашивает про выявленные риски или изменения — опирайся на "РЕЗУЛЬТАТЫ АНАЛИЗА РИСКОВ".
+5. Если ответ не найден ни в документе, ни в законах, отвечай: "В предоставленном документе и базе знаний нет информации по этому вопросу".
+"""
+
+        # ==========================================
+        # 4. Формирование сообщений для API
+        # ==========================================
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": f"Контекст беседы:\n{history_text}\n\nМой вопрос: {question}"}
+        ]
 
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -272,6 +315,9 @@ class AiRiskAnalyzer:
             "X-Title": settings.OPENROUTER_TITLE,
         }
 
+        # ==========================================
+        # 5. Вызов LLM (OpenRouter)
+        # ==========================================
         try:
             async with httpx.AsyncClient(timeout=settings.OPENROUTER_TIMEOUT) as client:
                 response = await client.post(
@@ -279,16 +325,13 @@ class AiRiskAnalyzer:
                     headers=headers,
                     json={
                         "model": settings.OPENROUTER_MODEL,
-                        "messages": [{"role": "user", "content": prompt}],
+                        "messages": messages,
+                        "temperature": 0.2
                     },
                 )
                 response.raise_for_status()
-
-                if response.encoding is None:
-                    response.encoding = "utf-8"
-
                 data = response.json()
-                content = data["choices"][0]["message"]["content"]
-                return content.strip()
+                return data["choices"][0]["message"]["content"].strip()
         except Exception as e:
-            return f"Ошибка при обработке запроса: {e}"
+            print(f"Ошибка API OpenRouter: {e}")
+            return "Произошла техническая ошибка при обращении к AI-ассистенту. Пожалуйста, попробуйте позже."
