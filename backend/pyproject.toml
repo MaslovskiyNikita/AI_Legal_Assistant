@@ -16,6 +16,14 @@ getenv = "^0.2.0"
 dotenv = "^0.9.9"
 python-multipart = "^0.0.22"
 aiofiles = "^25.1.0"
+python-docx = "^1.2.0"
+httpx = "^0.28.1"
+langchain = "^1.2.12"
+langchain-community = "^0.4.1"
+langchain-huggingface = "^1.2.1"
+rank-bm25 = "^0.2.2"
+langchain-postgres = "^0.0.17"
+psycopg2-binary = "^2.9.11"
 
 
 [build-system]
