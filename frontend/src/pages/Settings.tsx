@@ -57,6 +57,7 @@ export default function Settings() {
           setShowAllDocuments={settings.setShowAllDocuments}
           downloadingDocId={settings.downloadingDocId}
           handleDownload={settings.handleDownload}
+          onDeleteChat={settings.handleDeleteChat}
         />
 
         <SettingsOptions

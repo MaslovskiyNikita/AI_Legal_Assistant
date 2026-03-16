@@ -33,14 +33,23 @@ export const apiClient = {
     return await response.text();
   },
 
-  // Метод для скачивания документа напрямую в браузер
+  // Метод для скачивания документа (Адаптирован под Telegram)
   async downloadDocument(documentId: number, filename: string = "document") {
-    const response = await fetch(
-      `${BASE_URL}/documents/${documentId}/download`,
-    );
+    const downloadUrl = `${BASE_URL}/documents/${documentId}/download`;
+
+    // Проверяем, открыто ли приложение внутри Telegram
+    // @ts-ignore
+    if (window.Telegram?.WebApp?.initData) {
+      // Отдаем ссылку самому Телеграму, он откроет её нативным загрузчиком iOS/Android
+      // @ts-ignore
+      window.Telegram.WebApp.openLink(downloadUrl);
+      return;
+    }
+
+    // Фолбэк: если открыто просто в браузере Chrome/Safari на ПК
+    const response = await fetch(downloadUrl);
     if (!response.ok) throw new Error("Download failed");
 
-    // Превращаем ответ в Blob и триггерим скачивание
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");

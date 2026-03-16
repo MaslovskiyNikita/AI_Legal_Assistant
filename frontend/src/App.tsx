@@ -2,6 +2,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { useAuth } from "./hooks/useAuth";
+import { ToastProvider } from "./hooks/useToast"; // <-- Импортировали провайдер уведомлений
 
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
@@ -33,11 +34,14 @@ function AuthRouter() {
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-black flex justify-center font-sans">
-        <div className="w-full max-w-md bg-[#1C1C1D] relative shadow-2xl overflow-hidden">
-          <AuthRouter />
+      {/* Оборачиваем всё приложение в ToastProvider */}
+      <ToastProvider>
+        <div className="min-h-screen bg-black flex justify-center font-sans">
+          <div className="w-full max-w-md bg-[#1C1C1D] relative shadow-2xl overflow-hidden">
+            <AuthRouter />
+          </div>
         </div>
-      </div>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

@@ -1,12 +1,22 @@
 // src/features/chat/components/ChatInput.tsx
 import React from "react";
-import { X, FileText, Files, Paperclip, Loader2, ArrowUp } from "lucide-react";
+import {
+  X,
+  FileText,
+  Files,
+  Paperclip,
+  Loader2,
+  ArrowUp,
+  Sparkles,
+  Table,
+  ShieldAlert,
+} from "lucide-react";
 
 interface ChatInputProps {
   inputText: string;
   setInputText: (val: string) => void;
   isTyping: boolean;
-  handleSend: () => void;
+  handleSend: (textOverride?: string) => void;
   oldFile: File | null;
   newFile: File | null;
   setOldFile: (val: File | null) => void;
@@ -16,6 +26,30 @@ interface ChatInputProps {
   onOpenCompareModal: () => void;
   onOpenFileLimitModal: () => void;
 }
+
+// Массив быстрых действий (Чипсы)
+const QUICK_ACTIONS = [
+  {
+    id: "summary",
+    label: "Выжимка", // Было "Сделать выжимку"
+    icon: Sparkles,
+    prompt: "Сделай краткую выжимку главных изменений в документах.",
+  },
+  {
+    id: "table",
+    label: "Таблица", // Было "В виде таблицы"
+    icon: Table,
+    prompt:
+      "Покажи изменения в виде таблицы со столбцами: Было | Стало | Уровень риска.",
+  },
+  {
+    id: "risks",
+    label: "Риски", // Было "Скрытые риски"
+    icon: ShieldAlert,
+    prompt:
+      "Проигнорируй мелкие правки и найди только скрытые юридические риски в новой редакции.",
+  },
+];
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   inputText,
@@ -35,6 +69,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className="absolute bottom-0 left-0 w-full flex flex-col pt-2 pb-6 px-4 backdrop-blur-xl bg-white/90 border-t border-[#E5E5EA] z-20">
+      {/* 1. Зона прикрепленных файлов (если есть) */}
       {oldFile && newFile && (
         <div className="mb-3 w-full bg-[#F2F2F7] border border-[#E5E5EA] rounded-2xl p-3 flex flex-col gap-2 relative animate-in slide-in-from-bottom-2 duration-200 shadow-sm">
           <button
@@ -63,6 +98,25 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
 
+      {/* 2. НОВОЕ: Быстрые действия (Чипсы) */}
+      <div className="flex items-center justify-between gap-1.5 mb-3 w-full">
+        {QUICK_ACTIONS.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button
+              key={action.id}
+              onClick={() => handleSend(action.prompt)}
+              disabled={isTyping}
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-[#F2F2F7] hover:bg-[#E5E5EA] active:bg-[#D1D1D6] text-[#3A3A3C] rounded-xl text-[12px] font-medium transition-colors disabled:opacity-50 border border-[#E5E5EA] min-w-0"
+            >
+              <Icon size={12} className="text-[#3390EC] shrink-0" />
+              <span className="truncate">{action.label}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 3. Основная строка ввода */}
       <div className="flex items-end gap-2">
         <button
           onClick={() => {

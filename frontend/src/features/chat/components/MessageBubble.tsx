@@ -10,6 +10,7 @@ interface MessageBubbleProps {
   copiedMessageId: number | string | null;
   onCopy: (text: string, id: number | string) => void;
   onDownloadClick: () => void;
+  isScanning?: boolean; // <-- Добавили в интерфейс
 }
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
@@ -17,6 +18,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   copiedMessageId,
   onCopy,
   onDownloadClick,
+  isScanning, // <-- Достали из пропсов
 }) => {
   const isUser = msg.role === "user";
   const timeString = new Date(msg.created_at).toLocaleTimeString("ru-RU", {
@@ -67,6 +69,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               file1={fileMatch[1]}
               file2={fileMatch[2]}
               onClick={onDownloadClick}
+              isScanning={isScanning} // <-- Передаем в стопку файлов
             />
 
             {remainingText && (

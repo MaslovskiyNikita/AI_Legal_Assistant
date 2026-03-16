@@ -1,9 +1,11 @@
 // src/features/chat/components/ChatModals.tsx
 import React from "react";
-import { X, Download, Share2 } from "lucide-react";
+import { X, Download, Share2, UploadCloud } from "lucide-react";
 import { useNavigate } from "react-router";
 import { FileIcon } from "../../../components/ui/FileIcon";
 import { apiClient } from "../../../api/client";
+import { formatFileSize } from "../../../utils/fileUtils";
+import { useToast } from "../../../hooks/useToast"; // <-- Импортировали хук уведомлений
 
 interface ChatModalsProps {
   // Delete
@@ -37,6 +39,38 @@ interface ChatModalsProps {
 
 export const ChatModals: React.FC<ChatModalsProps> = (props) => {
   const navigate = useNavigate();
+  const { showToast } = useToast(); // <-- Достали функцию показа уведомлений
+
+  // Функция валидации файлов
+  const handleFileSelect = (
+    file: File | null,
+    setFile: (f: File | null) => void,
+  ) => {
+    if (!file) return;
+
+    // Проверка размера (10 МБ)
+    if (file.size > 10 * 1024 * 1024) {
+      showToast("Файл слишком большой. Максимум 10 МБ.", "error");
+      return;
+    }
+
+    // Проверка формата
+    const validTypes = [
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    if (
+      !validTypes.includes(file.type) &&
+      !file.name.match(/\.(pdf|doc|docx)$/i)
+    ) {
+      showToast("Неверный формат. Загрузите PDF или DOCX.", "error");
+      return;
+    }
+
+    setFile(file);
+  };
 
   return (
     <>
@@ -179,30 +213,110 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
               </button>
             </div>
             <div className="space-y-4">
+              {/* Старая версия */}
               <div>
                 <label className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider block mb-2">
                   Старая версия
                 </label>
-                <input
-                  type="file"
-                  onChange={(e) =>
-                    props.setOldFile(e.target.files?.[0] || null)
-                  }
-                  className="w-full text-sm text-black file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-[#F2F2F7] file:text-[#3390EC] hover:file:bg-[#E5E5EA] cursor-pointer"
-                />
+                {!props.oldFile ? (
+                  <label
+                    htmlFor="old-file"
+                    className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#E5E5EA] rounded-xl bg-[#F9FAFB] hover:bg-[#F2F2F7] transition-colors cursor-pointer"
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <UploadCloud size={24} className="text-[#8E8E93] mb-2" />
+                      <p className="text-sm text-[#8E8E93] font-medium">
+                        Нажмите для загрузки
+                      </p>
+                    </div>
+                    <input
+                      id="old-file"
+                      type="file"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleFileSelect(
+                          e.target.files?.[0] || null,
+                          props.setOldFile,
+                        )
+                      } // <-- Используем валидацию
+                      accept=".pdf,.doc,.docx"
+                    />
+                  </label>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-[#F0F8FF] border border-[#3390EC]/30 rounded-xl">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <FileIcon filename={props.oldFile.name} />
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="text-[14px] font-medium text-black truncate">
+                          {props.oldFile.name}
+                        </span>
+                        <span className="text-[12px] text-[#8E8E93]">
+                          {formatFileSize(props.oldFile.size)}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => props.setOldFile(null)}
+                      className="p-1.5 text-[#8E8E93] hover:text-[#FF3B30] transition-colors rounded-full bg-white shadow-sm"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
+
               <div className="h-[1px] bg-[#E5E5EA]" />
+
+              {/* Новая версия */}
               <div>
                 <label className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider block mb-2">
                   Новая версия
                 </label>
-                <input
-                  type="file"
-                  onChange={(e) =>
-                    props.setNewFile(e.target.files?.[0] || null)
-                  }
-                  className="w-full text-sm text-black file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-medium file:bg-[#F2F2F7] file:text-[#3390EC] hover:file:bg-[#E5E5EA] cursor-pointer"
-                />
+                {!props.newFile ? (
+                  <label
+                    htmlFor="new-file"
+                    className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-[#E5E5EA] rounded-xl bg-[#F9FAFB] hover:bg-[#F2F2F7] transition-colors cursor-pointer"
+                  >
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <UploadCloud size={24} className="text-[#8E8E93] mb-2" />
+                      <p className="text-sm text-[#8E8E93] font-medium">
+                        Нажмите для загрузки
+                      </p>
+                    </div>
+                    <input
+                      id="new-file"
+                      type="file"
+                      className="hidden"
+                      onChange={(e) =>
+                        handleFileSelect(
+                          e.target.files?.[0] || null,
+                          props.setNewFile,
+                        )
+                      } // <-- Используем валидацию
+                      accept=".pdf,.doc,.docx"
+                    />
+                  </label>
+                ) : (
+                  <div className="flex items-center justify-between p-3 bg-[#F0F8FF] border border-[#3390EC]/30 rounded-xl">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <FileIcon filename={props.newFile.name} />
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="text-[14px] font-medium text-black truncate">
+                          {props.newFile.name}
+                        </span>
+                        <span className="text-[12px] text-[#8E8E93]">
+                          {formatFileSize(props.newFile.size)}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => props.setNewFile(null)}
+                      className="p-1.5 text-[#8E8E93] hover:text-[#FF3B30] transition-colors rounded-full bg-white shadow-sm"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <button

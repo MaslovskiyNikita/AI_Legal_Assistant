@@ -11,7 +11,15 @@ import {
   FileText,
   Download,
   Loader2,
+  Trash2,
 } from "lucide-react";
+import {
+  SwipeableList,
+  SwipeableListItem,
+  SwipeAction,
+  TrailingActions,
+} from "react-swipeable-list";
+import "react-swipeable-list/dist/styles.css"; // Обязательно импортируем стили!
 
 interface SettingsHistoryProps {
   activeTab: "chats" | "documents";
@@ -36,17 +44,32 @@ interface SettingsHistoryProps {
     docId: number,
     filename: string,
   ) => void;
+  onDeleteChat?: (chatId: number) => void; // <-- Добавили проп для удаления
 }
 
 const filters = [
-  { id: "all", label: "Все", icon: Layers },
-  { id: "today", label: "Сегодня", icon: Clock },
-  { id: "week", label: "Неделя", icon: CalendarDays },
-  { id: "custom", label: "Период", icon: CalendarRange },
+  { id: "all", label: "Все" },
+  { id: "today", label: "Сегодня" },
+  { id: "week", label: "Неделя" },
+  { id: "custom", label: "Период" },
 ];
 
 export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
   const navigate = useNavigate();
+
+  // Функция, которая рендерит красную кнопку при свайпе влево
+  const trailingActions = (chatId: number) => (
+    <TrailingActions>
+      <SwipeAction
+        destructive={true} // Анимация полного удаления при сильном свайпе
+        onClick={() => props.onDeleteChat && props.onDeleteChat(chatId)}
+      >
+        <div className="flex items-center justify-center w-20 bg-[#FF3B30] text-white h-full">
+          <Trash2 size={20} />
+        </div>
+      </SwipeAction>
+    </TrailingActions>
+  );
 
   return (
     <section className="pt-2 animate-in fade-in duration-300 shrink-0">
@@ -58,34 +81,33 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </h3>
       </div>
 
-      <div className="grid grid-cols-4 gap-2 px-4 mb-4">
-        {filters.map((filter) => {
-          const isSelected = props.filterPeriod === filter.id;
-          const Icon = filter.icon;
-          return (
-            <button
-              key={filter.id}
-              onClick={() => {
-                props.setFilterPeriod(filter.id);
-                props.setShowAllChats(false);
-                props.setShowAllDocuments(false);
-              }}
-              className={`flex flex-col items-center justify-center h-[70px] rounded-2xl border transition-all cursor-pointer ${isSelected ? "bg-[#3390EC] border-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-white border-[#E5E5EA] text-[#8E8E93] active:bg-[#F2F2F7]"}`}
-            >
-              <Icon
-                size={20}
-                className={`mb-1.5 ${isSelected ? "text-white" : "text-black"}`}
-              />
-              <span
-                className={`text-[10px] uppercase font-bold tracking-wider ${isSelected ? "text-white/90" : "text-[#8E8E93]"}`}
+      {/* 1. НОВОЕ: Segmented Control (iOS Style) */}
+      <div className="px-4 mb-4">
+        <div className="flex items-center bg-[#E5E5EA] p-1 rounded-xl relative">
+          {filters.map((filter) => {
+            const isSelected = props.filterPeriod === filter.id;
+            return (
+              <button
+                key={filter.id}
+                onClick={() => {
+                  props.setFilterPeriod(filter.id);
+                  props.setShowAllChats(false);
+                  props.setShowAllDocuments(false);
+                }}
+                className={`flex-1 py-1.5 text-[13px] font-medium rounded-lg transition-all duration-200 z-10 ${
+                  isSelected
+                    ? "text-black shadow-sm bg-white"
+                    : "text-[#8E8E93] hover:text-black"
+                }`}
               >
                 {filter.label}
-              </span>
-            </button>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
+      {/* ИНПУТЫ ДЛЯ КАСТОМНОГО ПЕРИОДА */}
       {props.filterPeriod === "custom" && (
         <div className="mx-4 mb-4 flex items-center gap-2 animate-in slide-in-from-top-2 fade-in duration-200">
           <input
@@ -104,10 +126,24 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </div>
       )}
 
+      {/* КОНТЕЙНЕР СО СПИСКОМ */}
       <div className="mx-4 bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden flex flex-col min-h-[120px] shadow-sm">
         {props.isLoadingStats ? (
-          <div className="flex-1 flex items-center justify-center py-8">
-            <Loader2 size={24} className="animate-spin text-[#8E8E93]" />
+          <div className="w-full flex flex-col">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] last:border-0"
+              >
+                <div className="flex items-center gap-3 w-full">
+                  <div className="w-9 h-9 rounded-full bg-[#F2F2F7] animate-pulse shrink-0"></div>
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="h-4 bg-[#F2F2F7] rounded animate-pulse w-3/4"></div>
+                    <div className="h-3 bg-[#F2F2F7] rounded animate-pulse w-1/3"></div>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : props.activeTab === "chats" ? (
           props.allFilteredChatsCount === 0 ? (
@@ -117,41 +153,53 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
             </div>
           ) : (
             <>
-              {props.displayedChats.map((chat: any, idx) => {
-                const displayDate = chat.created_at
-                  ? new Date(chat.created_at).toLocaleDateString("ru-RU", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
-                  : "";
-                return (
-                  <button
-                    key={chat.id}
-                    onClick={() => navigate(`/chat/${chat.id}`)}
-                    className={`w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[#F2F2F7] transition-colors cursor-pointer text-left ${idx !== props.displayedChats.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
-                  >
-                    <div className="flex items-center gap-3 overflow-hidden pr-4">
-                      <div className="w-9 h-9 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
-                        <MessageSquare size={16} className="text-[#3390EC]" />
+              {/* 2. НОВОЕ: SwipeableList для чатов */}
+              <SwipeableList threshold={0.5}>
+                {props.displayedChats.map((chat: any, idx) => {
+                  const displayDate = chat.created_at
+                    ? new Date(chat.created_at).toLocaleDateString("ru-RU", {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })
+                    : "";
+                  return (
+                    <SwipeableListItem
+                      key={chat.id}
+                      trailingActions={trailingActions(chat.id)}
+                      className={`w-full bg-white ${idx !== props.displayedChats.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
+                    >
+                      <div
+                        onClick={() => navigate(`/chat/${chat.id}`)}
+                        className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[#F2F2F7] transition-colors cursor-pointer text-left"
+                      >
+                        <div className="flex items-center gap-3 overflow-hidden pr-4">
+                          <div className="w-9 h-9 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+                            <MessageSquare
+                              size={16}
+                              className="text-[#3390EC]"
+                            />
+                          </div>
+                          <div className="flex flex-col overflow-hidden">
+                            <span className="font-semibold text-[15px] text-black truncate">
+                              {chat.title || "Новая консультация"}
+                            </span>
+                            <span className="text-[13px] text-[#8E8E93] mt-0.5">
+                              {displayDate}
+                            </span>
+                          </div>
+                        </div>
+                        <ChevronRight
+                          size={18}
+                          className="text-[#C7C7CC] shrink-0"
+                        />
                       </div>
-                      <div className="flex flex-col overflow-hidden">
-                        <span className="font-semibold text-[15px] text-black truncate">
-                          {chat.title || "Новая консультация"}
-                        </span>
-                        <span className="text-[13px] text-[#8E8E93] mt-0.5">
-                          {displayDate}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronRight
-                      size={18}
-                      className="text-[#C7C7CC] shrink-0"
-                    />
-                  </button>
-                );
-              })}
+                    </SwipeableListItem>
+                  );
+                })}
+              </SwipeableList>
+
               {props.allFilteredChatsCount > 5 && (
                 <button
                   onClick={() => props.setShowAllChats(!props.showAllChats)}
@@ -164,7 +212,8 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
               )}
             </>
           )
-        ) : props.allFilteredDocsCount === 0 ? (
+        ) : // Рендер документов (без свайпа, так как документы удаляются вместе с чатом)
+        props.allFilteredDocsCount === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
             <FileText size={32} className="text-[#C7C7CC] mb-3" />
             <p className="text-[#8E8E93] text-[15px]">Нет документов</p>

@@ -6,12 +6,14 @@ interface StackedFilesProps {
   file1: string;
   file2: string;
   onClick: () => void;
+  isScanning?: boolean; // <-- Добавили проп
 }
 
 export const StackedFiles: React.FC<StackedFilesProps> = ({
   file1,
   file2,
   onClick,
+  isScanning,
 }) => {
   return (
     <div className="flex flex-col items-end my-1 mt-10 relative z-20">
@@ -19,6 +21,13 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
         onClick={onClick}
         className="relative inline-flex cursor-pointer active:opacity-80 transition-opacity"
       >
+        {/* Эффект сканера */}
+        {isScanning && (
+          <div className="absolute -inset-4 z-30 pointer-events-none overflow-hidden rounded-3xl">
+            <div className="absolute left-0 right-0 h-[3px] bg-[#34C759] shadow-[0_0_12px_4px_rgba(52,199,89,0.6)] animate-scan rounded-full"></div>
+          </div>
+        )}
+
         <div className="absolute inset-0 bg-[#297acc] rounded-[20px] p-2.5 pr-5 flex items-center shadow-md border border-white/20 transform origin-bottom-right rotate-[4deg] -translate-y-5 translate-x-2 z-0">
           <FileIcon filename={file1} />
           <div className="ml-3 flex flex-col flex-1 min-w-0">

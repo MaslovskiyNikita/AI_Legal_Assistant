@@ -24,9 +24,12 @@ export default function Chat() {
       <MessageList
         messages={chat.messages}
         messagesEndRef={chat.messagesEndRef}
+        scrollContainerRef={chat.scrollContainerRef}
+        setIsUserScrollingUp={chat.setIsUserScrollingUp}
         copiedMessageId={chat.copiedMessageId}
         onCopy={chat.handleCopy}
         onOpenDownload={() => chat.setIsDownloadModalOpen(true)}
+        isTyping={chat.isTyping}
       />
 
       <ChatInput

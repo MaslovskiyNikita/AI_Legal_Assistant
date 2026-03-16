@@ -55,16 +55,14 @@ export const useSettings = () => {
           let docsArray: any[] = [];
           try {
             const docsPromises = sorted.map((chat: any) =>
-              apiClient
-                .getChatDocuments(chat.id)
-                .then((docs) =>
-                  docs.map((d: any) => ({
-                    ...d,
-                    chatTitle: chat.title,
-                    chatId: chat.id,
-                    chatDate: getChatDateStr(chat),
-                  })),
-                ),
+              apiClient.getChatDocuments(chat.id).then((docs) =>
+                docs.map((d: any) => ({
+                  ...d,
+                  chatTitle: chat.title,
+                  chatId: chat.id,
+                  chatDate: getChatDateStr(chat),
+                })),
+              ),
             );
             const docsResults = await Promise.allSettled(docsPromises);
             docsResults.forEach((result) => {
@@ -91,6 +89,19 @@ export const useSettings = () => {
       setIsLoadingStats(false);
     }
   }, [internalUserId]);
+
+  // Внутри useSettings добавь эту функцию:
+  const handleDeleteChat = async (chatId: number) => {
+    try {
+      await apiClient.deleteChat(chatId);
+      // Обновляем стейт, чтобы чат мгновенно исчез из списка
+      setChats((prev) => prev.filter((c) => c.id !== chatId));
+      setAllDocuments((prev) => prev.filter((d) => d.chatId !== chatId));
+    } catch (error) {
+      console.error("Failed to delete chat", error);
+      alert("Не удалось удалить чат.");
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
@@ -246,5 +257,6 @@ export const useSettings = () => {
     downloadingDocId,
     handleDownload,
     navigate,
+    handleDeleteChat,
   };
 };

@@ -21,6 +21,8 @@ export const useChat = (chatId: string | undefined) => {
   const [copiedMessageId, setCopiedMessageId] = useState<
     number | string | null
   >(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [isUserScrollingUp, setIsUserScrollingUp] = useState(false);
 
   // Стейты файлов
   const [oldFile, setOldFile] = useState<File | null>(null);
@@ -47,8 +49,15 @@ export const useChat = (chatId: string | undefined) => {
   };
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // Скроллим вниз ТОЛЬКО если пользователь не читает старые сообщения
+    if (!isUserScrollingUp) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
   };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping, oldFile, newFile]);
 
   useEffect(() => {
     scrollToBottom();
@@ -301,5 +310,7 @@ export const useChat = (chatId: string | undefined) => {
     executeDeleteChat,
     handleExport,
     handleSend,
+    scrollContainerRef,
+    setIsUserScrollingUp,
   };
 };

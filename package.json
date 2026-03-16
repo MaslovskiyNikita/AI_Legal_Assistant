@@ -4,6 +4,7 @@
     "file-saver": "^2.0.5",
     "jspdf": "^4.2.0",
     "react-markdown": "^10.1.0",
+    "react-swipeable-list": "^1.10.0",
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
