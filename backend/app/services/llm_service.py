@@ -7,7 +7,7 @@ from app.models.document import Document
 from backend_llm.app.document_service import DocumentComparisonManager
 import aiofiles
 
-async def fake_llm_stream_generator(
+async def ai_stream_generator(
     db: AsyncSession, 
     chat_id: int, 
     user_text: str, 
@@ -16,7 +16,6 @@ async def fake_llm_stream_generator(
     full_ai_response = ""
 
     if comparison_message_id:
-        # 1. Ищем файлы в БД
         result = await db.execute(select(Document).where(Document.message_id == comparison_message_id))
         docs = result.scalars().all()
         

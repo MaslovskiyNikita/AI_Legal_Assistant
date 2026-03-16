@@ -6,7 +6,7 @@ from typing import List
 from app.api.dependencies import get_db
 from app.schemas.chat import ChatCreateRequest, ChatListResponse, ChatDetailResponse, DocumentResponse, MessageStreamRequest
 from app.services import chat_service
-from app.services.llm_service import fake_llm_stream_generator
+from app.services.llm_service import ai_stream_generator
 
 router = APIRouter(prefix="/api/v1/chats", tags=["Chats"])
 
@@ -45,17 +45,16 @@ async def stream_chat_message(
     request: MessageStreamRequest, 
     db: AsyncSession = Depends(get_db)
 ):
-    """
-    Принимает текст пользователя и ID документов (если есть).
-    Возвращает потоковый ответ от ИИ (Server-Sent Events).
-    """
 
-    message = await chat_service.add_message_to_chat(request, chat_id, db)
-
-    has_docs = request.comparison_id is not None
+    await chat_service.add_message_to_chat(request, chat_id, db)
 
     return StreamingResponse(
-        fake_llm_stream_generator(db, chat_id, request.text, has_docs),
+        ai_stream_generator(
+            db=db, 
+            chat_id=chat_id, 
+            user_text=request.text, 
+            comparison_message_id=request.comparison_id 
+        ),
         media_type="text/event-stream"
     )
     

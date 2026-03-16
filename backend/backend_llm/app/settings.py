@@ -16,7 +16,7 @@ class Settings:
 
     # --- OPENROUTER ---
     OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
-    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "ВАШ_КЛЮЧ")
+    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "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")
     OPENROUTER_URL: str = os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1/chat/completions")
     OPENROUTER_HTTP_REFERER: str = os.getenv("OPENROUTER_HTTP_REFERER", "https://science.bsuir.by/ru/aihackathon")
     OPENROUTER_TITLE: str = os.getenv("OPENROUTER_TITLE", "AI Legal Diff Tool")
@@ -29,7 +29,7 @@ class Settings:
     DATA_DIR: Path = BASE_DIR / "data"
 
     # --- СЕКРЕТЫ ---
-    HF_TOKEN: str | None = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+    HF_TOKEN: str | None = os.getenv("HF", "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")
 
     # --- БД ---
     DB_USER: str = os.getenv("POSTGRES_USER", "postgres")
