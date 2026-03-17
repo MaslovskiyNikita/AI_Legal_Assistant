@@ -38,6 +38,7 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
               )}
             </button>
             <button
+              type="button"
               onClick={() => props.setIsClearHistoryModalOpen(false)}
               disabled={props.isClearing}
               className="w-full py-3.5 text-[17px] font-semibold text-[#3390EC] active:bg-[#F2F2F7] transition-colors"
@@ -57,6 +58,7 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
               Политика конфиденциальности
             </h2>
             <button
+              type="button"
               onClick={() => props.setIsPrivacyModalOpen(false)}
               className="w-8 h-8 flex items-center justify-center rounded-full bg-[#F2F2F7] text-[#8E8E93] active:bg-[#E5E5EA] transition-colors"
             >
@@ -75,6 +77,7 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
           </div>
           <div className="p-4 border-t border-[#E5E5EA] bg-white shrink-0">
             <button
+              type="button"
               onClick={() => props.setIsPrivacyModalOpen(false)}
               className="w-full py-3.5 bg-[#3390EC] text-white font-semibold rounded-xl active:bg-blue-600 transition-colors shadow-sm"
             >

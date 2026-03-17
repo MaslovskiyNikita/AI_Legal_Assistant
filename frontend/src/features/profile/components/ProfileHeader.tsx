@@ -75,6 +75,7 @@ const TokenCircleMenu = ({ percent }: { percent: number }) => {
             </p>
           </div>
           <button
+            type="button"
             onClick={() => {
               setIsOpen(false);
               alert("Тут будет оплата через Telegram Stars ⭐️");

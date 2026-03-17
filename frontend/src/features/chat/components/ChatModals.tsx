@@ -350,6 +350,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
               пожалуйста, создайте новый чат.
             </p>
             <button
+              type="button"
               onClick={() => {
                 props.setIsFileLimitModalOpen(false);
                 navigate("/chat/new", { state: { openCompareModal: true } });

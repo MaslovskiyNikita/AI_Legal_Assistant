@@ -71,6 +71,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
       </h3>
       <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
         <button
+          type="button"
           onClick={props.onOpenPrivacy}
           className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[#F2F2F7] transition-colors text-left"
         >
@@ -90,6 +91,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
     <section className="px-4 pt-8 mt-auto shrink-0">
       <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm flex flex-col">
         <button
+          type="button"
           onClick={props.onOpenClearHistory}
           className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] bg-white active:bg-[#F2F2F7] transition-colors text-left"
         >
@@ -103,6 +105,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
           </div>
         </button>
         <button
+          type="button"
           onClick={props.onLogout}
           className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[#F2F2F7] transition-colors text-left"
         >

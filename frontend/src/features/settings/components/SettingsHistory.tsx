@@ -122,6 +122,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
             const isSelected = props.filterPeriod === filter.id;
             return (
               <button
+                type="button"
                 key={filter.id}
                 onClick={() => {
                   props.setFilterPeriod(filter.id);
@@ -233,6 +234,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
 
               {props.allFilteredChatsCount > 5 && (
                 <button
+                  type="button"
                   onClick={() => props.setShowAllChats(!props.showAllChats)}
                   className="w-full py-3.5 text-[15px] font-medium text-[#3390EC] bg-white active:bg-[#F2F2F7] transition-colors cursor-pointer border-t border-[#E5E5EA]"
                 >
@@ -290,6 +292,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                       </div>
                       {/* Кнопка скачивания (останавливаем всплытие клика, чтобы не переходить в чат) */}
                       <button
+                        type="button"
                         onClick={(e) =>
                           props.handleDownload(
                             e,
@@ -314,6 +317,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
 
             {props.allFilteredDocsCount > 5 && (
               <button
+                type="button"
                 onClick={() =>
                   props.setShowAllDocuments(!props.showAllDocuments)
                 }

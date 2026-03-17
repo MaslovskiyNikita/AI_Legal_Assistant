@@ -112,17 +112,16 @@ export const useChat = (chatId: string | undefined) => {
 
   // Обработка initialPrompt
   useEffect(() => {
-    const prompt = location.state?.initialPrompt;
-    if (prompt && chatId === "new" && !hasHandledInitialPrompt.current) {
-      hasHandledInitialPrompt.current = true;
-      const state = { ...location.state };
-      delete state.initialPrompt;
-      window.history.replaceState(state, document.title);
-      setTimeout(async () => {
-        await handleSend(prompt);
-      }, 150);
+    if (location.state?.openCompareModal) {
+      setIsCompareModalOpen(true);
+
+      const newState = { ...location.state };
+      delete newState.openCompareModal;
+
+      // ИСПРАВЛЕНО ЗДЕСЬ 👇
+      navigate(location.pathname, { replace: true, state: newState });
     }
-  }, [location.state?.initialPrompt, chatId]);
+  }, [location.state, navigate, location.pathname]);
 
   // Обработка автоматического открытия модалки
   useEffect(() => {

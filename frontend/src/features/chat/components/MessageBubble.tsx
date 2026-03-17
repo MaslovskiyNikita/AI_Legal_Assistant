@@ -280,6 +280,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               >
                 {!isUser && rawText && !isStillStreamingJson && (
                   <button
+                    type="button"
                     onClick={() => onCopy(rawText, msg.id)}
                     className="flex items-center hover:text-[#3390EC] transition-colors cursor-pointer mr-0.5"
                   >

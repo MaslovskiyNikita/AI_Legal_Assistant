@@ -105,6 +105,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           return (
             <button
               key={action.id}
+              type="button"
               onClick={() => handleSend(action.prompt)}
               disabled={isTyping}
               className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-[#F2F2F7] hover:bg-[#E5E5EA] active:bg-[#D1D1D6] text-[#3A3A3C] rounded-xl text-[12px] font-medium transition-colors disabled:opacity-50 border border-[#E5E5EA] min-w-0"
@@ -119,6 +120,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       {/* 3. Основная строка ввода */}
       <div className="flex items-end gap-2">
         <button
+          type="button"
           onClick={() => {
             if (!canAttachFiles) {
               onOpenFileLimitModal();
