@@ -1,5 +1,5 @@
 FROM python:3.11-slim AS builder
- 
+
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
@@ -9,12 +9,8 @@ RUN pip install poetry
 
 COPY pyproject.toml poetry.lock* ./
 
-RUN python -m venv /opt/venv
-
-ENV VIRTUAL_ENV=/opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
-
-RUN poetry install --no-root --no-interaction --no-ansi
+RUN poetry config virtualenvs.in-project true \
+    && poetry install --no-root --no-interaction --no-ansi
 
 FROM python:3.11-slim
 
@@ -23,10 +19,8 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-COPY --from=builder /opt/venv /opt/venv
-
-ENV VIRTUAL_ENV=/opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
+COPY --from=builder /app/.venv /app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
 
 COPY . .
 
