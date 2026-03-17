@@ -1,5 +1,5 @@
 // src/App.tsx
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { useAuth } from "./hooks/useAuth";
 import { ToastProvider } from "./hooks/useToast"; // <-- Импортировали провайдер уведомлений
@@ -32,9 +32,16 @@ function AuthRouter() {
 }
 
 export default function App() {
+  useEffect(() => {
+    const tg = (window as any).Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+    }
+  }, []);
+
   return (
     <BrowserRouter>
-      {/* Оборачиваем всё приложение в ToastProvider */}
       <ToastProvider>
         <div className="min-h-screen bg-black flex justify-center font-sans">
           <div className="w-full max-w-md bg-[#1C1C1D] relative shadow-2xl overflow-hidden">
