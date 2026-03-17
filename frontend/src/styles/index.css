@@ -25,5 +25,4 @@ body,
 html,
 #root {
   overscroll-behavior-y: none; /* Блокирует системный pull-to-refresh */
-  overflow: hidden; /* Предотвращает дергание всей страницы */
 }
