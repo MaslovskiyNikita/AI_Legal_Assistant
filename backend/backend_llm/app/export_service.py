@@ -26,7 +26,7 @@ class ExportService:
             run_risk.font.color.rgb = RGBColor(255, 0, 0)
         
         doc.add_paragraph(analysis.summary)
-        
+         
         if analysis.details:
             doc.add_heading("Детальный анализ", level=3)
             for detail in analysis.details:

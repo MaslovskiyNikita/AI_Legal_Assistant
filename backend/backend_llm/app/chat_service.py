@@ -21,7 +21,7 @@ class ChatService:
     @staticmethod
     def get_chat(chat_id: int) -> Optional[Chat]:
         return ChatService._chats.get(chat_id)
-
+ 
     @staticmethod
     def add_message(chat_id: int, role: str, text: str) -> bool:
         chat = ChatService._chats.get(chat_id)

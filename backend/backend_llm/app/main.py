@@ -22,7 +22,7 @@ app = FastAPI()
 @app.get("/ping")
 async def ping():
     return "Pong! FastAPI is working."
-
+ 
 @app.post("/api/v1/documents/parse")
 async def parse_document(file: UploadFile = File(...)):
     content = await file.read()

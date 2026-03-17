@@ -19,7 +19,7 @@ class RagService:
     def __init__(self):
         if not settings.HF_TOKEN:
             logger.warning("HUGGINGFACEHUB_API_TOKEN не найден. RAG может не работать.")
-
+ 
         # 1. Эмбеддинги
         self.embeddings = HuggingFaceEndpointEmbeddings(
             model=settings.EMBEDDINGS_MODEL,

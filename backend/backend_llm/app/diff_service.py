@@ -27,7 +27,7 @@ class SmartDiffService:
                     break
             if not match_found:
                 old_idx += 1
-
+ 
         # Step 2: ID match
         old_idx = 0
         while old_idx < len(old_unmatched):

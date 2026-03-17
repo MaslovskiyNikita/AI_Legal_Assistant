@@ -22,7 +22,7 @@ class DocumentComparisonManager:
 
         # 3. Фильтрация значимых изменений
         meaningful_diffs = [b for b in diff_blocks if b.change_type != ChangeType.UNCHANGED]
-
+ 
         if not meaningful_diffs:
             analysis = FullDocumentAnalysis(
                 overall_risk="GREEN",
