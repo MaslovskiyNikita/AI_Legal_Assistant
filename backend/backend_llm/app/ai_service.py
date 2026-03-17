@@ -14,7 +14,7 @@ from backend_llm.app.rag_service import rag_service
 
 class AiRiskAnalyzer:
     """
-    Анализ изменений: сначала пробуем внешний LLM (OpenRouter),
+    Анализ изменений: сначала пробуем внешний LLM (Gemini),
     при любой ошибке — возвращаем вменяемый ответ локальной эвристикой.
     """
 
@@ -127,19 +127,18 @@ class AiRiskAnalyzer:
 """
 
         headers = {
-            "Authorization": f"Bearer {api_key}",
-            "HTTP-Referer": settings.OPENROUTER_HTTP_REFERER,
-            "X-Title": settings.OPENROUTER_TITLE,
+            "Content-Type": "application/json"
         }
 
-        async with httpx.AsyncClient(timeout=settings.OPENROUTER_TIMEOUT) as client:
+        gemini_url = f"{settings.GEMINI_BASE_URL}/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
+
+        async with httpx.AsyncClient(timeout=settings.GEMINI_TIMEOUT) as client:
             response = await client.post(
-                settings.OPENROUTER_URL,
+                gemini_url,
                 headers=headers,
                 json={
-                    "model": settings.OPENROUTER_MODEL,
-                    "messages": [{"role": "user", "content": prompt}],
-                    "response_format": {"type": "json_object"}
+                    "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                    "generationConfig": {"responseMimeType": "application/json"}
                 },
             )
             response.raise_for_status()
@@ -148,7 +147,7 @@ class AiRiskAnalyzer:
                 response.encoding = "utf-8"
 
             data = response.json()
-            content = data["choices"][0]["message"]["content"].strip()
+            content = data["candidates"][0]["content"]["parts"][0]["text"].strip()
             
             # Ищем JSON внутри маркдаун-блока с помощью регулярки
             json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', content, re.DOTALL)
@@ -170,16 +169,16 @@ class AiRiskAnalyzer:
 
     @staticmethod
     async def analyze_changes(diff_blocks: List[BlockDiff]) -> FullDocumentAnalysis:
-        api_key = settings.OPENROUTER_API_KEY
+        api_key = settings.GEMINI_API_KEY
         
         meaningful_diffs = [b for b in diff_blocks if b.change_type != ChangeType.UNCHANGED]
         
         if not meaningful_diffs:
             return FullDocumentAnalysis(overall_risk=RiskLevel.GREEN, summary="Изменений не найдено или они незначительны", details=[])
             
-        if not api_key or api_key == settings.OPENROUTER_API_KEY:
+        if not api_key or api_key == "ВАШ_КЛЮЧ":
             diff_text = "\n".join([f"[{b.change_type.value}] {b.new_block.text if b.new_block else b.old_block.text}" for b in meaningful_diffs])
-            return AiRiskAnalyzer._heuristic(diff_text, "отсутствует OPENROUTER_API_KEY")
+            return AiRiskAnalyzer._heuristic(diff_text, "отсутствует GEMINI_API_KEY")
 
         batch_size = 5
         batches = [meaningful_diffs[i:i + batch_size] for i in range(0, len(meaningful_diffs), batch_size)]
@@ -245,7 +244,7 @@ class AiRiskAnalyzer:
         :param analysis_summary: Строка с выводами AI по рискам (если документ проверялся).
         :return: Текст ответа ассистента.
         """
-        api_key = settings.OPENROUTER_API_KEY
+        api_key = settings.GEMINI_API_KEY
         if not api_key or api_key == "ВАШ_КЛЮЧ":
             return "Извините, сервис LLM временно недоступен. Проверьте настройки API."
 
@@ -304,34 +303,35 @@ class AiRiskAnalyzer:
         # ==========================================
         # 4. Формирование сообщений для API
         # ==========================================
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": f"Контекст беседы:\n{history_text}\n\nМой вопрос: {question}"}
+        contents = [
+            {"role": "user", "parts": [{"text": f"Контекст беседы:\n{history_text}\n\nМой вопрос: {question}"}]}
         ]
 
         headers = {
-            "Authorization": f"Bearer {api_key}",
-            "HTTP-Referer": settings.OPENROUTER_HTTP_REFERER,
-            "X-Title": settings.OPENROUTER_TITLE,
+            "Content-Type": "application/json"
         }
 
+        gemini_url = f"{settings.GEMINI_BASE_URL}/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
+
         # ==========================================
-        # 5. Вызов LLM (OpenRouter)
+        # 5. Вызов LLM (Gemini)
         # ==========================================
         try:
-            async with httpx.AsyncClient(timeout=settings.OPENROUTER_TIMEOUT) as client:
+            async with httpx.AsyncClient(timeout=settings.GEMINI_TIMEOUT) as client:
                 response = await client.post(
-                    settings.OPENROUTER_URL,
+                    gemini_url,
                     headers=headers,
                     json={
-                        "model": settings.OPENROUTER_MODEL,
-                        "messages": messages,
-                        "temperature": 0.2
+                        "systemInstruction": {"parts": [{"text": system_prompt}]},
+                        "contents": contents,
+                        "generationConfig": {
+                            "temperature": 0.2
+                        }
                     },
                 )
                 response.raise_for_status()
                 data = response.json()
-                return data["choices"][0]["message"]["content"].strip()
+                return data["candidates"][0]["content"]["parts"][0]["text"].strip()
         except Exception as e:
-            print(f"Ошибка API OpenRouter: {e}")
+            print(f"Ошибка API Gemini: {e}")
             return "Произошла техническая ошибка при обращении к AI-ассистенту. Пожалуйста, попробуйте позже."
