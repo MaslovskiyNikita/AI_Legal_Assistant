@@ -29,6 +29,14 @@ export const useAuth = () => {
         const profile = await apiClient.getUser(tgId);
         localStorage.setItem("user", JSON.stringify(profile));
 
+        const safeProfile = {
+          ...profile,
+          first_name: profile.first_name || TELEGRAM_USER.first_name,
+          username: profile.username || TELEGRAM_USER.username,
+        };
+
+        localStorage.setItem("user", JSON.stringify(safeProfile));
+
         if (authResponse.is_new_user) {
           if (location.pathname !== "/") {
             navigate("/", { replace: true });

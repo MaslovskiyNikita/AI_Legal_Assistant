@@ -195,12 +195,18 @@ export const apiClient = {
           if (!dataStr || dataStr === "[DONE]") continue;
 
           try {
+            // Пытаемся прочитать как JSON
             const parsed = JSON.parse(dataStr);
-            if (parsed.chunk) {
-              onChunk(parsed.chunk);
+            // Ищем текст в разных вариантах (chunk, content, text)
+            const textToAppend = parsed.chunk || parsed.content || parsed.text;
+            if (textToAppend) {
+              onChunk(textToAppend);
+            } else if (typeof parsed === "string") {
+              onChunk(parsed);
             }
           } catch (e) {
-            console.error("Ошибка при парсинге чанка:", dataStr, e);
+            // ЕСЛИ ЭТО НЕ JSON, А ПРОСТО ТЕКСТ (очень частый случай на бэкенде)
+            onChunk(dataStr);
           }
         }
       }
