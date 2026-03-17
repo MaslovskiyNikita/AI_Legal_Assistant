@@ -307,8 +307,10 @@ class AiRiskAnalyzer:
             {"role": "user", "parts": [{"text": f"Контекст беседы:\n{history_text}\n\nМой вопрос: {question}"}]}
         ]
 
-        headers = {
-            "Content-Type": "application/json"
+        headers = { 
+            "Authorization": f"Bearer {api_key}",
+            "HTTP-Referer": settings.OPENROUTER_HTTP_REFERER,
+            "X-Title": settings.OPENROUTER_TITLE,
         }
 
         gemini_url = f"{settings.GEMINI_BASE_URL}/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
