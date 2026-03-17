@@ -38,6 +38,7 @@ export default function Settings() {
         <SettingsProfile
           firstName={settings.firstName}
           username={settings.username}
+          photoUrl={settings.photoUrl}
           activeTab={settings.activeTab}
           setActiveTab={settings.setActiveTab}
           chatsCount={settings.chats.length}

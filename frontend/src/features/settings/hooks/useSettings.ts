@@ -227,9 +227,12 @@ export const useSettings = () => {
     ? filteredDocuments
     : filteredDocuments.slice(0, 5);
 
+  const photoUrl = user?.photo_url || null;
+
   return {
     firstName,
     username,
+    photoUrl,
     activeTab,
     setActiveTab,
     chats,

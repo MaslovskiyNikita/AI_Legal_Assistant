@@ -5,6 +5,7 @@ import { MessageSquare, FileText, CheckCircle2, Loader2 } from "lucide-react";
 interface SettingsProfileProps {
   firstName: string;
   username: string;
+  photoUrl?: string | null;
   activeTab: "chats" | "documents";
   setActiveTab: (tab: "chats" | "documents") => void;
   chatsCount: number;
@@ -15,6 +16,7 @@ interface SettingsProfileProps {
 export const SettingsProfile: React.FC<SettingsProfileProps> = ({
   firstName,
   username,
+  photoUrl,
   activeTab,
   setActiveTab,
   chatsCount,
@@ -22,9 +24,17 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
   isLoadingStats,
 }) => (
   <div className="flex flex-col items-center justify-center px-4 shrink-0">
-    <div className="w-20 h-20 rounded-full bg-[#3390EC] flex items-center justify-center text-white text-3xl font-medium mb-3 shadow-sm">
-      {firstName.charAt(0).toUpperCase()}
-    </div>
+    {photoUrl ? (
+      <img
+        src={photoUrl}
+        alt={firstName}
+        className="w-20 h-20 rounded-full object-cover mb-3 shadow-sm"
+      />
+    ) : (
+      <div className="w-20 h-20 rounded-full bg-[#3390EC] flex items-center justify-center text-white text-3xl font-medium mb-3 shadow-sm">
+        {firstName.charAt(0).toUpperCase()}
+      </div>
+    )}
     <h1 className="text-2xl font-bold text-black mb-0.5">{firstName}</h1>
     <p className="text-[15px] text-[#8E8E93] mb-6">{username}</p>
 

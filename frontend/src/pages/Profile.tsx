@@ -10,6 +10,7 @@ import { RecentChats } from "../features/profile/components/RecentChats";
 export default function Profile() {
   const {
     firstName,
+    photoUrl,
     greeting,
     selectedAgent,
     setSelectedAgent,
@@ -23,6 +24,7 @@ export default function Profile() {
     <div className="min-h-screen w-full bg-white text-black relative flex flex-col font-sans overflow-x-hidden">
       <ProfileHeader
         firstName={firstName}
+        photoUrl={photoUrl}
         greeting={greeting}
         onSettingsClick={() => navigate("/settings")}
       />

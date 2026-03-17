@@ -14,12 +14,14 @@ const getUser = () => {
       username:
         tg.initDataUnsafe.user.username || `user_${tg.initDataUnsafe.user.id}`,
       first_name: tg.initDataUnsafe.user.first_name || "User",
+      photo_url: tg.initDataUnsafe.user.photo_url || null,
     };
   }
   return {
     id: 1234532131231,
     username: "demo_user",
     first_name: "Boris",
+    photo_url: null,
   };
 };
 

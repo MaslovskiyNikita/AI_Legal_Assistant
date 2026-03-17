@@ -19,6 +19,7 @@ export const useProfile = () => {
   // ФИКС ИМЕНИ: Если бэк не прислал first_name, берем напрямую из ТГ!
   const firstName =
     user?.first_name || user?.name || TELEGRAM_USER?.first_name || "User";
+  const photoUrl = user?.photo_url || TELEGRAM_USER?.photo_url;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -89,6 +90,7 @@ export const useProfile = () => {
 
   return {
     firstName,
+    photoUrl,
     greeting,
     selectedAgent,
     setSelectedAgent,

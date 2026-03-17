@@ -23,6 +23,7 @@ export default function Onboarding() {
         telegram_id: TELEGRAM_USER.id,
         username: TELEGRAM_USER.username || `user_${TELEGRAM_USER.id}`,
         first_name: TELEGRAM_USER.first_name || "User",
+        photo_url: TELEGRAM_USER.photo_url,
       });
       const fullProfile = await apiClient.getUser(TELEGRAM_USER.id);
       localStorage.setItem("user", JSON.stringify(fullProfile));
