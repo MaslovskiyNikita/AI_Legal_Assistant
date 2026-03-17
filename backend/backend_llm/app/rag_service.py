@@ -11,7 +11,7 @@ from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_postgres.vectorstores import PGVector
 
-from settings import settings
+from backend_llm.app.settings import settings
 
 logger = logging.getLogger(__name__)
 

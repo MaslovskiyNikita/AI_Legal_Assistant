@@ -6,10 +6,10 @@ import asyncio
 import httpx
 from pydantic import BaseModel
 
-from settings import settings
-from models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis, BlockDiff, ChangeType
+from backend_llm.app.settings import settings
+from backend_llm.app.models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis, BlockDiff, ChangeType
 
-from rag_service import rag_service
+from backend_llm.app.rag_service import rag_service
 
 
 class AiRiskAnalyzer:
