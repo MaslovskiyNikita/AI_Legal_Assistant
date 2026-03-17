@@ -2,7 +2,7 @@ from typing import Optional
 
 
 from backend_llm.app.settings import settings
-from backend_llm.app.models import AssistantTone
+from backend_llm.app.models.AssistantTone import AssistantTone
 from backend_llm.app.rag_service import rag_service
 
 class LegalPrompts:
