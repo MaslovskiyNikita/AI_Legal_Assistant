@@ -7,7 +7,7 @@ import httpx
 from backend_llm.app.settings import settings
 from backend_llm.app.models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis, BlockDiff, ChangeType, AssistantTone
 from backend_llm.app.rag_service import rag_service
-from .prompts import LegalPrompts 
+from backend_llm.app.prompts import LegalPrompts 
 
 class AiRiskAnalyzer:
     """
