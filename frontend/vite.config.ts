@@ -4,24 +4,24 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  plugins: [
-    // The React and Tailwind plugins are both required for Make, even if
-    // Tailwind is not being actively used – do not remove them
-    react(),
-    tailwindcss(),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      // Alias @ to the src directory
       "@": path.resolve(__dirname, "./src"),
     },
   },
-
-  // 👇 Вот здесь изменения 👇
   server: {
     allowedHosts: ["legal-assistant.kawun.su"],
+    // 👇 ДОБАВЬ ЭТОТ БЛОК 👇
+    hmr: {
+      // Это запретит Vite перезагружать страницу при ошибках HMR-сокета
+      overlay: false,
+    },
+    // Отключаем наблюдение за файлами, если они не меняются,
+    // чтобы снизить нагрузку на туннель
+    watch: {
+      usePolling: false,
+    },
   },
-
-  // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ["**/*.svg", "**/*.csv"],
 });
