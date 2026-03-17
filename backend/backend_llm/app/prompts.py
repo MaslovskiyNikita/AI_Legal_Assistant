@@ -74,7 +74,6 @@ class LegalPrompts:
     ) -> str:
         persona = LegalPrompts._PERSONAS.get(tone, LegalPrompts._PERSONAS[AssistantTone.STRICT])
         
-        # Логика поведения для чата
         if tone == AssistantTone.STRICT:
             behavior = (
                 "- Отвечай тезисно.\n"
