@@ -166,57 +166,22 @@ export const apiClient = {
   },
 
   // src/api/client.ts (Метод sendMessageStream)
-  async sendMessageStream(
+  async sendMessage(
     chat_id: number,
     payload: { text: string; comparison_id?: number },
-    onChunk: (chunk: string) => void,
   ) {
+    // Внимание: путь бэкенда остался /stream, хотя он больше не стримит
     const r = await fetch(`${BASE_URL}/chats/${chat_id}/messages/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
 
-    if (!r.ok || !r.body)
-      throw new Error(`sendMessageStream failed: ${r.status}`);
-
-    const reader = r.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunkString = decoder.decode(value, { stream: true });
-        const lines = chunkString.split("\n");
-
-        for (const line of lines) {
-          if (line.trim().startsWith("data:")) {
-            const dataStr = line.replace("data:", "").trim();
-            if (!dataStr || dataStr === "[DONE]") continue;
-
-            try {
-              const parsed = JSON.parse(dataStr);
-              const textToAppend =
-                parsed.chunk || parsed.content || parsed.text;
-              if (textToAppend) {
-                onChunk(textToAppend);
-              } else if (typeof parsed === "string") {
-                onChunk(parsed);
-              }
-            } catch (e) {
-              onChunk(dataStr);
-            }
-          }
-        }
-      }
-    } catch (streamError) {
-      console.error("Stream reading interrupted:", streamError);
-      throw new Error("Соединение прервано во время ожидания ответа.");
-    } finally {
-      // Обязательно освобождаем reader, если произошла ошибка
-      reader.releaseLock();
+    if (!r.ok) {
+      throw new Error(`sendMessage failed: ${r.status}`);
     }
+
+    // Бэкенд теперь возвращает обычный JSON сразу целиком
+    return r.json();
   },
 };
