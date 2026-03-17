@@ -3,7 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
 import { exportToDocx, exportToPdf } from "../../../utils/exportUtils";
-
+import { getTg, tgAlert } from "../../../utils/telegram";
 export const useChat = (chatId: string | undefined) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,7 +54,19 @@ export const useChat = (chatId: string | undefined) => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   };
+  useEffect(() => {
+    const tg = getTg();
+    if (tg && tg.BackButton) {
+      tg.BackButton.show();
+      const handleBack = () => navigate("/profile");
+      tg.BackButton.onClick(handleBack);
 
+      return () => {
+        tg.BackButton.offClick(handleBack);
+        tg.BackButton.hide();
+      };
+    }
+  }, [navigate]);
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, oldFile, newFile]);
@@ -128,7 +140,7 @@ export const useChat = (chatId: string | undefined) => {
       navigate("/profile", { replace: true });
     } catch (error) {
       console.error("Failed to delete chat", error);
-      alert("Не удалось удалить чат. Пожалуйста, попробуйте еще раз.");
+      tgAlert("Не удалось удалить чат. Пожалуйста, попробуйте еще раз.");
     }
   };
 
@@ -146,7 +158,7 @@ export const useChat = (chatId: string | undefined) => {
       }
     } catch (error) {
       console.error("Export failed", error);
-      alert("Не удалось экспортировать чат.");
+      tgAlert("Не удалось экспортировать чат.");
     } finally {
       setTimeout(() => {
         setIsExporting(false);

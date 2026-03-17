@@ -47,15 +47,6 @@ export default function Profile() {
 
         <WeeklyStats />
       </div>
-
-      <div className="px-4 pb-6 pt-3 bg-white border-t border-[#F2F2F7]">
-        <button
-          onClick={startNewChat}
-          className="w-full bg-[#3390EC] hover:bg-[#2879c7] text-white font-semibold text-[16px] py-4 rounded-2xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-[0_4px_14px_rgba(51,144,236,0.3)]"
-        >
-          <Plus size={22} strokeWidth={2.5} /> Начать новый чат
-        </button>
-      </div>
     </div>
   );
 }

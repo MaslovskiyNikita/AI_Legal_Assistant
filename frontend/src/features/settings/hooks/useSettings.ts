@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../../../api/client";
+import { getTg, tgAlert, tgClose } from "../../../utils/telegram";
 
 export const useSettings = () => {
   const navigate = useNavigate();
@@ -99,13 +100,18 @@ export const useSettings = () => {
       setAllDocuments((prev) => prev.filter((d) => d.chatId !== chatId));
     } catch (error) {
       console.error("Failed to delete chat", error);
-      alert("Не удалось удалить чат.");
+      tgAlert("Не удалось удалить чат.");
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    navigate("/", { replace: true });
+    const tg = getTg();
+    if (tg && tg.initDataUnsafe?.user) {
+      tgClose(); // Закрываем Mini App в Telegram
+    } else {
+      navigate("/", { replace: true }); // Фолбэк для браузера
+    }
   };
 
   const executeClearHistory = async () => {
@@ -119,7 +125,7 @@ export const useSettings = () => {
       }
       setIsClearHistoryModalOpen(false);
     } catch (error) {
-      alert("Не удалось очистить историю.");
+      tgAlert("Не удалось очистить историю.");
     } finally {
       setIsClearing(false);
     }
@@ -135,7 +141,7 @@ export const useSettings = () => {
     try {
       await apiClient.downloadDocument(docId, filename);
     } catch (err) {
-      alert("Не удалось скачать файл");
+      tgAlert("Не удалось скачать файл");
     } finally {
       setDownloadingDocId(null);
     }

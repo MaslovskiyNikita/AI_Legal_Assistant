@@ -1,9 +1,9 @@
-// src/app/pages/Onboarding.tsx
+// src/pages/Onboarding.tsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../api/client";
-import { TELEGRAM_USER } from "../utils/telegram";
-import { Scale, Shield, FileText, ArrowRight, Loader2 } from "lucide-react";
+import { TELEGRAM_USER, tgAlert } from "../utils/telegram"; // <-- Добавили tgAlert
+import { Scale, Shield, FileText, Loader2 } from "lucide-react";
 
 export default function Onboarding() {
   const navigate = useNavigate();
@@ -11,7 +11,7 @@ export default function Onboarding() {
 
   const handleStart = async () => {
     if (!TELEGRAM_USER?.id) {
-      alert(
+      tgAlert(
         "Не удалось получить данные Telegram. Пожалуйста, перезапустите приложение.",
       );
       return;
@@ -29,14 +29,13 @@ export default function Onboarding() {
       navigate("/profile", { replace: true });
     } catch (e) {
       console.error("Ошибка при старте и регистрации:", e);
-      alert("Произошла ошибка при входе. Попробуйте еще раз.");
+      tgAlert("Произошла ошибка при входе. Попробуйте еще раз.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    // Белый фон, вертикальный flex, отступы p-6
     <div className="min-h-screen w-full bg-white text-black flex flex-col justify-between p-6 font-sans">
       {/* Верхняя часть (Контент) */}
       <div className="flex flex-col items-center text-center mt-16">
@@ -60,10 +59,10 @@ export default function Onboarding() {
               <FileText size={22} className="text-[#3390EC]" />
             </div>
             <div>
-              <p className="text-black font-semibold text-[16px]">
+              <p className="text-black font-semibold text-[16px] text-left">
                 Анализ документов
               </p>
-              <p className="text-[#8E8E93] text-sm mt-0.5">
+              <p className="text-[#8E8E93] text-sm mt-0.5 text-left">
                 Проверка контрактов и поиск рисков
               </p>
             </div>
@@ -75,10 +74,10 @@ export default function Onboarding() {
               <Shield size={22} className="text-[#3390EC]" />
             </div>
             <div>
-              <p className="text-black font-semibold text-[16px]">
+              <p className="text-black font-semibold text-[16px] text-left">
                 Безопасно и приватно
               </p>
-              <p className="text-[#8E8E93] text-sm mt-0.5">
+              <p className="text-[#8E8E93] text-sm mt-0.5 text-left">
                 Все данные строго конфиденциальны
               </p>
             </div>
