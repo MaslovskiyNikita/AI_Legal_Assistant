@@ -110,7 +110,24 @@ export const useChat = (chatId: string | undefined) => {
     }
   }, [chatId]);
 
-  // Обработка initialPrompt
+  // Обработка initialPrompt (запуск чата с готовым текстом)
+  useEffect(() => {
+    const prompt = location.state?.initialPrompt;
+    if (prompt && chatId === "new" && !hasHandledInitialPrompt.current) {
+      hasHandledInitialPrompt.current = true;
+
+      const newState = { ...location.state };
+      delete newState.initialPrompt;
+
+      navigate(location.pathname, { replace: true, state: newState });
+
+      setTimeout(async () => {
+        await handleSend(prompt);
+      }, 150);
+    }
+  }, [location.state, chatId, navigate, location.pathname]);
+
+  // Обработка автоматического открытия модалки (лимит файлов)
   useEffect(() => {
     if (location.state?.openCompareModal) {
       setIsCompareModalOpen(true);
@@ -118,20 +135,9 @@ export const useChat = (chatId: string | undefined) => {
       const newState = { ...location.state };
       delete newState.openCompareModal;
 
-      // ИСПРАВЛЕНО ЗДЕСЬ 👇
       navigate(location.pathname, { replace: true, state: newState });
     }
   }, [location.state, navigate, location.pathname]);
-
-  // Обработка автоматического открытия модалки
-  useEffect(() => {
-    if (location.state?.openCompareModal) {
-      setIsCompareModalOpen(true);
-      const state = { ...location.state };
-      delete state.openCompareModal;
-      window.history.replaceState(state, document.title);
-    }
-  }, [location.state]);
 
   const executeDeleteChat = async () => {
     if (!chatId || chatId === "new") return;
@@ -225,7 +231,8 @@ export const useChat = (chatId: string | undefined) => {
         {
           id: assistantMsgId,
           role: "ai",
-          text: "",
+          // ХИТРОСТЬ: Ставим {, чтобы UI показал лоадер "Анализирую документы..."
+          text: "{",
           created_at: new Date().toISOString(),
           isComplete: false,
         },
@@ -253,33 +260,35 @@ export const useChat = (chatId: string | undefined) => {
       }
 
       // --- ИЩЕМ ID ПОСЛЕДНЕГО СООБЩЕНИЯ ---
-      // Переворачиваем массив и ищем первое сообщение, где id - это число (реальный ID от бэкенда)
       const lastRealMessage = [...messages]
         .reverse()
         .find((m) => typeof m.id === "number");
       const lastMessageId = lastRealMessage ? lastRealMessage.id : undefined;
 
-      // Отправляем запрос в стрим
-      await apiClient.sendMessageStream(
-        Number(activeChatId),
-        {
-          text: userTextForUI,
-          comparison_id: lastMessageId, // <-- ПЕРЕДАЕМ ID ЛАСТ СООБЩЕНИЯ СЮДА
-        },
-        (chunk) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? { ...msg, text: (msg.text || "") + chunk }
-                : msg,
-            ),
-          );
-        },
-      );
+      // Ждем полного ответа от бэкенда (без стриминга)
+      const responseData = await apiClient.sendMessage(Number(activeChatId), {
+        text: userTextForUI,
+        comparison_id: lastMessageId,
+      });
 
+      let finalAiText = responseData.text || "";
+
+      // Оборачиваем ответ в JSON, если пришли дифы, чтобы MessageBubble красиво их отрисовал
+      if (responseData.diff_blocks && responseData.diff_blocks.length > 0) {
+        finalAiText = JSON.stringify({
+          analysis: {
+            summary: responseData.text,
+          },
+          diff_blocks: responseData.diff_blocks,
+        });
+      }
+
+      // Обновляем сообщение ИИ готовым текстом и снимаем статус загрузки
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === assistantMsgId ? { ...msg, isComplete: true } : msg,
+          msg.id === assistantMsgId
+            ? { ...msg, text: finalAiText, isComplete: true }
+            : msg,
         ),
       );
 
