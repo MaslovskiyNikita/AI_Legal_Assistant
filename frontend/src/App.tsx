@@ -1,8 +1,9 @@
 // src/App.tsx
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route } from "react-router";
+// 1. МЕНЯЕМ BrowserRouter НА HashRouter ЗДЕСЬ 👇
+import { HashRouter, Routes, Route } from "react-router";
 import { useAuth } from "./hooks/useAuth";
-import { ToastProvider } from "./hooks/useToast"; // <-- Импортировали провайдер уведомлений
+import { ToastProvider } from "./hooks/useToast";
 
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
@@ -41,7 +42,8 @@ export default function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    // 2. ИСПОЛЬЗУЕМ HashRouter ВМЕСТО BrowserRouter 👇
+    <HashRouter>
       <ToastProvider>
         <div className="min-h-screen bg-black flex justify-center font-sans">
           <div className="w-full max-w-md bg-[#1C1C1D] relative shadow-2xl overflow-hidden">
@@ -49,6 +51,6 @@ export default function App() {
           </div>
         </div>
       </ToastProvider>
-    </BrowserRouter>
+    </HashRouter>
   );
 }

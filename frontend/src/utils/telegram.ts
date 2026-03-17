@@ -28,7 +28,10 @@ const getUser = () => {
 export const TELEGRAM_USER = getUser();
 
 // --- НАТИВНЫЕ ФУНКЦИИ TELEGRAM ---
-
+export const isTelegramWebApp = () => {
+  // В браузере вне ТГ platform обычно равен "unknown" или tg вообще пустой
+  return tg && tg.platform && tg.platform !== "unknown";
+};
 export const tgAlert = (message: string) => {
   if (tg && tg.showAlert) {
     tg.showAlert(message);

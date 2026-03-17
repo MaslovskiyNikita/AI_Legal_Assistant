@@ -7,6 +7,8 @@ import { SettingsProfile } from "../features/settings/components/SettingsProfile
 import { SettingsHistory } from "../features/settings/components/SettingsHistory";
 import { SettingsOptions } from "../features/settings/components/SettingsOptions";
 import { SettingsModals } from "../features/settings/components/SettingsModals";
+import { ChevronLeft } from "lucide-react";
+import { isTelegramWebApp } from "../utils/telegram";
 
 export default function Settings() {
   const settings = useSettings();
@@ -29,11 +31,24 @@ export default function Settings() {
   return (
     <div className="min-h-screen w-full bg-[#F2F2F7] text-black flex flex-col pb-10 relative font-sans overflow-x-hidden">
       {/* Header */}
-      <div className="h-14 px-4 flex items-center justify-center sticky top-0 bg-white/80 backdrop-blur-xl z-20 border-b border-[#E5E5EA]">
-        {/* HTML-кнопка удалена, так как теперь работает нативная кнопка Telegram */}
-        <h2 className="text-[17px] font-semibold text-black">Настройки</h2>
-      </div>
+      <div className="h-14 px-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-xl z-20 border-b border-[#E5E5EA]">
+        {!isTelegramWebApp() ? (
+          <button
+            onClick={() => settings.navigate("/profile")}
+            className="w-8 h-8 -ml-2 flex items-center justify-center text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer z-10"
+          >
+            <ChevronLeft size={28} />
+          </button>
+        ) : (
+          <div className="w-8"></div> // Пустой блок для баланса
+        )}
 
+        <h2 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-black">
+          Настройки
+        </h2>
+
+        <div className="w-8"></div>
+      </div>
       <div className="flex-1 z-10 relative space-y-6 pt-6 pb-8 flex flex-col">
         <SettingsProfile
           firstName={settings.firstName}

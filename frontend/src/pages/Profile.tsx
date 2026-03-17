@@ -6,6 +6,7 @@ import { ProfileHeader } from "../features/profile/components/ProfileHeader";
 import { AgentGrid } from "../features/profile/components/AgentGrid";
 import { WeeklyStats } from "../features/profile/components/WeeklyStats";
 import { RecentChats } from "../features/profile/components/RecentChats";
+import { isTelegramWebApp } from "../utils/telegram";
 
 export default function Profile() {
   const {
@@ -20,8 +21,13 @@ export default function Profile() {
     navigate,
   } = useProfile();
 
+  const isWeb = !isTelegramWebApp(); // Проверка на браузер
+
   return (
-    <div className="min-h-screen w-full bg-white text-black relative flex flex-col font-sans overflow-x-hidden">
+    // Добавили pb-20, чтобы контент не перекрывался кнопкой внизу
+    <div
+      className={`min-h-screen w-full bg-white text-black relative flex flex-col font-sans overflow-x-hidden ${isWeb ? "pb-24" : ""}`}
+    >
       <ProfileHeader
         firstName={firstName}
         photoUrl={photoUrl}
@@ -29,6 +35,7 @@ export default function Profile() {
         onSettingsClick={() => navigate("/settings")}
       />
 
+      {/* Основной контент */}
       <div className="px-4 flex-1 flex flex-col">
         <h1 className="text-3xl font-bold mt-2 mb-4 tracking-tight text-black">
           Выберите стиль
@@ -49,6 +56,18 @@ export default function Profile() {
 
         <WeeklyStats />
       </div>
+
+      {/* Кнопка только для веб-версии */}
+      {isWeb && (
+        <div className="absolute bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur-md border-t border-[#E5E5EA] z-30">
+          <button
+            onClick={startNewChat}
+            className="w-full bg-[#3390EC] text-white font-semibold text-[17px] py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all"
+          >
+            Начать новый чат
+          </button>
+        </div>
+      )}
     </div>
   );
 }
