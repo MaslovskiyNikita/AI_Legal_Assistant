@@ -7,14 +7,42 @@ on:
 
 jobs:
   deploy:
-    runs-on: self-hosted 
+    runs-on: self-hosted
     steps:
-      - name: Git Pull and Restart
+      - name: Notify Start
+        run: |
+          COMMIT_MSG="${{ github.event.head_commit.message }}"
+          AUTHOR="${{ github.actor }}"
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TG_DEPLOYMENT_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TG_ADMIN_ID }} \
+          -d text="⏳ <b>Деплой AI Legal Assistant начался!</b>%0A%0A👤 От: $AUTHOR%0A📝 Коммит: <i>$COMMIT_MSG</i>" \
+          -d parse_mode=HTML
+
+      - name: Git Pull and Reset
         run: |
           cd /home/stanislav/hacaton/AI_Legal_Assistant
-
-          git fetch
+          git fetch origin feature/deploy
           git checkout feature/deploy
           git reset --hard origin/feature/deploy
-          
-          docker compose up -d --build
+
+      - name: Docker Build and Run
+        run: |
+          cd /home/stanislav/hacaton/AI_Legal_Assistant
+          docker compose up -d --build --force-recreate
+          docker image prune -f
+
+      - name: Notify Success
+        if: success()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TG_DEPLOYMENT_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TG_ADMIN_ID }} \
+          -d text="✅ <b>AI Legal Assistant успешно обновлен!</b>%0AВсе контейнеры запущены." \
+          -d parse_mode=HTML
+
+      - name: Notify Failure
+        if: failure()
+        run: |
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TG_DEPLOYMENT_BOT_TOKEN }}/sendMessage \
+          -d chat_id=${{ secrets.TG_ADMIN_ID }} \
+          -d text="❌ <b>Ошибка при деплое AI Legal Assistant!</b>%0AПроверь логи GitHub Actions или зайди на сервер." \
+          -d parse_mode=HTML
