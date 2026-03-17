@@ -6,7 +6,7 @@ from typing import List
 from app.api.dependencies import get_db
 from app.schemas.chat import ChatCreateRequest, ChatListResponse, ChatDetailResponse, DocumentResponse, MessageStreamRequest
 from app.services import chat_service
-from app.services.llm_service import ai_stream_generator
+from app.services.llm_service import generate_ai_response
 
 router = APIRouter(prefix="/api/v1/chats", tags=["Chats"])
 
@@ -48,15 +48,14 @@ async def stream_chat_message(
 
     await chat_service.add_message_to_chat(request, chat_id, db)
 
-    return StreamingResponse(
-        ai_stream_generator(
-            db=db, 
-            chat_id=chat_id, 
-            user_text=request.text, 
-            comparison_message_id=request.comparison_id 
-        ),
-        media_type="text/event-stream"
+    response_data = await generate_ai_response(
+        db=db, 
+        chat_id=chat_id, 
+        user_text=request.text, 
+        comparison_message_id=request.comparison_id 
     )
+    
+    return response_data
     
     
 @router.get("/{chat_id}/documents", response_model=List[DocumentResponse])
