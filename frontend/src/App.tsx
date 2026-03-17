@@ -1,7 +1,7 @@
 // src/App.tsx
 import React, { useEffect } from "react";
-// 1. ИМПОРТИРУЕМ MemoryRouter 👇
-import { MemoryRouter, Routes, Route } from "react-router";
+// 1. ИМПОРТИРУЕМ ОБРАТНО BrowserRouter 👇
+import { BrowserRouter, Routes, Route } from "react-router";
 import { useAuth } from "./hooks/useAuth";
 import { ToastProvider } from "./hooks/useToast";
 
@@ -42,8 +42,8 @@ export default function App() {
   }, []);
 
   return (
-    // 2. ИСПОЛЬЗУЕМ MemoryRouter 👇
-    <MemoryRouter>
+    // 2. ИСПОЛЬЗУЕМ BrowserRouter 👇
+    <BrowserRouter>
       <ToastProvider>
         <div className="min-h-screen bg-black flex justify-center font-sans">
           <div className="w-full max-w-md bg-[#1C1C1D] relative shadow-2xl overflow-hidden">
@@ -51,6 +51,6 @@ export default function App() {
           </div>
         </div>
       </ToastProvider>
-    </MemoryRouter>
+    </BrowserRouter>
   );
 }
