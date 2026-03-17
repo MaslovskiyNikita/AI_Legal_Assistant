@@ -6,7 +6,6 @@ from app.models.chat import Message
 from app.models.document import Document
 from app.schemas.chat import ChatDetailResponse
 
-# Твои импорты ИИ
 from backend_llm.app.ai_service import AiRiskAnalyzer
 from backend_llm.app.document_service import DocumentComparisonManager
 from app.services.chat_service import get_chat_with_messages
