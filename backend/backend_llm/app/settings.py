@@ -14,13 +14,11 @@ class Settings:
     # --- МОДЕЛИ ---
     EMBEDDINGS_MODEL: str = os.getenv("EMBEDDINGS_MODEL", "intfloat/multilingual-e5-large")
 
-    # --- OPENROUTER ---
-    OPENROUTER_MODEL: str = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
-    OPENROUTER_API_KEY: str = os.getenv("OPENROUTER_API_KEY", "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")
-    OPENROUTER_URL: str = os.getenv("OPENROUTER_URL", "https://openrouter.ai/api/v1/chat/completions")
-    OPENROUTER_HTTP_REFERER: str = os.getenv("OPENROUTER_HTTP_REFERER", "https://science.bsuir.by/ru/aihackathon")
-    OPENROUTER_TITLE: str = os.getenv("OPENROUTER_TITLE", "AI Legal Diff Tool")
-    OPENROUTER_TIMEOUT: int = int(os.getenv("OPENROUTER_TIMEOUT_SECONDS", "30"))
+    # --- GEMINI ---
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    GEMINI_BASE_URL: str = os.getenv("GEMINI_BASE_URL", "https://still-limit-741c.s-markovtsev.workers.dev")
+    GEMINI_TIMEOUT: int = int(os.getenv("GEMINI_TIMEOUT_SECONDS", "30"))
 
     # --- ПАРАМЕТРЫ ПОИСКА (RAG) ---
     TOP_K: int = int(os.getenv("TOP_K", "7"))
