@@ -4,7 +4,7 @@ import { useNavigate } from "react-router";
 import { apiClient } from "../../../api/client";
 import { agents } from "../data/agents";
 import { TELEGRAM_USER } from "../../../utils/telegram"; // <-- ИМПОРТИРОВАЛИ ТЕЛЕГРАМ ЮЗЕРА
-
+import { getTg } from "../../../utils/telegram";
 export const useProfile = () => {
   const navigate = useNavigate();
   const [selectedAgent, setSelectedAgent] = useState("strict");
@@ -19,6 +19,7 @@ export const useProfile = () => {
   // ФИКС ИМЕНИ: Если бэк не прислал first_name, берем напрямую из ТГ!
   const firstName =
     user?.first_name || user?.name || TELEGRAM_USER?.first_name || "User";
+  const photoUrl = user?.photo_url || TELEGRAM_USER?.photo_url;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -27,7 +28,26 @@ export const useProfile = () => {
     else if (hour >= 18 && hour < 23) setGreeting("Добрый вечер");
     else setGreeting("Доброй ночи");
   }, []);
+  useEffect(() => {
+    const tg = getTg();
+    if (tg && tg.MainButton) {
+      tg.MainButton.setText("НАЧАТЬ НОВЫЙ ЧАТ");
+      tg.MainButton.show();
 
+      const handleMainButtonClick = () => {
+        const agentPrompt =
+          agents.find((a) => a.id === selectedAgent)?.prompt || "";
+        navigate("/chat/new", { state: { initialPrompt: agentPrompt } });
+      };
+
+      tg.MainButton.onClick(handleMainButtonClick);
+
+      return () => {
+        tg.MainButton.offClick(handleMainButtonClick);
+        tg.MainButton.hide();
+      };
+    }
+  }, [selectedAgent, navigate]);
   useEffect(() => {
     if (internalUserId) {
       setIsLoadingRecent(true);
@@ -70,6 +90,7 @@ export const useProfile = () => {
 
   return {
     firstName,
+    photoUrl,
     greeting,
     selectedAgent,
     setSelectedAgent,

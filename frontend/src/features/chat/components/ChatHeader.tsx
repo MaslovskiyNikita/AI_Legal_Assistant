@@ -27,13 +27,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
   return (
     <div className="h-14 px-4 flex items-center justify-between sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#E5E5EA]">
-      <button
-        onClick={() => navigate("/profile")}
-        className="flex items-center text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer"
-      >
-        <ChevronLeft size={24} className="-ml-1" />
-        <span className="text-[17px]">Назад</span>
-      </button>
       <span className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-black">
         Legal Expert
       </span>

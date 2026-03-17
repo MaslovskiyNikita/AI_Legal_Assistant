@@ -3,6 +3,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
 import { exportToDocx, exportToPdf } from "../../../utils/exportUtils";
+import { getTg, tgAlert } from "../../../utils/telegram";
 
 export const useChat = (chatId: string | undefined) => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ export const useChat = (chatId: string | undefined) => {
   const [copiedMessageId, setCopiedMessageId] = useState<
     number | string | null
   >(null);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isUserScrollingUp, setIsUserScrollingUp] = useState(false);
 
@@ -55,10 +57,22 @@ export const useChat = (chatId: string | undefined) => {
     }
   };
 
+  // Нативная кнопка Назад в Telegram
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping, oldFile, newFile]);
+    const tg = getTg();
+    if (tg && tg.BackButton) {
+      tg.BackButton.show();
+      const handleBack = () => navigate("/profile");
+      tg.BackButton.onClick(handleBack);
 
+      return () => {
+        tg.BackButton.offClick(handleBack);
+        tg.BackButton.hide();
+      };
+    }
+  }, [navigate]);
+
+  // Автоскролл при новых сообщениях
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, oldFile, newFile]);
@@ -128,7 +142,7 @@ export const useChat = (chatId: string | undefined) => {
       navigate("/profile", { replace: true });
     } catch (error) {
       console.error("Failed to delete chat", error);
-      alert("Не удалось удалить чат. Пожалуйста, попробуйте еще раз.");
+      tgAlert("Не удалось удалить чат. Пожалуйста, попробуйте еще раз.");
     }
   };
 
@@ -146,7 +160,7 @@ export const useChat = (chatId: string | undefined) => {
       }
     } catch (error) {
       console.error("Export failed", error);
-      alert("Не удалось экспортировать чат.");
+      tgAlert("Не удалось экспортировать чат.");
     } finally {
       setTimeout(() => {
         setIsExporting(false);
@@ -195,6 +209,7 @@ export const useChat = (chatId: string | undefined) => {
         }
       }
 
+      // Добавляем сообщение пользователя в UI
       setMessages((prev) => [
         ...prev,
         {
@@ -217,8 +232,7 @@ export const useChat = (chatId: string | undefined) => {
         },
       ]);
 
-      let comparisonId: number | undefined = undefined;
-
+      // Если есть файлы, отправляем их на бэк
       if (hasAttachedFiles && oldFile && newFile && internalUserId) {
         const uploadResponse = await apiClient.compareDocuments(
           Number(activeChatId),
@@ -226,20 +240,33 @@ export const useChat = (chatId: string | undefined) => {
           oldFile,
           newFile,
         );
-        comparisonId = uploadResponse?.new_document_id || uploadResponse?.id;
+
+        const newDocId = uploadResponse?.new_document_id || uploadResponse?.id;
+
         setChatDocuments((prev) => [
           ...prev,
           {
-            id: comparisonId ? comparisonId - 1 : Date.now(),
+            id: newDocId ? newDocId - 1 : Date.now(),
             filename: oldFile.name,
           },
-          { id: comparisonId || Date.now() + 1, filename: newFile.name },
+          { id: newDocId || Date.now() + 1, filename: newFile.name },
         ]);
       }
 
+      // --- ИЩЕМ ID ПОСЛЕДНЕГО СООБЩЕНИЯ ---
+      // Переворачиваем массив и ищем первое сообщение, где id - это число (реальный ID от бэкенда)
+      const lastRealMessage = [...messages]
+        .reverse()
+        .find((m) => typeof m.id === "number");
+      const lastMessageId = lastRealMessage ? lastRealMessage.id : undefined;
+
+      // Отправляем запрос в стрим
       await apiClient.sendMessageStream(
         Number(activeChatId),
-        { text: userTextForUI, comparison_id: comparisonId },
+        {
+          text: userTextForUI,
+          comparison_id: lastMessageId, // <-- ПЕРЕДАЕМ ID ЛАСТ СООБЩЕНИЯ СЮДА
+        },
         (chunk) => {
           setMessages((prev) =>
             prev.map((msg) =>

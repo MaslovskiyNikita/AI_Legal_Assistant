@@ -92,12 +92,14 @@ const TokenCircleMenu = ({ percent }: { percent: number }) => {
 
 interface ProfileHeaderProps {
   firstName: string;
+  photoUrl?: string | null;
   greeting: string;
   onSettingsClick: () => void;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   firstName,
+  photoUrl,
   greeting,
   onSettingsClick,
 }) => (
@@ -106,9 +108,17 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       className="flex items-center gap-3 cursor-pointer"
       onClick={onSettingsClick}
     >
-      <div className="w-10 h-10 rounded-full bg-[#3390EC] flex items-center justify-center text-white font-medium text-lg shadow-sm">
-        {firstName.charAt(0).toUpperCase()}
-      </div>
+      {photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={firstName}
+          className="w-10 h-10 rounded-full object-cover shadow-sm"
+        />
+      ) : (
+        <div className="w-10 h-10 rounded-full bg-[#3390EC] flex items-center justify-center text-white font-medium text-lg shadow-sm">
+          {firstName.charAt(0).toUpperCase()}
+        </div>
+      )}
       <div className="flex flex-col">
         <span className="text-[16px] font-semibold leading-tight text-black">
           {firstName}
