@@ -28,7 +28,7 @@ class Settings:
 
     # --- СЕКРЕТЫ ---
     HF_TOKEN: str | None = os.getenv("HF", "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")
-
+ 
     # --- БД ---
     DB_USER: str = os.getenv("POSTGRES_USER", "postgres")
     DB_PASSWORD: str = os.getenv("POSTGRES_PASSWORD", "superpassword")
