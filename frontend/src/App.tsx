@@ -2,7 +2,7 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { useAuth } from "./hooks/useAuth";
-import { ToastProvider } from "./hooks/useToast"; // <-- Импортировали провайдер уведомлений
+import { ToastProvider } from "./hooks/useToast";
 
 import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
@@ -37,6 +37,11 @@ export default function App() {
     if (tg) {
       tg.ready();
       tg.expand();
+
+      // Отключаем свайп для обновления страницы (Pull-to-Refresh)
+      if (tg.disableVerticalSwipes) {
+        tg.disableVerticalSwipes();
+      }
     }
   }, []);
 

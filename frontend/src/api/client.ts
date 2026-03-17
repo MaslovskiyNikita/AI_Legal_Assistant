@@ -165,6 +165,7 @@ export const apiClient = {
     return r.json();
   },
 
+  // src/api/client.ts (Метод sendMessageStream)
   async sendMessageStream(
     chat_id: number,
     payload: { text: string; comparison_id?: number },
@@ -182,34 +183,40 @@ export const apiClient = {
     const reader = r.body.getReader();
     const decoder = new TextDecoder("utf-8");
 
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-      const chunkString = decoder.decode(value, { stream: true });
-      const lines = chunkString.split("\n");
+        const chunkString = decoder.decode(value, { stream: true });
+        const lines = chunkString.split("\n");
 
-      for (const line of lines) {
-        if (line.trim().startsWith("data:")) {
-          const dataStr = line.replace("data:", "").trim();
-          if (!dataStr || dataStr === "[DONE]") continue;
+        for (const line of lines) {
+          if (line.trim().startsWith("data:")) {
+            const dataStr = line.replace("data:", "").trim();
+            if (!dataStr || dataStr === "[DONE]") continue;
 
-          try {
-            // Пытаемся прочитать как JSON
-            const parsed = JSON.parse(dataStr);
-            // Ищем текст в разных вариантах (chunk, content, text)
-            const textToAppend = parsed.chunk || parsed.content || parsed.text;
-            if (textToAppend) {
-              onChunk(textToAppend);
-            } else if (typeof parsed === "string") {
-              onChunk(parsed);
+            try {
+              const parsed = JSON.parse(dataStr);
+              const textToAppend =
+                parsed.chunk || parsed.content || parsed.text;
+              if (textToAppend) {
+                onChunk(textToAppend);
+              } else if (typeof parsed === "string") {
+                onChunk(parsed);
+              }
+            } catch (e) {
+              onChunk(dataStr);
             }
-          } catch (e) {
-            // ЕСЛИ ЭТО НЕ JSON, А ПРОСТО ТЕКСТ (очень частый случай на бэкенде)
-            onChunk(dataStr);
           }
         }
       }
+    } catch (streamError) {
+      console.error("Stream reading interrupted:", streamError);
+      throw new Error("Соединение прервано во время ожидания ответа.");
+    } finally {
+      // Обязательно освобождаем reader, если произошла ошибка
+      reader.releaseLock();
     }
   },
 };
