@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class RagService:
     def __init__(self):
+        self._lock = asyncio.Lock()
         if not settings.HF_TOKEN:
             logger.warning("HUGGINGFACEHUB_API_TOKEN не найден. RAG может не работать.")
  
@@ -146,7 +147,8 @@ class RagService:
 
     async def asearch(self, query: str, limit: int = settings.TOP_K) -> List[Document]:
         """Асинхронная версия поиска."""
-        return await asyncio.to_thread(self.search, query, limit)
+        async with self._lock:
+            return await asyncio.to_thread(self.search, query, limit)
 
 
 rag_service = RagService()
