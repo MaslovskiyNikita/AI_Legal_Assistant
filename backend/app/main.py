@@ -3,6 +3,15 @@ import sys
 from app.utils.logging import InterceptHandler
 from loguru import logger
 
+SILENT_LOGGERS = [
+    "uvicorn.access",
+    "uvicorn.error",
+    "sqlalchemy.engine",
+    "httpcore",
+    "httpx",
+    "anyio",
+]
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import app.models.user 
@@ -13,7 +22,7 @@ logging.getLogger("uvicorn.access").handlers = []
 logging.getLogger("uvicorn.error").handlers = []
 logging.getLogger("sqlalchemy.engine").handlers = []
 
-logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+logging.basicConfig(handlers=[InterceptHandler()], level=logging.INFO, force=True)
 
 logger.configure(handlers=[{
     "sink": sys.stdout, 
