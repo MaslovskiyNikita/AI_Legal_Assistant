@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
 import { exportToDocx, exportToPdf } from "../../../utils/exportUtils";
 import { getTg, tgAlert } from "../../../utils/telegram";
+
 export const useChat = (chatId: string | undefined) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -21,6 +22,7 @@ export const useChat = (chatId: string | undefined) => {
   const [copiedMessageId, setCopiedMessageId] = useState<
     number | string | null
   >(null);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isUserScrollingUp, setIsUserScrollingUp] = useState(false);
 
@@ -54,6 +56,8 @@ export const useChat = (chatId: string | undefined) => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   };
+
+  // Нативная кнопка Назад в Telegram
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.BackButton) {
@@ -67,10 +71,8 @@ export const useChat = (chatId: string | undefined) => {
       };
     }
   }, [navigate]);
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping, oldFile, newFile]);
 
+  // Автоскролл при новых сообщениях
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, oldFile, newFile]);
