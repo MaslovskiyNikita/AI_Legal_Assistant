@@ -308,9 +308,7 @@ class AiRiskAnalyzer:
         ]
 
         headers = { 
-            "Authorization": f"Bearer {api_key}",
-            "HTTP-Referer": settings.OPENROUTER_HTTP_REFERER,
-            "X-Title": settings.OPENROUTER_TITLE,
+            "Content-Type": "application/json",
         }
 
         gemini_url = f"{settings.GEMINI_BASE_URL}/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
