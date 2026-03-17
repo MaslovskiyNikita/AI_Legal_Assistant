@@ -75,6 +75,7 @@ async def generate_ai_response(
                 chat_history=history_for_llm
             )
             logger.success("🤖 Ответ от LLM успешно получен")
+            logger.success(f"✨ Ответ AI: {full_ai_response[:200]}...")
         else:
             logger.error(f"❌ Не удалось загрузить историю для чата ID={chat_id}")
             full_ai_response = "Ошибка: не удалось загрузить историю диалога."
