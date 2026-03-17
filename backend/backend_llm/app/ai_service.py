@@ -177,7 +177,7 @@ class AiRiskAnalyzer:
         if not meaningful_diffs:
             return FullDocumentAnalysis(overall_risk=RiskLevel.GREEN, summary="Изменений не найдено или они незначительны", details=[])
             
-        if not api_key or api_key == "ВАШ_КЛЮЧ":
+        if not api_key or api_key == settings.OPENROUTER_API_KEY:
             diff_text = "\n".join([f"[{b.change_type.value}] {b.new_block.text if b.new_block else b.old_block.text}" for b in meaningful_diffs])
             return AiRiskAnalyzer._heuristic(diff_text, "отсутствует OPENROUTER_API_KEY")
 
