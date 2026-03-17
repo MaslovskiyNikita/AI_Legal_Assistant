@@ -127,7 +127,8 @@ class AiRiskAnalyzer:
 """
 
         headers = {
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-goog-api-key": settings.GEMINI_API_KEY
         }
 
         gemini_url = f"{settings.GEMINI_BASE_URL}/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
@@ -309,6 +310,7 @@ class AiRiskAnalyzer:
 
         headers = { 
             "Content-Type": "application/json",
+            "x-goog-api-key": settings.GEMINI_API_KEY
         }
 
         gemini_url = f"{settings.GEMINI_BASE_URL}/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}"
