@@ -8,7 +8,6 @@
     "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
-    "@twa-dev/types": "^8.0.2",
     "@types/file-saver": "^2.0.7"
   }
 }
