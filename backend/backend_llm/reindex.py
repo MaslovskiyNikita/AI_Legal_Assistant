@@ -35,7 +35,13 @@ def build_index():
             if "исключена" in item['text'].lower() or not item['text'].strip():
                 continue
 
-            full_text = f"passage: {item['source']}. Статья {item['article_number']}. {item['text']}"  # Для E5
+            full_text = (
+                f"passage: {item['source']}. "
+                f"Статья {item['article_number']}. "
+                f"ст {item['article_number']}. "
+                f"{item['article_number']}. "
+                f"{item['text']}"
+            )
             chunks = text_splitter.split_text(full_text)
 
             for chunk in chunks:

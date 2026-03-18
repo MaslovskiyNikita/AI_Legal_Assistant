@@ -20,7 +20,7 @@ class RagService:
         self._lock = asyncio.Lock()
         if not settings.HF_TOKEN:
             logger.warning("HUGGINGFACEHUB_API_TOKEN не найден. RAG может не работать.")
- 
+
         # 1. Эмбеддинги
         self.embeddings = HuggingFaceEndpointEmbeddings(
             model=settings.EMBEDDINGS_MODEL,
@@ -45,7 +45,7 @@ class RagService:
         retrievers = [self.vector_db.as_retriever(search_kwargs={"k": settings.TOP_K})]
         if self.bm25_retriever:
             retrievers.append(self.bm25_retriever)
-            weights = [0.6, 0.4]
+            weights = [0.5, 0.5]
         else:
             weights = [1.0]
 
@@ -69,12 +69,23 @@ class RagService:
                         continue
 
                     doc_id = f"{entry['source']}_{entry['article_number']}"
+
+                    searchable_text = (
+                        f"Источник: {entry['source']}. "
+                        f"Статья {entry['article_number']}. "
+                        f"ст {entry['article_number']}. "
+                        f"{entry['article_number']}. "
+                        f"{entry['text']}"
+                    )
+
                     cache[doc_id] = Document(
-                        page_content=entry['text'],
+                        page_content=searchable_text,
                         metadata={
                             "article": entry['article_number'],
+                            "article_str": str(entry['article_number']),
+                            "source": entry['source'],
+                            "source_norm": entry['source'].lower(),
                             "section": entry.get('section', ''),
-                            "source": entry['source']
                         }
                     )
             except Exception as e:
@@ -120,17 +131,26 @@ class RagService:
         """
         Гибридный поиск. Возвращает полные тексты статей.
         """
+        structured_docs = self._structured_search(query)
+
+        if structured_docs:
+            return structured_docs[:limit]
+
         if not self._articles_cache:
             return []
+
+        structured_docs = self._structured_search(query)
 
         # EnsembleRetriever делает всю работу по гибридизации
         # Мы запрашиваем чуть больше, чтобы гарантированно отдать limit после маппинга
         raw_results = self.ensemble_retriever.invoke(query)
 
+        combined = structured_docs + raw_results
+
         seen_ids = set()
         final_docs = []
 
-        for doc in raw_results:
+        for doc in combined:
             article_num = doc.metadata.get('article')
             source = doc.metadata.get('source')
             doc_id = f"{source}_{article_num}"
@@ -144,6 +164,28 @@ class RagService:
                 break
 
         return final_docs
+
+    def _structured_search(self, query: str) -> List[Document]:
+        tokens = query.lower().split()
+        scored = []
+
+        for doc in self._articles_cache.values():
+            score = 0
+
+            article = doc.metadata.get("article_str")
+            source = doc.metadata.get("source_norm", "")
+
+            if article in tokens:
+                score += 10  # сильный сигнал
+
+            if any(token in source for token in tokens):
+                score += 3
+
+            if score > 0:
+                scored.append((score, doc))
+
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [doc for _, doc in scored]
 
     async def asearch(self, query: str, limit: int = settings.TOP_K) -> List[Document]:
         """Асинхронная версия поиска."""
