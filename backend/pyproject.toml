@@ -26,6 +26,7 @@ langchain-postgres = "^0.0.17"
 psycopg2-binary = "^2.9.11"
 langchain-classic = "^1.0.3"
 loguru = "^0.7.3"
+fpdf2 = "^2.8.7"
 
 
 [build-system]
