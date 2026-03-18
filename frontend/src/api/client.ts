@@ -3,7 +3,6 @@
 const BASE_URL = "https://legal-assistant-api.kawun.su/api/v1";
 
 export const apiClient = {
-  // Метод для сравнения
   async compareDocuments(
     chatId: number,
     userId: number,
@@ -34,7 +33,6 @@ export const apiClient = {
     return await response.text();
   },
 
-  // Скачивание обычного документа
   async downloadDocument(documentId: number, filename: string = "document") {
     const downloadUrl = `${BASE_URL}/documents/${documentId}/download`;
 
@@ -59,14 +57,23 @@ export const apiClient = {
     document.body.removeChild(a);
   },
 
-  // 👇 НОВЫЙ МЕТОД: Экспорт чата с бэкенда
+  // 👇 ИСПРАВЛЕННЫЙ МЕТОД ЭКСПОРТА (Работает в Telegram)
   async exportChat(chatId: number, format: "docx" | "pdf", filename: string) {
     const downloadUrl = `${BASE_URL}/chats/${chatId}/export/${format}`;
 
+    // Проверяем, открыто ли приложение внутри Telegram
+    // @ts-ignore
+    if (window.Telegram?.WebApp?.initData) {
+      // Внутри телеграма скачивание работает только через внешний линк (openLink)
+      // @ts-ignore
+      window.Telegram.WebApp.openLink(downloadUrl);
+      return;
+    }
+
+    // Фолбэк для браузера Chrome/Safari на компьютере
     const response = await fetch(downloadUrl);
     if (!response.ok) throw new Error("Export failed");
 
-    // Скачиваем через Blob, чтобы работало и в Telegram WebApp, и в браузере, и сохранялось нужное имя файла
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");

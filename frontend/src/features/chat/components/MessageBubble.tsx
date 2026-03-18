@@ -81,11 +81,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     if (onExportDocx) onExportDocx();
   };
 
-  // ФУНКЦИЯ ОЧИСТКИ ТЕКСТА (Убирает звездочки и меняет RiskLevel на красивый русский текст)
   const cleanSummaryText = (text: string) => {
     if (!text) return "";
     return text
-      .replace(/\*\*/g, "") // Убираем жирность
+      .replace(/\*\*/g, "")
       .replace(/RiskLevel\.RED/g, "Критический")
       .replace(/RiskLevel\.YELLOW/g, "Средний")
       .replace(/RiskLevel\.GREEN/g, "Низкий");
@@ -186,7 +185,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <TypingLoader />
                 ) : isComplexAnalysis && parsedData ? (
                   <div className="flex flex-col gap-3 pb-4">
-                    {/* ОСНОВНОЙ ЧАТ: Короткое резюме ОЧИЩЕННОЕ ОТ ТЕХНИЧЕСКОГО ТЕКСТА */}
                     <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 shadow-sm border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-bold text-[13px] uppercase tracking-wide text-[var(--tg-theme-hint-color)]">
@@ -240,10 +238,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         </button>
                       </div>
 
-                      {/* 👇 ТА САМАЯ КНОПКА ЭКСПОРТА (КАК НА СКРИНЕ В МОДАЛКЕ) 👇 */}
+                      {/* 👇 ТУТ ИЗМЕНЕН ЦВЕТ НА ЦВЕТ ТЕМЫ ТЕЛЕГРАМА 👇 */}
                       <button
                         onClick={handleExportClick}
-                        className="w-full mt-2 py-3.5 bg-[#3390EC] text-white rounded-2xl flex flex-col items-center justify-center active:scale-[0.98] transition-all shadow-sm"
+                        className="w-full mt-2 py-3.5 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] rounded-2xl flex flex-col items-center justify-center active:scale-[0.98] transition-all shadow-sm"
                       >
                         <div className="flex items-center gap-2 text-[17px] font-semibold">
                           <Download size={20} />
@@ -329,9 +327,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         </div>
       </div>
 
-      {/* ============================================================
-          МОДАЛКА 1: "Дорожка изменений"
-      ============================================================= */}
       <Drawer.Root open={isDiffModalOpen} onOpenChange={setIsDiffModalOpen}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
@@ -391,9 +386,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         </Drawer.Portal>
       </Drawer.Root>
 
-      {/* ============================================================
-          МОДАЛКА 2: "Сводная таблица"
-      ============================================================= */}
       <Drawer.Root open={isTableModalOpen} onOpenChange={setIsTableModalOpen}>
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
