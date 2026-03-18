@@ -9,12 +9,14 @@ export const apiClient = {
     userId: number,
     oldFile: File,
     newFile: File,
+    text: string, // <--- 👇 ДОБАВИЛИ прием текста
   ) {
     const formData = new FormData();
     formData.append("chat_id", chatId.toString());
     formData.append("user_id", userId.toString());
     formData.append("old_file", oldFile);
     formData.append("new_file", newFile);
+    formData.append("text", text); // <--- 👇 Отправляем текст на бэкенд
 
     const response = await fetch(`${BASE_URL}/documents/compare`, {
       method: "POST",
@@ -25,7 +27,6 @@ export const apiClient = {
       throw new Error(`compareDocuments failed: ${response.status}`);
     }
 
-    // Проверяем, в каком формате отвечает бэк (если JSON - парсим, иначе текст)
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       return await response.json();

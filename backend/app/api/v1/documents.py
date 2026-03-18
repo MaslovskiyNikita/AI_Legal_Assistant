@@ -13,22 +13,22 @@ router = APIRouter(prefix="/api/v1/documents", tags=["Documents"])
 async def upload_documents_for_comparison(
     chat_id: int = Form(...),
     user_id: int = Form(...),
+    text: str = Form(""), # <--- 👇 ПРИНИМАЕМ ТЕКСТ
     old_file: UploadFile = File(...), 
     new_file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db)
 ):
     logger.info(f"📤 Загрузка файлов для сравнения (Chat ID: {chat_id}, User ID: {user_id})")
-    logger.info(f"📄 Файл 1: {old_file.filename} ({old_file.content_type})")
-    logger.info(f"📄 Файл 2: {new_file.filename} ({new_file.content_type})")
 
     try:
-        response = await save_uploaded_documents(db, user_id, chat_id, old_file, new_file)
-        logger.success(f"✅ Документы для чата {chat_id} успешно обработаны и сохранены")
+        # Передаем text в сервис
+        response = await save_uploaded_documents(db, user_id, chat_id, old_file, new_file, text)
         return response
     except Exception as e:
         logger.error(f"❌ Ошибка при сохранении документов: {str(e)}")
         raise HTTPException(status_code=500, detail="Ошибка при обработке файлов")
-
+    
+    
 @router.get("/{document_id}/download")
 async def download_document(
     document_id: int, 
