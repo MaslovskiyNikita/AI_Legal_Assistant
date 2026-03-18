@@ -29,6 +29,7 @@ export default function Chat() {
         copiedMessageId={chat.copiedMessageId}
         onCopy={chat.handleCopy}
         onOpenDownload={() => chat.setIsDownloadModalOpen(true)}
+        onExportDocx={() => chat.handleExport("docx")} // <-- ПЕРЕДАЛИ
         isTyping={chat.isTyping}
       />
 

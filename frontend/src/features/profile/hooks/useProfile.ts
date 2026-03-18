@@ -3,8 +3,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../../../api/client";
 import { agents } from "../data/agents";
-import { TELEGRAM_USER } from "../../../utils/telegram"; // <-- ИМПОРТИРОВАЛИ ТЕЛЕГРАМ ЮЗЕРА
-import { getTg } from "../../../utils/telegram";
+import { TELEGRAM_USER, getTg, tgHaptic } from "../../../utils/telegram";
+
 export const useProfile = () => {
   const navigate = useNavigate();
   const [selectedAgent, setSelectedAgent] = useState("strict");
@@ -16,7 +16,6 @@ export const useProfile = () => {
   const user = userStr ? JSON.parse(userStr) : null;
   const internalUserId = user?.id || null;
 
-  // ФИКС ИМЕНИ: Если бэк не прислал first_name, берем напрямую из ТГ!
   const firstName =
     user?.first_name || user?.name || TELEGRAM_USER?.first_name || "User";
   const photoUrl = user?.photo_url || TELEGRAM_USER?.photo_url;
@@ -28,13 +27,21 @@ export const useProfile = () => {
     else if (hour >= 18 && hour < 23) setGreeting("Добрый вечер");
     else setGreeting("Доброй ночи");
   }, []);
+
+  // НАСТРОЙКА NATIVE MAIN BUTTON ДЛЯ TELEGRAM
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.MainButton) {
-      tg.MainButton.setText("НАЧАТЬ НОВЫЙ ЧАТ");
-      tg.MainButton.show();
+      // Стилизуем под дизайн приложения
+      tg.MainButton.setParams({
+        text: "НАЧАТЬ НОВЫЙ ЧАТ",
+        color: "#3390EC",
+        text_color: "#ffffff",
+        is_visible: true,
+      });
 
       const handleMainButtonClick = () => {
+        tgHaptic("medium"); // Вибрация при нажатии
         const agentPrompt =
           agents.find((a) => a.id === selectedAgent)?.prompt || "";
         navigate("/chat/new", { state: { initialPrompt: agentPrompt } });
@@ -48,6 +55,7 @@ export const useProfile = () => {
       };
     }
   }, [selectedAgent, navigate]);
+
   useEffect(() => {
     if (internalUserId) {
       setIsLoadingRecent(true);
@@ -63,7 +71,6 @@ export const useProfile = () => {
               return new Date(dateB).getTime() - new Date(dateA).getTime();
             });
 
-            // ФИКС ЧАТОВ: Дублируем title и name, чтобы UI точно нашел, что рисовать
             const safeChats = sorted.map((chat) => ({
               ...chat,
               title: chat.title || chat.name || `Чат #${chat.id}`,
@@ -83,6 +90,7 @@ export const useProfile = () => {
   }, [internalUserId]);
 
   const startNewChat = () => {
+    tgHaptic("medium"); // Вибрация для браузерной кнопки (на мобилках)
     const agentPrompt =
       agents.find((a) => a.id === selectedAgent)?.prompt || "";
     navigate("/chat/new", { state: { initialPrompt: agentPrompt } });

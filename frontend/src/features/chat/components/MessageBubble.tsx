@@ -10,14 +10,17 @@ import {
   Info,
   CheckCircle,
   ShieldAlert,
+  Download, // <-- Иконка загрузки
 } from "lucide-react";
 import { StackedFiles } from "./StackedFiles";
+import { tgHapticNotification } from "../../../utils/telegram"; // <-- ИМПОРТ ВИБРАЦИИ
 
 interface MessageBubbleProps {
   msg: any;
   copiedMessageId: number | string | null;
   onCopy: (text: string, id: number | string) => void;
   onDownloadClick: () => void;
+  onExportDocx?: () => void; // <-- ДОБАВИЛИ ПРОП ДЛЯ ЭКСПОРТА
   isScanning?: boolean;
 }
 
@@ -26,6 +29,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   copiedMessageId,
   onCopy,
   onDownloadClick,
+  onExportDocx,
   isScanning,
 }) => {
   const isUser = msg.role === "user";
@@ -34,35 +38,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     minute: "2-digit",
   });
 
-  // Получаем сырой текст из сообщения
   const rawText = msg.text || msg.content || "";
   const showFooter = isUser || msg.isComplete;
 
-  // --- МАГИЯ ПАРСИНГА ОТВЕТА БЭКЕНДА ---
   let parsedData = null;
   let isComplexAnalysis = false;
 
-  // Пытаемся понять, прислал ли бэкенд сложный JSON с аудитом
   if (!isUser && rawText.trim().startsWith("{")) {
     try {
       parsedData = JSON.parse(rawText);
       if (parsedData.analysis || parsedData.diff_blocks) {
         isComplexAnalysis = true;
       }
-    } catch (e) {
-      // Если JSON парсится с ошибкой (например, он еще стримится)
-      // Оставляем isComplexAnalysis = false
-    }
+    } catch (e) {}
   }
 
-  // Если это сложный объект, но он еще загружается (стримится)
   const isStillStreamingJson =
     !isUser &&
     !msg.isComplete &&
     rawText.trim().startsWith("{") &&
     !isComplexAnalysis;
 
-  // --- ОБРАБОТКА ПОЛЬЗОВАТЕЛЬСКОГО СООБЩЕНИЯ С ФАЙЛАМИ ---
   const fileMatch = rawText.match(
     /Прикреплены документы для сравнения:\s*1\.\s*(.*?)\s*2\.\s*([^\n]+)/,
   );
@@ -76,7 +72,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       .trim();
   }
 
-  // --- РЕНДЕР КАРТОЧЕК РИСКА ---
+  // Функция вызова конфетти и экспорта
+  const handleExportClick = () => {
+    tgHapticNotification("success");
+  };
+
   const renderRiskBadge = (risk: string) => {
     switch (risk) {
       case "RED":
@@ -106,13 +106,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     : "last:after:content-[''] last:after:inline-block last:after:w-[68px] last:after:h-[10px]";
 
   return (
+    // ДОБАВИЛИ АНИМАЦИЮ ВСПЛЫТИЯ (animate-in slide-in-from-bottom-2 fade-in) 👇
     <div
-      className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"} mb-3 relative z-20`}
+      className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"} mb-3 relative z-20 animate-in fade-in slide-in-from-bottom-2 duration-300`}
     >
       <div
         className={`relative flex items-end min-w-0 ${isUser ? "ml-auto" : "mr-auto"} ${!isFileStack && !isComplexAnalysis ? "max-w-[85%] sm:max-w-[75%]" : "max-w-[95%]"}`}
       >
-        {/* Хвостик пузыря для ИИ */}
         {!isUser && !isFileStack && (
           <svg
             viewBox="0 0 8 13"
@@ -124,7 +124,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </svg>
         )}
 
-        {/* ЕСЛИ ЭТО ПОЛЬЗОВАТЕЛЬ ОТПРАВИЛ ФАЙЛЫ */}
         {isFileStack ? (
           <div className="flex flex-col items-end">
             <StackedFiles
@@ -167,16 +166,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             className={`relative px-4 pt-3 pb-3 text-[15px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words ${isUser ? "bg-[#3390EC] text-white rounded-[18px] rounded-br-none" : "bg-[#F2F2F7] text-black rounded-[18px] rounded-bl-none"}`}
           >
             <div className="w-full min-w-0">
-              {/* ЕСЛИ ИДЕТ ЗАГРУЗКА JSON */}
               {isStillStreamingJson ? (
                 <div className="flex items-center gap-2 text-[#8E8E93] font-medium animate-pulse pb-2">
                   <ShieldAlert size={18} />
                   Анализирую документы и выявляю риски...
                 </div>
-              ) : /* ЕСЛИ БЭКЕНД ПРИСЛАЛ СЛОЖНЫЙ АУДИТ ФАЙЛОВ */
-              isComplexAnalysis && parsedData ? (
+              ) : isComplexAnalysis && parsedData ? (
                 <div className="flex flex-col gap-4 pb-2">
-                  {/* Заголовок аудита */}
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-2">
                       <span className="font-bold text-[14px] uppercase tracking-wide text-gray-500">
@@ -190,7 +186,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     </p>
                   </div>
 
-                  {/* Список рисков */}
                   {parsedData.analysis?.details?.length > 0 && (
                     <div className="flex flex-col gap-2">
                       <span className="font-bold text-[13px] uppercase text-gray-500 ml-1">
@@ -225,9 +220,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     </div>
                   )}
 
-                  {/* Подсветка изменений в тексте (Diffs) */}
                   {parsedData.diff_blocks?.length > 0 && (
-                    <div className="flex flex-col gap-2 mt-2">
+                    <div className="flex flex-col gap-2 mt-2 mb-2">
                       <span className="font-bold text-[13px] uppercase text-gray-500 ml-1">
                         Измененные фрагменты:
                       </span>
@@ -236,7 +230,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           key={idx}
                           className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 text-[13px] font-mono leading-relaxed overflow-x-auto"
                         >
-                          {/* Рендерим HTML с <ins> и <del> прямо от бэкенда */}
                           <div
                             dangerouslySetInnerHTML={{ __html: diff.diff_html }}
                             className="[&>del]:bg-red-100 [&>del]:text-red-800 [&>del]:line-through [&>ins]:bg-green-100 [&>ins]:text-green-800 [&>ins]:no-underline"
@@ -245,9 +238,17 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                       ))}
                     </div>
                   )}
+
+                  {/* КНОПКА ГЕНЕРАЦИИ ОТЧЕТА С КОНФЕТТИ */}
+                  <button
+                    onClick={handleExportClick}
+                    className="w-full mt-2 bg-gradient-to-r from-[#3390EC] to-[#5856D6] text-white font-semibold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Download size={20} />
+                    Сгенерировать отчет (.DOCX)
+                  </button>
                 </div>
               ) : (
-                /* ЕСЛИ БЭКЕНД ПРИСЛАЛ ОБЫЧНЫЙ ТЕКСТ (ОТВЕТ НА ВОПРОС) */
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -273,7 +274,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
             </div>
 
-            {/* Подвал сообщения (Время и галочки) */}
             {showFooter && (
               <div
                 className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none ${isUser ? "text-blue-100" : "text-[#8E8E93]"}`}
@@ -298,7 +298,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
         )}
 
-        {/* Хвостик пузыря для пользователя */}
         {isUser && !isFileStack && (
           <svg
             viewBox="0 0 8 13"

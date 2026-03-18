@@ -29,22 +29,30 @@ export const TELEGRAM_USER = getUser();
 
 // --- НАТИВНЫЕ ФУНКЦИИ TELEGRAM ---
 export const isTelegramWebApp = () => {
-  // В браузере вне ТГ platform обычно равен "unknown" или tg вообще пустой
   return tg && tg.platform && tg.platform !== "unknown";
 };
+
 export const tgAlert = (message: string) => {
   if (tg && tg.showAlert) {
     tg.showAlert(message);
   } else {
-    alert(message); // Фолбэк для браузера
+    alert(message);
   }
 };
 
+// Обычный отклик (щелчок при нажатии на кнопки)
 export const tgHaptic = (
   style: "light" | "medium" | "heavy" | "rigid" | "soft" = "light",
 ) => {
   if (tg && tg.HapticFeedback) {
     tg.HapticFeedback.impactOccurred(style);
+  }
+};
+
+// Отклик-уведомление (вибрация при успешном ответе или предупреждении)
+export const tgHapticNotification = (type: "error" | "success" | "warning") => {
+  if (tg && tg.HapticFeedback) {
+    tg.HapticFeedback.notificationOccurred(type);
   }
 };
 

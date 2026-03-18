@@ -7,7 +7,7 @@ import {
   Share2,
   Trash2,
 } from "lucide-react";
-import { isTelegramWebApp } from "../../../utils/telegram"; // <-- Импорт проверки
+import { isTelegramWebApp } from "../../../utils/telegram";
 
 interface ChatHeaderProps {
   chatId?: string;
@@ -24,12 +24,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const isWeb = !isTelegramWebApp(); // Проверяем, в браузере ли мы
+  const isWeb = !isTelegramWebApp();
 
   return (
     <div className="h-14 px-4 flex items-center justify-between sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#E5E5EA]">
-      {/* ЛЕВАЯ ЧАСТЬ: Кнопка назад (только для Web) + Троеточие */}
-      <div className="flex items-center gap-1 z-10">
+      {/* ЛЕВАЯ ЧАСТЬ: Кнопка назад (только для Web). 
+          Оставляем ширину w-8, чтобы заголовок оставался ровно по центру */}
+      <div className="flex items-center z-10 w-8">
         {isWeb && (
           <button
             type="button"
@@ -39,65 +40,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             <ChevronLeft size={28} />
           </button>
         )}
-
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="w-8 h-8 flex items-center justify-start text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer"
-          >
-            <MoreVertical size={24} />
-          </button>
-
-          {isMenuOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setIsMenuOpen(false)}
-              />
-              {/* Поменяли right-0 на left-0, чтобы меню открывалось вправо */}
-              <div className="absolute left-0 top-10 w-56 bg-white border border-[#E5E5EA] rounded-2xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onOpenDownload();
-                  }}
-                  className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
-                >
-                  <Download size={18} className="text-[#3390EC]" /> Документы
-                  чата
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    onOpenExport();
-                  }}
-                  className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
-                >
-                  <Share2 size={18} className="text-[#3390EC]" /> Экспорт
-                  переписки
-                </button>
-                {chatId && chatId !== "new" && (
-                  <>
-                    <div className="h-[1px] bg-[#E5E5EA] mx-4 my-1" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsMenuOpen(false);
-                        onOpenDelete();
-                      }}
-                      className="w-full text-left px-4 py-3 text-[15px] font-medium text-[#FF3B30] active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
-                    >
-                      <Trash2 size={18} /> Удалить чат
-                    </button>
-                  </>
-                )}
-              </div>
-            </>
-          )}
-        </div>
       </div>
 
       {/* ЦЕНТР: Заголовок */}
@@ -105,8 +47,64 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         Legal Expert
       </span>
 
-      {/* ПРАВАЯ ЧАСТЬ: Пустой блок для баланса flex-контейнера */}
-      <div className="w-8" />
+      {/* ПРАВАЯ ЧАСТЬ: Троеточие и выпадающее меню */}
+      <div className="relative flex items-center justify-end z-10 w-8">
+        <button
+          type="button"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="w-8 h-8 flex items-center justify-center text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer"
+        >
+          <MoreVertical size={24} />
+        </button>
+
+        {isMenuOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setIsMenuOpen(false)}
+            />
+            {/* ИЗМЕНЕНО: Поменяли left-0 на right-0, чтобы меню открывалось внутрь экрана, а не за его пределы */}
+            <div className="absolute right-0 top-10 w-56 bg-white border border-[#E5E5EA] rounded-2xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onOpenDownload();
+                }}
+                className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
+              >
+                <Download size={18} className="text-[#3390EC]" /> Документы чата
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsMenuOpen(false);
+                  onOpenExport();
+                }}
+                className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
+              >
+                <Share2 size={18} className="text-[#3390EC]" /> Экспорт
+                переписки
+              </button>
+              {chatId && chatId !== "new" && (
+                <>
+                  <div className="h-[1px] bg-[#E5E5EA] mx-4 my-1" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMenuOpen(false);
+                      onOpenDelete();
+                    }}
+                    className="w-full text-left px-4 py-3 text-[15px] font-medium text-[#FF3B30] active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
+                  >
+                    <Trash2 size={18} /> Удалить чат
+                  </button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

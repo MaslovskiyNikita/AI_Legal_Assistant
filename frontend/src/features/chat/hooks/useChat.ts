@@ -3,7 +3,8 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
 import { exportToDocx, exportToPdf } from "../../../utils/exportUtils";
-import { getTg, tgAlert } from "../../../utils/telegram";
+// 👇 ИСПРАВЛЕНИЕ: Добавили tgHapticNotification в импорт
+import { getTg, tgAlert, tgHapticNotification } from "../../../utils/telegram";
 
 export const useChat = (chatId: string | undefined) => {
   const navigate = useNavigate();
@@ -281,6 +282,12 @@ export const useChat = (chatId: string | undefined) => {
           },
           diff_blocks: responseData.diff_blocks,
         });
+
+        // ВНИМАНИЕ: Нашли риски/дифы — вибрируем "Warning"
+        tgHapticNotification("warning");
+      } else {
+        // Обычный текстовый ответ — вибрируем "Success"
+        tgHapticNotification("success");
       }
 
       // Обновляем сообщение ИИ готовым текстом и снимаем статус загрузки
@@ -298,6 +305,9 @@ export const useChat = (chatId: string | undefined) => {
       }
     } catch (error) {
       console.error("Error sending message or uploading files:", error);
+      // В случае ошибки тоже можно дать вибрацию
+      tgHapticNotification("error");
+
       setMessages((prev) => [
         ...prev,
         {

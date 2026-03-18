@@ -1,6 +1,6 @@
 // src/features/settings/components/SettingsProfile.tsx
 import React from "react";
-import { MessageSquare, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { MessageSquare, FileText, CheckCircle2 } from "lucide-react";
 
 interface SettingsProfileProps {
   firstName: string;
@@ -55,13 +55,16 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
         >
           <MessageSquare size={20} />
         </div>
-        <span className="text-2xl font-bold text-black mb-0.5">
-          {isLoadingStats ? (
-            <Loader2 size={24} className="animate-spin text-[#8E8E93]" />
-          ) : (
-            chatsCount
-          )}
-        </span>
+
+        {/* Скелетная загрузка вместо Loader2 */}
+        {isLoadingStats ? (
+          <div className="h-8 w-12 bg-[#E5E5EA] animate-pulse rounded-md mb-0.5" />
+        ) : (
+          <span className="text-2xl font-bold text-black mb-0.5">
+            {chatsCount}
+          </span>
+        )}
+
         <span
           className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "chats" ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
         >
@@ -85,13 +88,16 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
         >
           <FileText size={20} />
         </div>
-        <span className="text-2xl font-bold text-black mb-0.5">
-          {isLoadingStats ? (
-            <Loader2 size={24} className="animate-spin text-[#8E8E93]" />
-          ) : (
-            docsCount
-          )}
-        </span>
+
+        {/* Скелетная загрузка вместо Loader2 */}
+        {isLoadingStats ? (
+          <div className="h-8 w-12 bg-[#E5E5EA] animate-pulse rounded-md mb-0.5" />
+        ) : (
+          <span className="text-2xl font-bold text-black mb-0.5">
+            {docsCount}
+          </span>
+        )}
+
         <span
           className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "documents" ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
         >

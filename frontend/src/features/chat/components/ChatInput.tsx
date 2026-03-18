@@ -1,5 +1,6 @@
 // src/features/chat/components/ChatInput.tsx
 import React from "react";
+import { motion } from "motion/react"; // <-- ИМПОРТ MOTION
 import {
   X,
   FileText,
@@ -11,6 +12,7 @@ import {
   Table,
   ShieldAlert,
 } from "lucide-react";
+import { tgHaptic } from "../../../utils/telegram";
 
 interface ChatInputProps {
   inputText: string;
@@ -27,24 +29,23 @@ interface ChatInputProps {
   onOpenFileLimitModal: () => void;
 }
 
-// Массив быстрых действий (Чипсы)
 const QUICK_ACTIONS = [
   {
     id: "summary",
-    label: "Выжимка", // Было "Сделать выжимку"
+    label: "Выжимка",
     icon: Sparkles,
     prompt: "Сделай краткую выжимку главных изменений в документах.",
   },
   {
     id: "table",
-    label: "Таблица", // Было "В виде таблицы"
+    label: "Таблица",
     icon: Table,
     prompt:
       "Покажи изменения в виде таблицы со столбцами: Было | Стало | Уровень риска.",
   },
   {
     id: "risks",
-    label: "Риски", // Было "Скрытые риски"
+    label: "Риски",
     icon: ShieldAlert,
     prompt:
       "Проигнорируй мелкие правки и найди только скрытые юридические риски в новой редакции.",
@@ -69,16 +70,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 
   return (
     <div className="absolute bottom-0 left-0 w-full flex flex-col pt-2 pb-6 px-4 backdrop-blur-xl bg-white/90 border-t border-[#E5E5EA] z-20">
-      {/* 1. Зона прикрепленных файлов (если есть) */}
       {oldFile && newFile && (
         <div className="mb-3 w-full bg-[#F2F2F7] border border-[#E5E5EA] rounded-2xl p-3 flex flex-col gap-2 relative animate-in slide-in-from-bottom-2 duration-200 shadow-sm">
           <button
             onClick={() => {
+              tgHaptic("light");
               setOldFile(null);
               setNewFile(null);
             }}
             className="absolute top-2 right-2 p-1 text-[#8E8E93] hover:text-[#FF3B30] transition-colors rounded-full cursor-pointer bg-white shadow-sm"
-            title="Открепить файлы"
           >
             <X size={16} />
           </button>
@@ -98,30 +98,36 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
 
-      {/* 2. НОВОЕ: Быстрые действия (Чипсы) */}
+      {/* АНИМИРОВАННЫЕ ЧИПСЫ */}
       <div className="flex items-center justify-between gap-1.5 mb-3 w-full">
-        {QUICK_ACTIONS.map((action) => {
+        {QUICK_ACTIONS.map((action, index) => {
           const Icon = action.icon;
           return (
-            <button
+            <motion.button
               key={action.id}
+              initial={{ opacity: 0, y: 15 }} // Начинают чуть ниже и прозрачные
+              animate={{ opacity: 1, y: 0 }} // Выезжают наверх
+              transition={{ delay: index * 0.1, duration: 0.3 }} // Задержка для каждого следующего (Stagger)
               type="button"
-              onClick={() => handleSend(action.prompt)}
+              onClick={() => {
+                tgHaptic("light");
+                handleSend(action.prompt);
+              }}
               disabled={isTyping}
               className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-[#F2F2F7] hover:bg-[#E5E5EA] active:bg-[#D1D1D6] text-[#3A3A3C] rounded-xl text-[12px] font-medium transition-colors disabled:opacity-50 border border-[#E5E5EA] min-w-0"
             >
               <Icon size={12} className="text-[#3390EC] shrink-0" />
               <span className="truncate">{action.label}</span>
-            </button>
+            </motion.button>
           );
         })}
       </div>
 
-      {/* 3. Основная строка ввода */}
       <div className="flex items-end gap-2">
         <button
           type="button"
           onClick={() => {
+            tgHaptic("light");
             if (!canAttachFiles) {
               onOpenFileLimitModal();
               return;
@@ -148,6 +154,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
+                tgHaptic("medium");
                 handleSend();
               }
             }}
@@ -162,7 +169,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
 
         <button
-          onClick={() => handleSend()}
+          type="button"
+          onClick={() => {
+            tgHaptic("medium");
+            handleSend();
+          }}
           disabled={isTyping || (!inputText.trim() && !hasAttachedFiles)}
           className={`w-[44px] h-[44px] shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-sm mb-0.5
             ${

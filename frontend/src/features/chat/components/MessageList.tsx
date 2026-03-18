@@ -7,22 +7,24 @@ import { formatDateLabel } from "../../../utils/dateUtils";
 interface MessageListProps {
   messages: any[];
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>; // <-- Добавили
-  setIsUserScrollingUp: (val: boolean) => void; // <-- Добавили
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  setIsUserScrollingUp: (val: boolean) => void;
   copiedMessageId: string | number | null;
   onCopy: (text: string, id: string | number) => void;
   onOpenDownload: () => void;
+  onExportDocx: () => void; // <-- ДОБАВИЛИ
   isTyping: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
   messages,
   messagesEndRef,
-  scrollContainerRef, // <-- Достали из пропсов
-  setIsUserScrollingUp, // <-- Достали из пропсов
+  scrollContainerRef,
+  setIsUserScrollingUp,
   copiedMessageId,
   onCopy,
   onOpenDownload,
+  onExportDocx, // <-- ДОСТАЛИ ИЗ ПРОПСОВ
   isTyping,
 }) => {
   const [isScrolling, setIsScrolling] = useState(false);
@@ -30,11 +32,9 @@ export const MessageList: React.FC<MessageListProps> = ({
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastScrollCheck = useRef<number>(0);
 
-  // Находим ID последнего сообщения от пользователя (чтобы сканер работал только на новых файлах)
   const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
   const lastUserMsgId = lastUserMsg?.id;
 
-  // Группировка сообщений по датам
   const groupedMessages: { label: string; messages: any[] }[] = [];
   let currentGroup: { label: string; messages: any[] } | null = null;
 
@@ -56,10 +56,9 @@ export const MessageList: React.FC<MessageListProps> = ({
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
 
-    // Проверяем, прокрутил ли юзер вверх (если до низа больше 100px)
     const isNearBottom =
       target.scrollHeight - target.scrollTop - target.clientHeight < 100;
-    setIsUserScrollingUp(!isNearBottom); // <-- Сообщаем хуку, что юзер скроллит вверх
+    setIsUserScrollingUp(!isNearBottom);
 
     setIsScrolling(true);
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
@@ -91,7 +90,7 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <div
-      ref={scrollContainerRef} // <-- Привязали реф к контейнеру
+      ref={scrollContainerRef}
       className="flex-1 overflow-y-auto px-4 pt-2 pb-[160px] z-10 relative bg-white scroll-smooth"
       onScroll={handleScroll}
     >
@@ -139,6 +138,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                   copiedMessageId={copiedMessageId}
                   onCopy={onCopy}
                   onDownloadClick={onOpenDownload}
+                  onExportDocx={onExportDocx} // <-- ПЕРЕДАЛИ В ПУЗЫРЬ
                   isScanning={isTyping && msg.id === lastUserMsgId}
                 />
               ))}
