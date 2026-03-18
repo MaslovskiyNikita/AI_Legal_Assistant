@@ -4,6 +4,7 @@ import logging
 import pickle
 from pathlib import Path
 from typing import List, Dict, Optional
+from functools import lru_cache
 
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
@@ -15,6 +16,25 @@ from backend_llm.app.settings import settings
 
 logger = logging.getLogger(__name__)
 
+class CachedEmbeddings:
+    def __init__(self, base_embeddings, maxsize: int = 1000):
+        self.base = base_embeddings
+
+        # делаем LRU-кэш
+        @lru_cache(maxsize=maxsize)
+        def cached_embed(query: str):
+            return tuple(self.base.embed_query(query))  # tuple чтобы был hashable
+
+        self._cached_embed = cached_embed
+
+    def embed_query(self, text: str):
+        normalized = " ".join(text.lower().split())
+        return list(self._cached_embed(normalized))
+
+    def embed_documents(self, texts):
+        # документы обычно не повторяются → не кэшируем
+        return self.base.embed_documents(texts)
+
 class RagService:
     def __init__(self):
         self._lock = asyncio.Lock()
@@ -22,11 +42,13 @@ class RagService:
             logger.warning("HUGGINGFACEHUB_API_TOKEN не найден. RAG может не работать.")
 
         # 1. Эмбеддинги
-        self.embeddings = HuggingFaceEndpointEmbeddings(
+        base_embeddings = HuggingFaceEndpointEmbeddings(
             model=settings.EMBEDDINGS_MODEL,
             huggingfacehub_api_token=settings.HF_TOKEN,
             task="feature-extraction",
         )
+
+        self.embeddings = CachedEmbeddings(base_embeddings)
 
         # 2. Векторная база данных (PostgreSQL)
         self.vector_db = PGVector(
@@ -139,8 +161,6 @@ class RagService:
         if not self._articles_cache:
             return []
 
-        structured_docs = self._structured_search(query)
-
         # EnsembleRetriever делает всю работу по гибридизации
         # Мы запрашиваем чуть больше, чтобы гарантированно отдать limit после маппинга
         raw_results = self.ensemble_retriever.invoke(query)
@@ -188,9 +208,7 @@ class RagService:
         return [doc for _, doc in scored]
 
     async def asearch(self, query: str, limit: int = settings.TOP_K) -> List[Document]:
-        """Асинхронная версия поиска."""
-        async with self._lock:
-            return await asyncio.to_thread(self.search, query, limit)
+        return await asyncio.to_thread(self.search, query, limit)
 
 
 rag_service = RagService()
