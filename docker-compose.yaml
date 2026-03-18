@@ -3,13 +3,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      target: development
     ports:
-      - "5173:5173"
+      - "5173:80"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-    command: npm run dev -- --host 0.0.0.0
 
   backend:
     build:
@@ -19,11 +17,15 @@ services:
       - "8023:8023"
     depends_on:
       - db-backend
-    env_file:            
-      - backend/.env              
+    env_file:
+      - backend/.env
     volumes:
       - ./backend:/app
-
+    tty: true
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - FORCE_COLOR=1
 
   db-backend:
     image: pgvector/pgvector:pg15
@@ -35,5 +37,5 @@ services:
       POSTGRES_DB: hackathon_db
     ports:
       - "6432:6432"
-    env_file:            
-      - ./backend/.env     
+    env_file:
+      - ./backend/.env

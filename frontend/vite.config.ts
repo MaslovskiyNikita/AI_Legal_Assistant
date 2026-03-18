@@ -12,9 +12,11 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ["legal-assistant.kawun.su"],
-    hmr: {
-      overlay: false,
-    },
+    host: "0.0.0.0",
+    port: 5173,
+
+    hmr: false,
+
     watch: {
       usePolling: false,
       ignored: ["!**/src/**"],
