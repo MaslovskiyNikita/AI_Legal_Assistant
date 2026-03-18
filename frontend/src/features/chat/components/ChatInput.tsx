@@ -71,7 +71,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div className="absolute bottom-0 left-0 w-full flex flex-col pt-2 pb-6 px-4 backdrop-blur-xl bg-white/90 border-t border-[#E5E5EA] z-20">
       {oldFile && newFile && (
-        <div className="mb-3 w-full bg-[#F2F2F7] border border-[#E5E5EA] rounded-2xl p-3 flex flex-col gap-2 relative animate-in slide-in-from-bottom-2 duration-200 shadow-sm">
+        <div className="mb-3 w-full bg-[var(--tg-theme-secondary-bg-color)] border border-[#E5E5EA] rounded-2xl p-3 flex flex-col gap-2 relative animate-in slide-in-from-bottom-2 duration-200 shadow-sm">
           <button
             onClick={() => {
               tgHaptic("light");
@@ -87,11 +87,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </span>
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2.5 text-[14px] text-black truncate pr-6 bg-white p-2 rounded-xl shadow-sm">
-              <FileText size={18} className="text-[#3390EC] shrink-0" />
+              <FileText
+                size={18}
+                className="text-[var(--tg-theme-button-color)] shrink-0"
+              />
               <span className="truncate font-medium">{oldFile.name}</span>
             </div>
             <div className="flex items-center gap-2.5 text-[14px] text-black truncate pr-6 bg-white p-2 rounded-xl shadow-sm">
-              <FileText size={18} className="text-[#3390EC] shrink-0" />
+              <FileText
+                size={18}
+                className="text-[var(--tg-theme-button-color)] shrink-0"
+              />
               <span className="truncate font-medium">{newFile.name}</span>
             </div>
           </div>
@@ -114,9 +120,12 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 handleSend(action.prompt);
               }}
               disabled={isTyping}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-[#F2F2F7] hover:bg-[#E5E5EA] active:bg-[#D1D1D6] text-[#3A3A3C] rounded-xl text-[12px] font-medium transition-colors disabled:opacity-50 border border-[#E5E5EA] min-w-0"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-[var(--tg-theme-secondary-bg-color)] hover:bg-[#E5E5EA] active:bg-[#D1D1D6] text-[#3A3A3C] rounded-xl text-[12px] font-medium transition-colors disabled:opacity-50 border border-[#E5E5EA] min-w-0"
             >
-              <Icon size={12} className="text-[#3390EC] shrink-0" />
+              <Icon
+                size={12}
+                className="text-[var(--tg-theme-button-color)] shrink-0"
+              />
               <span className="truncate">{action.label}</span>
             </motion.button>
           );
@@ -136,8 +145,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           }}
           className={`w-10 h-10 mb-1 flex items-center justify-center rounded-full transition-colors shrink-0 cursor-pointer ${
             shouldShowAttachedIcon
-              ? "text-[#3390EC] bg-[#E5F1FF]"
-              : "text-[#8E8E93] hover:text-[#3390EC]"
+              ? "text-[var(--tg-theme-button-color)] bg-[#E5F1FF]"
+              : "text-[#8E8E93] hover:text-[var(--tg-theme-button-color)]"
           }`}
         >
           {shouldShowAttachedIcon ? (
@@ -147,7 +156,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           )}
         </button>
 
-        <div className="flex-1 bg-[#F2F2F7] border border-[#E5E5EA] rounded-3xl min-h-[44px] max-h-[120px] flex items-end px-4 py-1.5 focus-within:border-[#3390EC] transition-colors">
+        <div className="flex-1 bg-[var(--tg-theme-secondary-bg-color)] border border-[#E5E5EA] rounded-3xl min-h-[44px] max-h-[120px] flex items-end px-4 py-1.5 focus-within:border-[#3390EC] transition-colors">
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}

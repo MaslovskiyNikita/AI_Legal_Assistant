@@ -18,9 +18,9 @@ export const RecentChats: React.FC<RecentChatsProps> = ({
     return (
       <div className="w-full">
         <div className="grid grid-cols-3 gap-2 w-full">
-          <div className="h-[96px] bg-[#F2F2F7] rounded-2xl animate-pulse"></div>
-          <div className="h-[96px] bg-[#F2F2F7] rounded-2xl animate-pulse"></div>
-          <div className="h-[96px] bg-[#F2F2F7] rounded-2xl animate-pulse"></div>
+          <div className="h-[96px] bg-[var(--tg-theme-secondary-bg-color)] rounded-2xl animate-pulse"></div>
+          <div className="h-[96px] bg-[var(--tg-theme-secondary-bg-color)] rounded-2xl animate-pulse"></div>
+          <div className="h-[96px] bg-[var(--tg-theme-secondary-bg-color)] rounded-2xl animate-pulse"></div>
         </div>
       </div>
     );
@@ -63,9 +63,15 @@ export const RecentChats: React.FC<RecentChatsProps> = ({
                 {/* Умная иконка типа чата */}
                 <div className="w-5 h-5 rounded-full bg-[#E5F1FF] flex items-center justify-center shrink-0">
                   {isFileComparison ? (
-                    <Files size={10} className="text-[#3390EC]" />
+                    <Files
+                      size={10}
+                      className="text-[var(--tg-theme-button-color)]"
+                    />
                   ) : (
-                    <MessageSquare size={10} className="text-[#3390EC]" />
+                    <MessageSquare
+                      size={10}
+                      className="text-[var(--tg-theme-button-color)]"
+                    />
                   )}
                 </div>
               </div>

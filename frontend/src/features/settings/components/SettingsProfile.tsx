@@ -41,17 +41,17 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
     <div className="w-full flex gap-3">
       <div
         onClick={() => setActiveTab("chats")}
-        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "chats" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-white border-[#E5E5EA] active:bg-[#F2F2F7]"}`}
+        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "chats" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-white border-[#E5E5EA] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
       >
         {activeTab === "chats" && (
           <CheckCircle2
             size={18}
-            className="absolute top-3 right-3 text-[#3390EC]"
+            className="absolute top-3 right-3 text-[var(--tg-theme-button-color)]"
             fill="white"
           />
         )}
         <div
-          className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "chats" ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-[#F2F2F7] text-[#8E8E93]"}`}
+          className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "chats" ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-[var(--tg-theme-secondary-bg-color)] text-[#8E8E93]"}`}
         >
           <MessageSquare size={20} />
         </div>
@@ -66,7 +66,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
         )}
 
         <span
-          className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "chats" ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
+          className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "chats" ? "text-[var(--tg-theme-button-color)]" : "text-[#8E8E93]"}`}
         >
           Консультаций
         </span>
@@ -74,17 +74,17 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
 
       <div
         onClick={() => setActiveTab("documents")}
-        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "documents" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-white border-[#E5E5EA] active:bg-[#F2F2F7]"}`}
+        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "documents" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-white border-[#E5E5EA] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
       >
         {activeTab === "documents" && (
           <CheckCircle2
             size={18}
-            className="absolute top-3 right-3 text-[#3390EC]"
+            className="absolute top-3 right-3 text-[var(--tg-theme-button-color)]"
             fill="white"
           />
         )}
         <div
-          className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "documents" ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-[#F2F2F7] text-[#8E8E93]"}`}
+          className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "documents" ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-[var(--tg-theme-secondary-bg-color)] text-[#8E8E93]"}`}
         >
           <FileText size={20} />
         </div>
@@ -99,7 +99,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
         )}
 
         <span
-          className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "documents" ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
+          className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "documents" ? "text-[var(--tg-theme-button-color)]" : "text-[#8E8E93]"}`}
         >
           Документов
         </span>

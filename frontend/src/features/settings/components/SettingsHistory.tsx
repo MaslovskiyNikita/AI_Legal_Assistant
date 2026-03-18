@@ -169,10 +169,10 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                 className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] last:border-0"
               >
                 <div className="flex items-center gap-3 w-full">
-                  <div className="w-9 h-9 rounded-full bg-[#F2F2F7] animate-pulse shrink-0"></div>
+                  <div className="w-9 h-9 rounded-full bg-[var(--tg-theme-secondary-bg-color)] animate-pulse shrink-0"></div>
                   <div className="flex flex-col gap-2 w-full">
-                    <div className="h-4 bg-[#F2F2F7] rounded animate-pulse w-3/4"></div>
-                    <div className="h-3 bg-[#F2F2F7] rounded animate-pulse w-1/3"></div>
+                    <div className="h-4 bg-[var(--tg-theme-secondary-bg-color)] rounded animate-pulse w-3/4"></div>
+                    <div className="h-3 bg-[var(--tg-theme-secondary-bg-color)] rounded animate-pulse w-1/3"></div>
                   </div>
                 </div>
               </div>
@@ -204,13 +204,13 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                     >
                       <div
                         onClick={() => navigate(`/chat/${chat.id}`)}
-                        className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[#F2F2F7] transition-colors cursor-pointer text-left"
+                        className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer text-left"
                       >
                         <div className="flex items-center gap-3 overflow-hidden pr-4">
                           <div className="w-9 h-9 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
                             <MessageSquare
                               size={16}
-                              className="text-[#3390EC]"
+                              className="text-[var(--tg-theme-button-color)]"
                             />
                           </div>
                           <div className="flex flex-col overflow-hidden">
@@ -236,7 +236,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                 <button
                   type="button"
                   onClick={() => props.setShowAllChats(!props.showAllChats)}
-                  className="w-full py-3.5 text-[15px] font-medium text-[#3390EC] bg-white active:bg-[#F2F2F7] transition-colors cursor-pointer border-t border-[#E5E5EA]"
+                  className="w-full py-3.5 text-[15px] font-medium text-[var(--tg-theme-button-color)] bg-white active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer border-t border-[#E5E5EA]"
                 >
                   {props.showAllChats
                     ? "Скрыть"
@@ -275,11 +275,14 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                   >
                     <div
                       onClick={() => navigate(`/chat/${doc.chatId}`)}
-                      className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[#F2F2F7] transition-colors cursor-pointer text-left"
+                      className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer text-left"
                     >
                       <div className="flex items-center gap-3 overflow-hidden pr-2">
                         <div className="w-10 h-10 rounded-lg bg-[#F0F8FF] border border-[#E5E5EA] flex items-center justify-center shrink-0">
-                          <FileText size={18} className="text-[#3390EC]" />
+                          <FileText
+                            size={18}
+                            className="text-[var(--tg-theme-button-color)]"
+                          />
                         </div>
                         <div className="flex flex-col overflow-hidden">
                           <span className="font-semibold text-[15px] text-black truncate">
@@ -301,7 +304,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                           )
                         }
                         disabled={isDownloading}
-                        className="w-9 h-9 shrink-0 rounded-full bg-[#F2F2F7] flex items-center justify-center text-[#3390EC] hover:bg-[#E5E5EA] active:scale-95 transition-all"
+                        className="w-9 h-9 shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] flex items-center justify-center text-[var(--tg-theme-button-color)] hover:bg-[#E5E5EA] active:scale-95 transition-all"
                       >
                         {isDownloading ? (
                           <Loader2 size={16} className="animate-spin" />
@@ -321,7 +324,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                 onClick={() =>
                   props.setShowAllDocuments(!props.showAllDocuments)
                 }
-                className="w-full py-3.5 text-[15px] font-medium text-[#3390EC] bg-white active:bg-[#F2F2F7] transition-colors cursor-pointer border-t border-[#E5E5EA]"
+                className="w-full py-3.5 text-[15px] font-medium text-[var(--tg-theme-button-color)] bg-white active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer border-t border-[#E5E5EA]"
               >
                 {props.showAllDocuments
                   ? "Скрыть"

@@ -23,12 +23,15 @@ export const WeeklyStats: React.FC = () => {
       <h4 className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider mb-2 ml-1">
         Сводка за неделю
       </h4>
-      <div className="bg-[#F2F2F7] rounded-2xl overflow-hidden w-full p-2 space-y-2">
+      <div className="bg-[var(--tg-theme-secondary-bg-color)] rounded-2xl overflow-hidden w-full p-2 space-y-2">
         {/* Карточка 1: Риски */}
         <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
-              <AlertTriangle size={16} className="text-[#3390EC]" />
+              <AlertTriangle
+                size={16}
+                className="text-[var(--tg-theme-button-color)]"
+              />
             </div>
             <span className="font-semibold text-sm text-black">
               Критических рисков
@@ -40,7 +43,7 @@ export const WeeklyStats: React.FC = () => {
               <TrendingDown size={12} strokeWidth={3} />
               {Math.abs(stats.risksTrend)}
             </div>
-            <span className="font-bold text-lg text-[#3390EC]">
+            <span className="font-bold text-lg text-[var(--tg-theme-button-color)]">
               {stats.criticalRisks}
             </span>
           </div>
@@ -50,7 +53,10 @@ export const WeeklyStats: React.FC = () => {
         <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
-              <FileText size={16} className="text-[#3390EC]" />
+              <FileText
+                size={16}
+                className="text-[var(--tg-theme-button-color)]"
+              />
             </div>
             <span className="font-semibold text-sm text-black">
               Проанализировано страниц
@@ -62,7 +68,7 @@ export const WeeklyStats: React.FC = () => {
               <TrendingUp size={12} strokeWidth={3} />
               {stats.pagesTrend}%
             </div>
-            <span className="font-bold text-lg text-[#3390EC]">
+            <span className="font-bold text-lg text-[var(--tg-theme-button-color)]">
               {stats.pagesAnalyzed}
             </span>
           </div>
@@ -72,13 +78,16 @@ export const WeeklyStats: React.FC = () => {
         <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
-              <PenSquare size={16} className="text-[#3390EC]" />
+              <PenSquare
+                size={16}
+                className="text-[var(--tg-theme-button-color)]"
+              />
             </div>
             <span className="font-semibold text-sm text-black">
               Частые точки правок
             </span>
           </div>
-          <span className="font-semibold text-sm text-[#3390EC] truncate max-w-[120px] text-right">
+          <span className="font-semibold text-sm text-[var(--tg-theme-button-color)] truncate max-w-[120px] text-right">
             {stats.commonEdits}
           </span>
         </div>

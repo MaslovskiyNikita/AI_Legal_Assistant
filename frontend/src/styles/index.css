@@ -1,28 +1,36 @@
-@import "./fonts.css";
-@import "./tailwind.css";
-@import "./theme.css";
-@keyframes scan {
-  0% {
-    top: -10%;
-    opacity: 0;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Фолбэки, если открыто в браузере */
+    --tg-theme-bg-color: #ffffff;
+    --tg-theme-secondary-bg-color: #f2f2f7;
+    --tg-theme-text-color: #000000;
+    --tg-theme-hint-color: #8e8e93;
+    --tg-theme-button-color: #3390ec;
+    --tg-theme-button-text-color: #ffffff;
+    --tg-theme-destructive-text-color: #ff3b30;
   }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    top: 110%;
-    opacity: 0;
+
+  /* Если открыто в темной теме браузера (фолбэк) */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --tg-theme-bg-color: #1c1c1d;
+      --tg-theme-secondary-bg-color: #2c2c2e;
+      --tg-theme-text-color: #ffffff;
+      --tg-theme-hint-color: #ebebf5;
+      --tg-theme-button-color: #3390ec;
+    }
   }
 }
 
-.animate-scan {
-  animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
-body,
-html,
-#root {
-  overscroll-behavior-y: none; /* Блокирует системный pull-to-refresh */
+/* Принудительно задаем фон приложения цветом Telegram */
+body {
+  background-color: var(--tg-theme-bg-color);
+  color: var(--tg-theme-text-color);
+  /* Safe areas для челки и полоски iOS */
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
 }

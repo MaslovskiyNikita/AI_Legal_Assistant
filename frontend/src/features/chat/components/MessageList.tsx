@@ -107,7 +107,7 @@ export const MessageList: React.FC<MessageListProps> = ({
       {groupedMessages.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-full text-center text-black mt-10">
           <div className="w-20 h-20 bg-[#F0F8FF] rounded-full flex items-center justify-center mb-4 shadow-sm">
-            <Scale size={36} className="text-[#3390EC]" />
+            <Scale size={36} className="text-[var(--tg-theme-button-color)]" />
           </div>
           <p className="text-[20px] font-semibold text-black mb-2">
             Готов помочь

@@ -80,7 +80,7 @@ const TokenCircleMenu = ({ percent }: { percent: number }) => {
               setIsOpen(false);
               alert("Тут будет оплата через Telegram Stars ⭐️");
             }}
-            className="w-full flex items-center justify-between p-4 text-[14px] font-medium text-[#3390EC] active:bg-[#F2F2F7] transition-colors"
+            className="w-full flex items-center justify-between p-4 text-[14px] font-medium text-[var(--tg-theme-button-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors"
           >
             Пополнить баланс
             <ChevronRight size={16} />

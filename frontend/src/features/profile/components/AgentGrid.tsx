@@ -21,12 +21,12 @@ export const AgentGrid: React.FC<AgentGridProps> = ({
           <div
             key={agent.id}
             onClick={() => setSelectedAgent(agent.id)}
-            className={`rounded-2xl p-4 flex flex-col relative transition-all cursor-pointer border ${agent.size === "large" ? "col-span-1 row-span-2 min-h-[160px]" : "col-span-1"} ${isSelected ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-[#F2F2F7] border-transparent hover:bg-[#E5E5EA]"}`}
+            className={`rounded-2xl p-4 flex flex-col relative transition-all cursor-pointer border ${agent.size === "large" ? "col-span-1 row-span-2 min-h-[160px]" : "col-span-1"} ${isSelected ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-[var(--tg-theme-secondary-bg-color)] border-transparent hover:bg-[#E5E5EA]"}`}
           >
             {isSelected && (
               <CheckCircle2
                 size={18}
-                className="absolute top-3 right-3 text-[#3390EC]"
+                className="absolute top-3 right-3 text-[var(--tg-theme-button-color)]"
                 fill="white"
               />
             )}
@@ -41,7 +41,7 @@ export const AgentGrid: React.FC<AgentGridProps> = ({
               </h3>
               {agent.description && (
                 <p
-                  className={`text-[12px] mt-1 line-clamp-2 ${isSelected ? "text-[#3390EC]" : "text-[#8E8E93]"}`}
+                  className={`text-[12px] mt-1 line-clamp-2 ${isSelected ? "text-[var(--tg-theme-button-color)]" : "text-[#8E8E93]"}`}
                 >
                   {agent.description}
                 </p>

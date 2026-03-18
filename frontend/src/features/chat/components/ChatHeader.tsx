@@ -35,7 +35,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
           <button
             type="button"
             onClick={() => navigate("/profile")}
-            className="w-8 h-8 -ml-2 flex items-center justify-center text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer"
+            className="w-8 h-8 -ml-2 flex items-center justify-center text-[var(--tg-theme-button-color)] active:opacity-70 transition-opacity cursor-pointer"
           >
             <ChevronLeft size={28} />
           </button>
@@ -52,7 +52,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
         <button
           type="button"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="w-8 h-8 flex items-center justify-center text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer"
+          className="w-8 h-8 flex items-center justify-center text-[var(--tg-theme-button-color)] active:opacity-70 transition-opacity cursor-pointer"
         >
           <MoreVertical size={24} />
         </button>
@@ -71,9 +71,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   setIsMenuOpen(false);
                   onOpenDownload();
                 }}
-                className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
+                className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors flex items-center gap-3 cursor-pointer"
               >
-                <Download size={18} className="text-[#3390EC]" /> Документы чата
+                <Download
+                  size={18}
+                  className="text-[var(--tg-theme-button-color)]"
+                />{" "}
+                Документы чата
               </button>
               <button
                 type="button"
@@ -81,10 +85,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   setIsMenuOpen(false);
                   onOpenExport();
                 }}
-                className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
+                className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors flex items-center gap-3 cursor-pointer"
               >
-                <Share2 size={18} className="text-[#3390EC]" /> Экспорт
-                переписки
+                <Share2
+                  size={18}
+                  className="text-[var(--tg-theme-button-color)]"
+                />{" "}
+                Экспорт переписки
               </button>
               {chatId && chatId !== "new" && (
                 <>
@@ -95,7 +102,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                       setIsMenuOpen(false);
                       onOpenDelete();
                     }}
-                    className="w-full text-left px-4 py-3 text-[15px] font-medium text-[#FF3B30] active:bg-[#F2F2F7] transition-colors flex items-center gap-3 cursor-pointer"
+                    className="w-full text-left px-4 py-3 text-[15px] font-medium text-[#FF3B30] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors flex items-center gap-3 cursor-pointer"
                   >
                     <Trash2 size={18} /> Удалить чат
                   </button>

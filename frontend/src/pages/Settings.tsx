@@ -29,13 +29,13 @@ export default function Settings() {
   }, [settings.navigate]);
 
   return (
-    <div className="min-h-screen w-full bg-[#F2F2F7] text-black flex flex-col pb-10 relative font-sans overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[var(--tg-theme-secondary-bg-color)] text-black flex flex-col pb-10 relative font-sans overflow-x-hidden">
       {/* Header */}
       <div className="h-14 px-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-xl z-20 border-b border-[#E5E5EA]">
         {!isTelegramWebApp() ? (
           <button
             onClick={() => settings.navigate("/profile")}
-            className="w-8 h-8 -ml-2 flex items-center justify-center text-[#3390EC] active:opacity-70 transition-opacity cursor-pointer z-10"
+            className="w-8 h-8 -ml-2 flex items-center justify-center text-[var(--tg-theme-button-color)] active:opacity-70 transition-opacity cursor-pointer z-10"
           >
             <ChevronLeft size={28} />
           </button>

@@ -20,7 +20,9 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
   const icons = {
     success: <CheckCircle2 className="text-[#34C759]" size={20} />,
     error: <AlertCircle className="text-[#FF3B30]" size={20} />,
-    info: <AlertCircle className="text-[#3390EC]" size={20} />,
+    info: (
+      <AlertCircle className="text-[var(--tg-theme-button-color)]" size={20} />
+    ),
   };
 
   const bgColors = {

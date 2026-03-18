@@ -7,14 +7,14 @@ interface FileIconProps {
 
 export const FileIcon: React.FC<FileIconProps> = ({ filename }) => {
   const ext = filename?.split(".").pop()?.toLowerCase();
-  let color = "text-[#3390EC]";
+  let color = "text-[var(--tg-theme-button-color)]";
   let label = "DOC";
 
   if (ext === "pdf") {
     color = "text-[#FF3B30]";
     label = "PDF";
   } else if (ext === "docx" || ext === "doc") {
-    color = "text-[#3390EC]";
+    color = "text-[var(--tg-theme-button-color)]";
     label = "DOCX";
   }
 

@@ -73,7 +73,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
         <button
           type="button"
           onClick={props.onOpenPrivacy}
-          className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[#F2F2F7] transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
         >
           <div className="flex items-center gap-3 text-black">
             <div className="w-8 h-8 rounded-lg bg-[#8E8E93]/10 flex items-center justify-center">
@@ -93,7 +93,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
         <button
           type="button"
           onClick={props.onOpenClearHistory}
-          className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] bg-white active:bg-[#F2F2F7] transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] bg-white active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
         >
           <div className="flex items-center gap-3 text-[#FF3B30]">
             <div className="w-8 h-8 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center">
@@ -107,7 +107,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
         <button
           type="button"
           onClick={props.onLogout}
-          className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[#F2F2F7] transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
         >
           <div className="flex items-center gap-3 text-[#FF3B30]">
             <div className="w-8 h-8 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center">

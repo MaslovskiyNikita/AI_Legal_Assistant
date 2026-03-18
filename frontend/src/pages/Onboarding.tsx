@@ -42,7 +42,7 @@ export default function Onboarding() {
       <div className="flex flex-col items-center text-center mt-16">
         {/* Иконка в стиле iOS/Telegram */}
         <div className="w-24 h-24 bg-[#F0F8FF] rounded-full flex items-center justify-center mb-6 shadow-sm">
-          <Scale size={48} className="text-[#3390EC]" />
+          <Scale size={48} className="text-[var(--tg-theme-button-color)]" />
         </div>
 
         <h1 className="text-black text-3xl font-bold mb-3 tracking-tight">
@@ -57,7 +57,10 @@ export default function Onboarding() {
           {/* 1. Анализ документов */}
           <div className="flex items-center gap-4 p-4 border-b border-[#E5E5EA]">
             <div className="w-10 h-10 flex-shrink-0 bg-[#F0F8FF] rounded-lg flex items-center justify-center">
-              <FileText size={22} className="text-[#3390EC]" />
+              <FileText
+                size={22}
+                className="text-[var(--tg-theme-button-color)]"
+              />
             </div>
             <div>
               <p className="text-black font-semibold text-[16px] text-left">
@@ -72,7 +75,10 @@ export default function Onboarding() {
           {/* 2. Безопасность */}
           <div className="flex items-center gap-4 p-4">
             <div className="w-10 h-10 flex-shrink-0 bg-[#F0F8FF] rounded-lg flex items-center justify-center">
-              <Shield size={22} className="text-[#3390EC]" />
+              <Shield
+                size={22}
+                className="text-[var(--tg-theme-button-color)]"
+              />
             </div>
             <div>
               <p className="text-black font-semibold text-[16px] text-left">
