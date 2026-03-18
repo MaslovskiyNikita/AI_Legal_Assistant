@@ -18,11 +18,11 @@ export const useChat = (initialChatId: string | undefined) => {
   const [currentChatId, setCurrentChatId] = useState(initialChatId);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [isSending, setIsSending] = useState(false); // Блокировка от двойных кликов
 
-  // Рефы для защиты от гонки состояний
+  // 👇 ЖЕСТКИЕ БЛОКИРОВКИ (Мутексы)
+  const isSendingRef = useRef(false); // Защита от двойного клика
+  const localSessionLock = useRef(false); // Защита от фоновой загрузки истории
   const hasFetchedHistory = useRef(false);
-  const localSessionLock = useRef(false); // Запрещает скачивать историю, если чат создан ТОЛЬКО ЧТО
   const hasHandledInitialPrompt = useRef(false);
 
   const modals = useChatModals();
@@ -33,12 +33,10 @@ export const useChat = (initialChatId: string | undefined) => {
     files.hasAttachedFiles,
   );
 
-  // Синхронизация ID с URL при клике "Назад"
+  // Синхронизация ID с URL (когда роутер нас реально перенаправляет)
   useEffect(() => {
-    setCurrentChatId(initialChatId);
-    if (initialChatId === "new") {
-      hasFetchedHistory.current = false;
-      localSessionLock.current = false;
+    if (initialChatId !== currentChatId) {
+      setCurrentChatId(initialChatId);
     }
   }, [initialChatId]);
 
@@ -56,9 +54,9 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   }, [navigate]);
 
-  // 1. ОЧИСТКА СОСТОЯНИЯ ПРИ НОВОМ ЧАТЕ
+  // 1. ОЧИСТКА СОСТОЯНИЯ (Только когда реально заходим в /chat/new)
   useEffect(() => {
-    if (currentChatId === "new") {
+    if (initialChatId === "new") {
       chatMessages.setMessages([]);
       files.setChatDocuments([]);
       files.setOldFile(null);
@@ -66,15 +64,15 @@ export const useChat = (initialChatId: string | undefined) => {
       setInputText("");
       hasHandledInitialPrompt.current = false;
       localSessionLock.current = false;
+      hasFetchedHistory.current = false;
     }
-  }, [currentChatId]);
+  }, [initialChatId]); // <-- Строго следим за initialChatId от роутера
 
   // 2. ЗАГРУЗКА ИСТОРИИ (СТРОГО ОДИН РАЗ И ТОЛЬКО ДЛЯ СТАРЫХ ЧАТОВ)
   useEffect(() => {
     if (!currentChatId || currentChatId === "new") return;
     if (hasFetchedHistory.current) return;
-    // 👇 ГЛАВНАЯ ЗАЩИТА: Если мы сами в этой сессии создали чат - серверная история нам не нужна!
-    if (localSessionLock.current) return;
+    if (localSessionLock.current) return; // Если чат создан только что - не тянем с сервера!
 
     hasFetchedHistory.current = true;
 
@@ -96,22 +94,20 @@ export const useChat = (initialChatId: string | undefined) => {
   // 3. ОБРАБОТКА СТАРТОВОГО ПРОМПТА (ИЗ ПРОФИЛЯ)
   useEffect(() => {
     const prompt = location.state?.initialPrompt;
-    if (prompt && currentChatId === "new" && !hasHandledInitialPrompt.current) {
+    if (prompt && initialChatId === "new" && !hasHandledInitialPrompt.current) {
       hasHandledInitialPrompt.current = true;
-
-      // Тихо чистим стейт, чтобы не триггерить рендер роутера
-      window.history.replaceState({}, document.title, window.location.pathname);
-
+      // Очищаем стейт роутера, чтобы при ререндере не отправить промпт второй раз
+      navigate(location.pathname, { replace: true, state: {} });
       setTimeout(() => handleSend(prompt), 100);
     }
-  }, [location.state, currentChatId]);
+  }, [location.state, initialChatId, navigate]);
 
   useEffect(() => {
     if (location.state?.openCompareModal) {
       modals.setIsCompareModalOpen(true);
-      window.history.replaceState({}, document.title, window.location.pathname);
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state]);
+  }, [location.state, navigate]);
 
   // Экспорт и Удаление
   const executeDeleteChat = async () => {
@@ -147,17 +143,22 @@ export const useChat = (initialChatId: string | undefined) => {
 
   // 4. ГЛАВНАЯ БИЗНЕС-ЛОГИКА (ОТПРАВКА С ЗАЩИТОЙ ОТ ДУБЛЕЙ)
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
-    if (isSending || isTyping) return; // Строгая блокировка дублей
+    // ЗАЩИТА: Если уже отправляем - игнорируем клик
+    if (isSendingRef.current || isTyping) return;
 
     const textToSend =
       typeof textOverride === "string" ? textOverride : inputText;
 
-    // Запоминаем файлы и текст локально
+    // Фиксируем текущие файлы, чтобы они не потерялись при рендере
     const currentOldFile = files.oldFile;
     const currentNewFile = files.newFile;
     const hasFiles = Boolean(currentOldFile && currentNewFile);
 
     if (!textToSend.trim() && !hasFiles) return;
+
+    // Включаем блокировку
+    isSendingRef.current = true;
+    setIsTyping(true);
 
     // 👇 ОЧИЩАЕМ UI МОМЕНТАЛЬНО, чтобы не было дублей на экране
     setInputText("");
@@ -166,8 +167,6 @@ export const useChat = (initialChatId: string | undefined) => {
       files.setNewFile(null);
     }
 
-    setIsSending(true);
-    setIsTyping(true);
     const finalPrompt = textToSend.trim();
     let activeChatId = currentChatId;
 
@@ -176,7 +175,8 @@ export const useChat = (initialChatId: string | undefined) => {
       if (activeChatId === "new" || !activeChatId) {
         if (!internalUserId) throw new Error("User ID not found");
 
-        localSessionLock.current = true; // Запрещаем тянуть историю с сервера!
+        // ЗАЩИТА: Запрещаем хуку скачивать историю, так как мы сами всё построим
+        localSessionLock.current = true;
 
         const chatTitle = hasFiles
           ? `Сравнение: ${currentOldFile!.name.substring(0, 10)}...`
@@ -186,12 +186,11 @@ export const useChat = (initialChatId: string | undefined) => {
           user_id: internalUserId,
           title: chatTitle,
         });
-
         activeChatId = newChat.id.toString();
-        setCurrentChatId(activeChatId);
 
-        // 👇 ТИХАЯ СМЕНА URL БЕЗ ПЕРЕЗАГРУЗКИ REACT ROUTER 👇
-        window.history.replaceState(null, "", `/chat/${activeChatId}`);
+        setCurrentChatId(activeChatId);
+        // Сообщаем React Router'у, что URL изменился (без моргания благодаря настройкам App.tsx)
+        navigate(`/chat/${activeChatId}`, { replace: true });
       }
 
       // СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЯ
@@ -291,7 +290,8 @@ export const useChat = (initialChatId: string | undefined) => {
         },
       ]);
     } finally {
-      setIsSending(false);
+      // Снимаем блокировки
+      isSendingRef.current = false;
       setIsTyping(false);
     }
   };
