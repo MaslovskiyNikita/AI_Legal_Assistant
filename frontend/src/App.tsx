@@ -1,5 +1,6 @@
 // src/App.tsx
 import React, { useEffect } from "react";
+// 1. ИМПОРТИРУЕМ ОБРАТНО BrowserRouter 👇
 import { BrowserRouter, Routes, Route } from "react-router";
 import { useAuth } from "./hooks/useAuth";
 import { ToastProvider } from "./hooks/useToast";
@@ -14,9 +15,9 @@ function AuthRouter() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-[var(--tg-theme-secondary-bg-color)]">
-        <div className="absolute top-[30%] w-32 h-32 bg-[var(--tg-theme-button-color)] rounded-full blur-[80px] opacity-30" />
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[var(--tg-theme-button-color)] z-10"></div>
+      <div className="min-h-screen w-full flex flex-col items-center justify-center relative overflow-hidden bg-[#1C1C1D]">
+        <div className="absolute top-[30%] w-32 h-32 bg-[#24A1DE] rounded-full blur-[80px] opacity-30" />
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#24A1DE] z-10"></div>
       </div>
     );
   }
@@ -37,20 +38,9 @@ export default function App() {
     if (tg) {
       tg.ready();
       tg.expand();
-
-      // 👇 НОВАЯ ФИЧА: Запрос на открытие во весь экран (убирает шапку TG)
-      if (tg.requestFullscreen) {
-        tg.requestFullscreen();
-      }
-
       // Отключаем закрытие приложения при случайном свайпе вниз по экрану
       if (tg.disableVerticalSwipes) {
         tg.disableVerticalSwipes();
-      }
-
-      // Красим хедер Telegram в цвет фона приложения
-      if (tg.setHeaderColor) {
-        tg.setHeaderColor("secondary_bg_color");
       }
     }
   }, []);
@@ -58,9 +48,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        {/* Базовый фон центровщика */}
+        {/* ЗАМЕНИЛИ bg-black и bg-[#1C1C1D] на переменные темы */}
         <div className="min-h-screen bg-[var(--tg-theme-secondary-bg-color)] flex justify-center font-sans">
-          {/* Ограничитель ширины для десктопа (max-w-md), на мобилках будет 100% */}
           <div className="w-full max-w-md bg-[var(--tg-theme-bg-color)] relative shadow-2xl overflow-hidden">
             <AuthRouter />
           </div>
