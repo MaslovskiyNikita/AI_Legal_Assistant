@@ -1,8 +1,7 @@
 // src/App.tsx
 import React, { useEffect } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router";
-// ИМПОРТИРУЕМ MOTION ДЛЯ АНИМАЦИЙ 👇
-import { motion, AnimatePresence } from "motion/react";
+// 1. ИМПОРТИРУЕМ ОБРАТНО BrowserRouter 👇
+import { BrowserRouter, Routes, Route } from "react-router";
 import { useAuth } from "./hooks/useAuth";
 import { ToastProvider } from "./hooks/useToast";
 
@@ -11,28 +10,7 @@ import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 
-// 1. Создаем универсальную обертку для страниц с Apple-подобной анимацией
-const PageTransition = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <motion.div
-      // Начальное состояние (при появлении страницы)
-      initial={{ opacity: 0, y: 15, scale: 0.98 }}
-      // Конечное состояние (когда страница на экране)
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      // Состояние при уходе со страницы
-      exit={{ opacity: 0, y: -15, scale: 0.98 }}
-      // Настройки плавности (пружинная анимация как в iOS)
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-      className="w-full h-full flex flex-col"
-    >
-      {children}
-    </motion.div>
-  );
-};
-
-// 2. Модифицируем роутер: добавляем useLocation и AnimatePresence
-function AnimatedRoutes() {
-  const location = useLocation(); // Теперь роутер знает, на какой мы странице
+function AuthRouter() {
   const { isLoading } = useAuth();
 
   if (isLoading) {
@@ -45,43 +23,12 @@ function AnimatedRoutes() {
   }
 
   return (
-    // AnimatePresence с mode="wait" ждет, пока старая страница исчезнет, прежде чем показать новую
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route
-          path="/"
-          element={
-            <PageTransition>
-              <Onboarding />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PageTransition>
-              <Profile />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/chat/:chatId"
-          element={
-            <PageTransition>
-              <Chat />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/settings"
-          element={
-            <PageTransition>
-              <Settings />
-            </PageTransition>
-          }
-        />
-      </Routes>
-    </AnimatePresence>
+    <Routes>
+      <Route path="/" element={<Onboarding />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/chat/:chatId" element={<Chat />} />
+      <Route path="/settings" element={<Settings />} />
+    </Routes>
   );
 }
 
@@ -95,12 +42,12 @@ export default function App() {
   }, []);
 
   return (
+    // 2. ИСПОЛЬЗУЕМ BrowserRouter 👇
     <BrowserRouter>
       <ToastProvider>
         <div className="min-h-screen bg-black flex justify-center font-sans">
           <div className="w-full max-w-md bg-[#1C1C1D] relative shadow-2xl overflow-hidden">
-            {/* Используем наш анимированный роутер */}
-            <AnimatedRoutes />
+            <AuthRouter />
           </div>
         </div>
       </ToastProvider>
