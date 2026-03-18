@@ -258,13 +258,11 @@ export const useChat = (initialChatId: string | undefined) => {
       const lastMessageId = lastRealMessage ? lastRealMessage.id : undefined;
 
       // 👇 Если есть загруженные файлы, берем их ID. Иначе берем последний ID.
-      const targetComparisonId = comparisonMsgId
-        ? comparisonMsgId
-        : lastMessageId;
+      const targetComparisonId = comparisonMsgId ? comparisonMsgId : undefined;
 
       const responseData = await apiClient.sendMessage(Number(activeChatId), {
         text: userTextForUI,
-        comparison_id: targetComparisonId, // 🚀 ПЕРЕДАЕМ ВЕРНЫЙ ID!
+        comparison_id: targetComparisonId,
       });
 
       // ПАРСИНГ ОТВЕТА
