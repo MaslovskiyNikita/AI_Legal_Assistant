@@ -22,16 +22,16 @@ interface SettingsOptionsProps {
 export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
   <>
     <section className="px-4 pt-4 shrink-0">
-      <h3 className="text-[#8E8E93] text-[13px] font-medium uppercase tracking-wider ml-1 mb-2">
+      <h3 className="text-[var(--tg-theme-hint-color)] text-[13px] font-medium uppercase tracking-wider ml-1 mb-2">
         Основные
       </h3>
-      <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
+      <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
         <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA]">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#5856D6] flex items-center justify-center">
               <Moon size={16} className="text-white" />
             </div>
-            <span className="font-medium text-[16px] text-black">
+            <span className="font-medium text-[16px] text-[var(--tg-theme-text-color)]">
               Темная тема
             </span>
           </div>
@@ -40,7 +40,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
             className={`w-[50px] h-[30px] rounded-full relative cursor-pointer transition-colors duration-300 ${props.theme === "dark" ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
           >
             <div
-              className={`absolute top-[2px] w-[26px] h-[26px] bg-white rounded-full shadow-md transition-all duration-300 ${props.theme === "dark" ? "left-[22px]" : "left-[2px]"}`}
+              className={`absolute top-[2px] w-[26px] h-[26px] bg-[var(--tg-theme-bg-color)] rounded-full shadow-md transition-all duration-300 ${props.theme === "dark" ? "left-[22px]" : "left-[2px]"}`}
             />
           </div>
         </div>
@@ -49,7 +49,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
             <div className="w-8 h-8 rounded-lg bg-[#FF9500] flex items-center justify-center">
               <Bell size={16} className="text-white" />
             </div>
-            <span className="font-medium text-[16px] text-black">
+            <span className="font-medium text-[16px] text-[var(--tg-theme-text-color)]">
               Уведомления
             </span>
           </div>
@@ -58,7 +58,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
             className={`w-[50px] h-[30px] rounded-full relative cursor-pointer transition-colors duration-300 ${props.notifications ? "bg-[#34C759]" : "bg-[#E5E5EA]"}`}
           >
             <div
-              className={`absolute top-[2px] w-[26px] h-[26px] bg-white rounded-full shadow-md transition-all duration-300 ${props.notifications ? "left-[22px]" : "left-[2px]"}`}
+              className={`absolute top-[2px] w-[26px] h-[26px] bg-[var(--tg-theme-bg-color)] rounded-full shadow-md transition-all duration-300 ${props.notifications ? "left-[22px]" : "left-[2px]"}`}
             />
           </div>
         </div>
@@ -66,18 +66,21 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
     </section>
 
     <section className="px-4 pt-2 shrink-0">
-      <h3 className="text-[#8E8E93] text-[13px] font-medium uppercase tracking-wider ml-1 mb-2">
+      <h3 className="text-[var(--tg-theme-hint-color)] text-[13px] font-medium uppercase tracking-wider ml-1 mb-2">
         Информация
       </h3>
-      <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
+      <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
         <button
           type="button"
           onClick={props.onOpenPrivacy}
-          className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3.5 bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
         >
-          <div className="flex items-center gap-3 text-black">
+          <div className="flex items-center gap-3 text-[var(--tg-theme-text-color)]">
             <div className="w-8 h-8 rounded-lg bg-[#8E8E93]/10 flex items-center justify-center">
-              <ShieldCheck size={16} className="text-[#8E8E93]" />
+              <ShieldCheck
+                size={16}
+                className="text-[var(--tg-theme-hint-color)]"
+              />
             </div>
             <span className="font-medium text-[16px]">
               Политика конфиденциальности
@@ -89,11 +92,11 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
     </section>
 
     <section className="px-4 pt-8 mt-auto shrink-0">
-      <div className="bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm flex flex-col">
+      <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm flex flex-col">
         <button
           type="button"
           onClick={props.onOpenClearHistory}
-          className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] bg-white active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
         >
           <div className="flex items-center gap-3 text-[#FF3B30]">
             <div className="w-8 h-8 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center">
@@ -107,7 +110,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
         <button
           type="button"
           onClick={props.onLogout}
-          className="w-full flex items-center justify-between px-4 py-3.5 bg-white active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
+          className="w-full flex items-center justify-between px-4 py-3.5 bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
         >
           <div className="flex items-center gap-3 text-[#FF3B30]">
             <div className="w-8 h-8 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center">

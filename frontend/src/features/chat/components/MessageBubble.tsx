@@ -1,5 +1,6 @@
 // src/features/chat/components/MessageBubble.tsx
 import React from "react";
+import { AILoader, TypingLoader } from "./AILoader";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
@@ -53,11 +54,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     } catch (e) {}
   }
 
-  // 1. ПРОВЕРКИ СОСТОЯНИЙ ЗАГРУЗКИ
-  // Если текст "{" - значит анализируем файлы
+  // ПРОВЕРКИ СОСТОЯНИЙ ЗАГРУЗКИ
   const isStillStreamingJson =
     !isUser && !msg.isComplete && rawText.trim() === "{";
-  // Если текст "..." - значит просто печатаем текст
   const isTypingText = !isUser && !msg.isComplete && rawText.trim() === "...";
 
   const fileMatch = rawText.match(
@@ -78,24 +77,25 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     if (onExportDocx) onExportDocx();
   };
 
+  // Бейджи рисков адаптированы под светлую/темную тему (через opacity)
   const renderRiskBadge = (risk: string) => {
     switch (risk) {
       case "RED":
         return (
-          <span className="flex items-center gap-1 bg-red-100 text-red-700 px-2 py-0.5 rounded text-[11px] font-bold">
+          <span className="flex items-center gap-1 bg-red-500/15 text-red-500 px-2 py-0.5 rounded text-[11px] font-bold border border-red-500/20">
             <AlertTriangle size={12} /> ВЫСОКИЙ РИСК
           </span>
         );
       case "YELLOW":
         return (
-          <span className="flex items-center gap-1 bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded text-[11px] font-bold">
+          <span className="flex items-center gap-1 bg-yellow-500/15 text-yellow-600 dark:text-yellow-500 px-2 py-0.5 rounded text-[11px] font-bold border border-yellow-500/20">
             <Info size={12} /> ВНИМАНИЕ
           </span>
         );
       case "GREEN":
       default:
         return (
-          <span className="flex items-center gap-1 bg-green-100 text-green-700 px-2 py-0.5 rounded text-[11px] font-bold">
+          <span className="flex items-center gap-1 bg-green-500/15 text-green-600 dark:text-green-500 px-2 py-0.5 rounded text-[11px] font-bold border border-green-500/20">
             <CheckCircle size={12} /> БЕЗОПАСНО
           </span>
         );
@@ -113,15 +113,15 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       <div
         className={`relative flex items-end min-w-0 ${isUser ? "ml-auto" : "mr-auto"} ${!isFileStack && !isComplexAnalysis ? "max-w-[85%] sm:max-w-[75%]" : "max-w-[95%]"}`}
       >
-        {/* ХВОСТИК ИИ (ЖЕСТКО ЗАДАЕМ fill="#F2F2F7", ЧТОБЫ НЕ БЫЛ ЧЕРНЫМ) */}
+        {/* ХВОСТИК ИИ (Наследует цвет фона через currentColor) */}
         {!isUser && !isFileStack && (
           <svg
             viewBox="0 0 8 13"
             width="8"
             height="13"
-            className="absolute -left-[7px] bottom-0 shrink-0"
+            className="absolute -left-[7px] bottom-0 shrink-0 text-[var(--tg-theme-secondary-bg-color)]"
           >
-            <path d="M8 0v13H0c3.9 0 8-4.2 8-13z" fill="#F2F2F7" />
+            <path d="M8 0v13H0c3.9 0 8-4.2 8-13z" fill="currentColor" />
           </svg>
         )}
 
@@ -134,10 +134,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               isScanning={isScanning}
             />
             {remainingText && (
-              <div
-                style={{ backgroundColor: "#3390EC" }}
-                className="mt-2 relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words text-white rounded-[18px] rounded-br-none"
-              >
+              <div className="mt-2 relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] rounded-[18px] rounded-br-none">
                 <ReactMarkdown
                   components={{
                     p: ({ node, ...props }) => (
@@ -150,92 +147,79 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 >
                   {remainingText}
                 </ReactMarkdown>
-                <div className="absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium text-blue-100">
+                <div className="absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium text-[var(--tg-theme-button-text-color)]/80">
                   <span>{timeString}</span>
-                  <CheckCheck size={14} className="text-white" />
+                  <CheckCheck
+                    size={14}
+                    className="text-[var(--tg-theme-button-text-color)]"
+                  />
                 </div>
                 {/* ХВОСТИК ЮЗЕРА (С ФАЙЛАМИ) */}
                 <svg
                   viewBox="0 0 8 13"
                   width="8"
                   height="13"
-                  className="absolute -right-[7px] bottom-0 shrink-0"
+                  className="absolute -right-[7px] bottom-0 shrink-0 text-[var(--tg-theme-button-color)]"
                 >
-                  <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" fill="#3390EC" />
+                  <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" fill="currentColor" />
                 </svg>
               </div>
             )}
           </div>
         ) : (
           <div
-            // ИСПОЛЬЗУЕМ INLINE STYLE ДЛЯ ФОНА ЮЗЕРА, ЧТОБЫ 100% НЕ ПРОПАДАЛ
-            style={{ backgroundColor: isUser ? "#3390EC" : "#F2F2F7" }}
-            className={`relative px-4 pt-3 pb-3 text-[15px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words ${isUser ? "text-white rounded-[18px] rounded-br-none" : "text-black rounded-[18px] rounded-bl-none"}`}
+            className={`relative px-4 pt-3 pb-3 text-[15px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words ${isUser ? "bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] rounded-[18px] rounded-br-none" : "bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-text-color)] rounded-[18px] rounded-bl-none"}`}
           >
             <div className="w-full min-w-0">
               {/* === ЛОАДЕР ДЛЯ ДОКУМЕНТОВ === */}
               {isStillStreamingJson ? (
-                <div className="flex items-center gap-2 text-[#3390EC] font-medium animate-pulse pb-2">
-                  <ShieldAlert size={18} />
-                  Анализирую документы и выявляю риски...
-                </div>
+                <AILoader />
               ) : /* === ЛОАДЕР ДЛЯ ПРОСТОГО ТЕКСТА (ПЕЧАТАЕТ...) === */
               isTypingText ? (
-                <div className="flex items-center gap-1.5 h-5 px-1 pb-1">
-                  <span
-                    className="w-1.5 h-1.5 bg-[#8E8E93] rounded-full animate-bounce"
-                    style={{ animationDelay: "0ms" }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 bg-[#8E8E93] rounded-full animate-bounce"
-                    style={{ animationDelay: "150ms" }}
-                  />
-                  <span
-                    className="w-1.5 h-1.5 bg-[#8E8E93] rounded-full animate-bounce"
-                    style={{ animationDelay: "300ms" }}
-                  />
-                </div>
+                <TypingLoader />
               ) : /* === ОТВЕТ С РИСКАМИ И ТАБЛИЦАМИ === */
               isComplexAnalysis && parsedData ? (
                 <div className="flex flex-col gap-4 pb-2">
-                  <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
+                  {/* Главная карточка аудита */}
+                  <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 shadow-sm border border-[var(--tg-theme-secondary-bg-color)]">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-bold text-[14px] uppercase tracking-wide text-gray-500">
+                      <span className="font-bold text-[14px] uppercase tracking-wide text-[var(--tg-theme-hint-color)]">
                         Результат аудита
                       </span>
                       {parsedData.analysis?.overall_risk &&
                         renderRiskBadge(parsedData.analysis.overall_risk)}
                     </div>
-                    <p className="text-[14px] font-medium">
+                    <p className="text-[14px] font-medium text-[var(--tg-theme-text-color)]">
                       {parsedData.analysis?.summary}
                     </p>
                   </div>
 
+                  {/* Детализация рисков */}
                   {parsedData.analysis?.details?.length > 0 && (
                     <div className="flex flex-col gap-2">
-                      <span className="font-bold text-[13px] uppercase text-gray-500 ml-1">
+                      <span className="font-bold text-[13px] uppercase text-[var(--tg-theme-hint-color)] tracking-wider ml-1">
                         Детализация рисков:
                       </span>
                       {parsedData.analysis.details.map(
                         (detail: any, idx: number) => (
                           <div
                             key={idx}
-                            className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col gap-1.5"
+                            className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 shadow-sm border border-[var(--tg-theme-secondary-bg-color)] flex flex-col gap-1.5"
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="font-bold text-[14px] leading-tight">
+                              <span className="font-bold text-[14px] leading-tight text-[var(--tg-theme-text-color)]">
                                 {detail.title}
                               </span>
                               <div className="shrink-0 mt-0.5">
                                 {renderRiskBadge(detail.risk)}
                               </div>
                             </div>
-                            <p className="text-[13px] text-gray-700">
+                            <p className="text-[13px] text-[var(--tg-theme-text-color)]/80">
                               {detail.explanation}
                             </p>
                             {detail.violated_law &&
                               detail.violated_law !== "null" && (
-                                <span className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded inline-block w-fit mt-1">
+                                <span className="text-[11px] font-semibold text-[var(--tg-theme-button-color)] bg-[var(--tg-theme-button-color)]/10 px-2 py-1 rounded inline-block w-fit mt-1 border border-[var(--tg-theme-button-color)]/20">
                                   Нарушение: {detail.violated_law}
                                 </span>
                               )}
@@ -245,19 +229,25 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     </div>
                   )}
 
+                  {/* Измененные фрагменты (КРАСИВЫЕ КАРТОЧКИ С ЗАСЕЧКАМИ) */}
                   {parsedData.diff_blocks?.length > 0 && (
-                    <div className="flex flex-col gap-2 mt-2 mb-2">
-                      <span className="font-bold text-[13px] uppercase text-gray-500 ml-1">
-                        Измененные фрагменты:
+                    <div className="flex flex-col gap-3 mt-2 mb-2">
+                      <span className="font-bold text-[13px] uppercase text-[var(--tg-theme-hint-color)] tracking-wider ml-1">
+                        Юридические изменения:
                       </span>
                       {parsedData.diff_blocks.map((diff: any, idx: number) => (
                         <div
                           key={idx}
-                          className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 text-[13px] font-mono leading-relaxed overflow-x-auto"
+                          className="bg-[var(--tg-theme-bg-color)] rounded-xl overflow-hidden shadow-sm border border-[var(--tg-theme-secondary-bg-color)] flex flex-col"
                         >
+                          <div className="bg-[var(--tg-theme-button-color)]/10 px-3 py-2 border-b border-[var(--tg-theme-secondary-bg-color)] flex items-center justify-between">
+                            <span className="text-[12px] font-semibold text-[var(--tg-theme-button-color)]">
+                              Фрагмент #{idx + 1}
+                            </span>
+                          </div>
                           <div
                             dangerouslySetInnerHTML={{ __html: diff.diff_html }}
-                            className="[&>del]:bg-red-100 [&>del]:text-red-800 [&>del]:line-through [&>ins]:bg-green-100 [&>ins]:text-green-800 [&>ins]:no-underline"
+                            className="p-3 text-[14px] font-serif leading-relaxed text-[var(--tg-theme-text-color)] overflow-x-auto [&>del]:bg-red-500/20 [&>del]:text-red-600 [&>del]:line-through [&>del]:px-1 [&>del]:rounded-sm [&>ins]:bg-green-500/20 [&>ins]:text-green-600 [&>ins]:no-underline [&>ins]:px-1 [&>ins]:rounded-sm"
                           />
                         </div>
                       ))}
@@ -266,7 +256,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
                   <button
                     onClick={handleExportClick}
-                    className="w-full mt-2 bg-gradient-to-r from-[#3390EC] to-[#5856D6] text-white font-semibold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="w-full mt-2 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] font-semibold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
                     <Download size={20} />
                     Сгенерировать отчет (.DOCX)
@@ -285,7 +275,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     ),
                     a: ({ node, ...props }) => (
                       <a
-                        className={`${isUser ? "text-white underline" : "text-[#3390EC] underline"} break-all`}
+                        className={`${isUser ? "text-white underline" : "text-[var(--tg-theme-button-color)] underline"} break-all`}
                         {...props}
                       />
                     ),
@@ -299,10 +289,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
             </div>
 
-            {/* НИЖНЯЯ ПАНЕЛЬ С ВРЕМЕНЕМ (ТЕПЕРЬ СИНЯЯ У ИИ) */}
+            {/* НИЖНЯЯ ПАНЕЛЬ С ВРЕМЕНЕМ */}
             {showFooter && (
               <div
-                className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none ${isUser ? "text-blue-100" : "text-[#3390EC]"}`}
+                className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none ${isUser ? "text-[var(--tg-theme-button-text-color)]/80" : "text-[var(--tg-theme-hint-color)]"}`}
               >
                 {!isUser &&
                   rawText &&
@@ -311,31 +301,39 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     <button
                       type="button"
                       onClick={() => onCopy(rawText, msg.id)}
-                      className="flex items-center hover:opacity-70 transition-colors cursor-pointer mr-0.5"
+                      className="flex items-center hover:opacity-70 transition-colors cursor-pointer mr-0.5 text-[var(--tg-theme-hint-color)]"
                     >
                       {copiedMessageId === msg.id ? (
-                        <Check size={14} className="text-[#3390EC]" />
+                        <Check
+                          size={14}
+                          className="text-[var(--tg-theme-button-color)]"
+                        />
                       ) : (
                         <Copy size={13} />
                       )}
                     </button>
                   )}
                 <span>{timeString}</span>
-                {isUser && <CheckCheck size={14} className="text-white" />}
+                {isUser && (
+                  <CheckCheck
+                    size={14}
+                    className="text-[var(--tg-theme-button-text-color)]"
+                  />
+                )}
               </div>
             )}
           </div>
         )}
 
-        {/* ХВОСТИК ЮЗЕРА (БЕЗ ФАЙЛОВ) - ЖЕСТКО ЗАДАН fill="#3390EC" */}
+        {/* ХВОСТИК ЮЗЕРА (БЕЗ ФАЙЛОВ) */}
         {isUser && !isFileStack && (
           <svg
             viewBox="0 0 8 13"
             width="8"
             height="13"
-            className="absolute -right-[7px] bottom-0 shrink-0"
+            className="absolute -right-[7px] bottom-0 shrink-0 text-[var(--tg-theme-button-color)]"
           >
-            <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" fill="#3390EC" />
+            <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" fill="currentColor" />
           </svg>
         )}
       </div>

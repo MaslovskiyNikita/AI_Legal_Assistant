@@ -26,7 +26,7 @@ export default function Profile() {
   return (
     // Добавили pb-20, чтобы контент не перекрывался кнопкой внизу
     <div
-      className={`min-h-screen w-full bg-white text-black relative flex flex-col font-sans overflow-x-hidden ${isWeb ? "pb-24" : ""}`}
+      className={`min-h-screen w-full bg-[var(--tg-theme-bg-color)] text-[var(--tg-theme-text-color)] relative flex flex-col font-sans overflow-x-hidden ${isWeb ? "pb-24" : ""}`}
     >
       <ProfileHeader
         firstName={firstName}
@@ -37,7 +37,7 @@ export default function Profile() {
 
       {/* Основной контент */}
       <div className="px-4 flex-1 flex flex-col">
-        <h1 className="text-3xl font-bold mt-2 mb-4 tracking-tight text-black">
+        <h1 className="text-3xl font-bold mt-2 mb-4 tracking-tight text-[var(--tg-theme-text-color)]">
           Выберите стиль
           <br />
           вашего AI-юриста
@@ -59,10 +59,10 @@ export default function Profile() {
 
       {/* Кнопка только для веб-версии */}
       {isWeb && (
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-white/80 backdrop-blur-md border-t border-[#E5E5EA] z-30">
+        <div className="absolute bottom-0 left-0 w-full p-4 bg-[var(--tg-theme-bg-color)]/80 backdrop-blur-md border-t border-[#E5E5EA] z-30">
           <button
             onClick={startNewChat}
-            className="w-full bg-[#3390EC] text-white font-semibold text-[17px] py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all"
+            className="w-full bg-[var(--tg-theme-button-color)] text-white font-semibold text-[17px] py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all"
           >
             Начать новый чат
           </button>

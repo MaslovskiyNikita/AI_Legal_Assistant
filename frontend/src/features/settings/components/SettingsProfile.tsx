@@ -31,17 +31,21 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
         className="w-20 h-20 rounded-full object-cover mb-3 shadow-sm"
       />
     ) : (
-      <div className="w-20 h-20 rounded-full bg-[#3390EC] flex items-center justify-center text-white text-3xl font-medium mb-3 shadow-sm">
+      <div className="w-20 h-20 rounded-full bg-[var(--tg-theme-button-color)] flex items-center justify-center text-white text-3xl font-medium mb-3 shadow-sm">
         {firstName.charAt(0).toUpperCase()}
       </div>
     )}
-    <h1 className="text-2xl font-bold text-black mb-0.5">{firstName}</h1>
-    <p className="text-[15px] text-[#8E8E93] mb-6">{username}</p>
+    <h1 className="text-2xl font-bold text-[var(--tg-theme-text-color)] mb-0.5">
+      {firstName}
+    </h1>
+    <p className="text-[15px] text-[var(--tg-theme-hint-color)] mb-6">
+      {username}
+    </p>
 
     <div className="w-full flex gap-3">
       <div
         onClick={() => setActiveTab("chats")}
-        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "chats" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-white border-[#E5E5EA] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
+        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "chats" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-[var(--tg-theme-bg-color)] border-[#E5E5EA] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
       >
         {activeTab === "chats" && (
           <CheckCircle2
@@ -51,7 +55,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
           />
         )}
         <div
-          className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "chats" ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-[var(--tg-theme-secondary-bg-color)] text-[#8E8E93]"}`}
+          className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "chats" ? "bg-[var(--tg-theme-button-color)] text-white shadow-sm shadow-blue-500/20" : "bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-hint-color)]"}`}
         >
           <MessageSquare size={20} />
         </div>
@@ -60,13 +64,13 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
         {isLoadingStats ? (
           <div className="h-8 w-12 bg-[#E5E5EA] animate-pulse rounded-md mb-0.5" />
         ) : (
-          <span className="text-2xl font-bold text-black mb-0.5">
+          <span className="text-2xl font-bold text-[var(--tg-theme-text-color)] mb-0.5">
             {chatsCount}
           </span>
         )}
 
         <span
-          className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "chats" ? "text-[var(--tg-theme-button-color)]" : "text-[#8E8E93]"}`}
+          className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "chats" ? "text-[var(--tg-theme-button-color)]" : "text-[var(--tg-theme-hint-color)]"}`}
         >
           Консультаций
         </span>
@@ -74,7 +78,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
 
       <div
         onClick={() => setActiveTab("documents")}
-        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "documents" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-white border-[#E5E5EA] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
+        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "documents" ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-[var(--tg-theme-bg-color)] border-[#E5E5EA] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
       >
         {activeTab === "documents" && (
           <CheckCircle2
@@ -84,7 +88,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
           />
         )}
         <div
-          className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "documents" ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-[var(--tg-theme-secondary-bg-color)] text-[#8E8E93]"}`}
+          className={`w-10 h-10 rounded-full mb-1.5 flex items-center justify-center ${activeTab === "documents" ? "bg-[var(--tg-theme-button-color)] text-white shadow-sm shadow-blue-500/20" : "bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-hint-color)]"}`}
         >
           <FileText size={20} />
         </div>
@@ -93,13 +97,13 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
         {isLoadingStats ? (
           <div className="h-8 w-12 bg-[#E5E5EA] animate-pulse rounded-md mb-0.5" />
         ) : (
-          <span className="text-2xl font-bold text-black mb-0.5">
+          <span className="text-2xl font-bold text-[var(--tg-theme-text-color)] mb-0.5">
             {docsCount}
           </span>
         )}
 
         <span
-          className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "documents" ? "text-[var(--tg-theme-button-color)]" : "text-[#8E8E93]"}`}
+          className={`text-[11px] font-semibold uppercase tracking-wide ${activeTab === "documents" ? "text-[var(--tg-theme-button-color)]" : "text-[var(--tg-theme-hint-color)]"}`}
         >
           Документов
         </span>

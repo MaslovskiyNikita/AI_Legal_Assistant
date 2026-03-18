@@ -13,7 +13,7 @@ export default function Chat() {
   const chat = useChat(chatId);
 
   return (
-    <div className="h-[100dvh] w-full relative flex flex-col bg-[#FFFFFF] overflow-hidden font-sans">
+    <div className="h-[100dvh] w-full relative flex flex-col bg-[var(--tg-theme-bg-color)] overflow-hidden font-sans">
       <ChatHeader
         chatId={chatId}
         onOpenDownload={() => chat.setIsDownloadModalOpen(true)}

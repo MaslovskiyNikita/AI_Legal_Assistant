@@ -37,7 +37,7 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-white text-black flex flex-col justify-between p-6 font-sans">
+    <div className="min-h-screen w-full bg-[var(--tg-theme-bg-color)] text-[var(--tg-theme-text-color)] flex flex-col justify-between p-6 font-sans">
       {/* Верхняя часть (Контент) */}
       <div className="flex flex-col items-center text-center mt-16">
         {/* Иконка в стиле iOS/Telegram */}
@@ -45,15 +45,15 @@ export default function Onboarding() {
           <Scale size={48} className="text-[var(--tg-theme-button-color)]" />
         </div>
 
-        <h1 className="text-black text-3xl font-bold mb-3 tracking-tight">
+        <h1 className="text-[var(--tg-theme-text-color)] text-3xl font-bold mb-3 tracking-tight">
           Ваш AI-юрист в Telegram
         </h1>
-        <p className="text-[#8E8E93] text-[17px] leading-relaxed mb-10 max-w-xs">
+        <p className="text-[var(--tg-theme-hint-color)] text-[17px] leading-relaxed mb-10 max-w-xs">
           Анализируйте документы, проверяйте договоры и получайте консультации.
         </p>
 
         {/* Список фичей в виде карточки (как в настройках) */}
-        <div className="w-full bg-white rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
+        <div className="w-full bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[#E5E5EA] overflow-hidden shadow-sm">
           {/* 1. Анализ документов */}
           <div className="flex items-center gap-4 p-4 border-b border-[#E5E5EA]">
             <div className="w-10 h-10 flex-shrink-0 bg-[#F0F8FF] rounded-lg flex items-center justify-center">
@@ -63,10 +63,10 @@ export default function Onboarding() {
               />
             </div>
             <div>
-              <p className="text-black font-semibold text-[16px] text-left">
+              <p className="text-[var(--tg-theme-text-color)] font-semibold text-[16px] text-left">
                 Анализ документов
               </p>
-              <p className="text-[#8E8E93] text-sm mt-0.5 text-left">
+              <p className="text-[var(--tg-theme-hint-color)] text-sm mt-0.5 text-left">
                 Проверка контрактов и поиск рисков
               </p>
             </div>
@@ -81,10 +81,10 @@ export default function Onboarding() {
               />
             </div>
             <div>
-              <p className="text-black font-semibold text-[16px] text-left">
+              <p className="text-[var(--tg-theme-text-color)] font-semibold text-[16px] text-left">
                 Безопасно и приватно
               </p>
-              <p className="text-[#8E8E93] text-sm mt-0.5 text-left">
+              <p className="text-[var(--tg-theme-hint-color)] text-sm mt-0.5 text-left">
                 Все данные строго конфиденциальны
               </p>
             </div>
@@ -96,7 +96,7 @@ export default function Onboarding() {
       <button
         onClick={handleStart}
         disabled={loading}
-        className="w-full py-4 mb-2 rounded-2xl font-semibold text-[17px] text-white flex items-center justify-center gap-2 bg-[#3390EC] shadow-md shadow-blue-500/30 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+        className="w-full py-4 mb-2 rounded-2xl font-semibold text-[17px] text-white flex items-center justify-center gap-2 bg-[var(--tg-theme-button-color)] shadow-md shadow-blue-500/30 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
       >
         {loading ? <Loader2 className="animate-spin" size={20} /> : "Начать"}
       </button>

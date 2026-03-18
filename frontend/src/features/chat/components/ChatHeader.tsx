@@ -27,7 +27,13 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   const isWeb = !isTelegramWebApp();
 
   return (
-    <div className="h-14 px-4 flex items-center justify-between sticky top-0 z-30 bg-white/80 backdrop-blur-xl border-b border-[#E5E5EA]">
+    <div
+      className="px-4 flex items-center justify-between sticky top-0 z-30 bg-[var(--tg-theme-bg-color)]/80 backdrop-blur-xl border-b border-[var(--tg-theme-secondary-bg-color)]"
+      style={{
+        paddingTop: "var(--safe-top)",
+        minHeight: "calc(3.5rem + var(--safe-top))",
+      }}
+    >
       {/* ЛЕВАЯ ЧАСТЬ: Кнопка назад (только для Web). 
           Оставляем ширину w-8, чтобы заголовок оставался ровно по центру */}
       <div className="flex items-center z-10 w-8">
@@ -43,7 +49,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
       </div>
 
       {/* ЦЕНТР: Заголовок */}
-      <span className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-black">
+      <span className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-[var(--tg-theme-text-color)]">
         Legal Expert
       </span>
 
@@ -63,15 +69,15 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               className="fixed inset-0 z-40"
               onClick={() => setIsMenuOpen(false)}
             />
-            {/* ИЗМЕНЕНО: Поменяли left-0 на right-0, чтобы меню открывалось внутрь экрана, а не за его пределы */}
-            <div className="absolute right-0 top-10 w-56 bg-white border border-[#E5E5EA] rounded-2xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
+            {/* ИЗМЕНЕНО: Цвета заменены на переменные Telegram */}
+            <div className="absolute right-0 top-10 w-56 bg-[var(--tg-theme-bg-color)] border border-[var(--tg-theme-secondary-bg-color)] rounded-2xl shadow-xl z-50 overflow-hidden py-1 animate-in fade-in zoom-in-95 duration-100">
               <button
                 type="button"
                 onClick={() => {
                   setIsMenuOpen(false);
                   onOpenDownload();
                 }}
-                className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors flex items-center gap-3 cursor-pointer"
+                className="w-full text-left px-4 py-3 text-[15px] font-medium text-[var(--tg-theme-text-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors flex items-center gap-3 cursor-pointer"
               >
                 <Download
                   size={18}
@@ -85,7 +91,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                   setIsMenuOpen(false);
                   onOpenExport();
                 }}
-                className="w-full text-left px-4 py-3 text-[15px] font-medium text-black active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors flex items-center gap-3 cursor-pointer"
+                className="w-full text-left px-4 py-3 text-[15px] font-medium text-[var(--tg-theme-text-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors flex items-center gap-3 cursor-pointer"
               >
                 <Share2
                   size={18}
@@ -95,7 +101,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               </button>
               {chatId && chatId !== "new" && (
                 <>
-                  <div className="h-[1px] bg-[#E5E5EA] mx-4 my-1" />
+                  <div className="h-[1px] bg-[var(--tg-theme-secondary-bg-color)] mx-4 my-1" />
                   <button
                     type="button"
                     onClick={() => {
@@ -104,6 +110,7 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
                     }}
                     className="w-full text-left px-4 py-3 text-[15px] font-medium text-[#FF3B30] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors flex items-center gap-3 cursor-pointer"
                   >
+                    {/* Красный цвет оставляем жестким, т.к. это сигнал об удалении */}
                     <Trash2 size={18} /> Удалить чат
                   </button>
                 </>

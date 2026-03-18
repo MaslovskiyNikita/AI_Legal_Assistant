@@ -29,9 +29,9 @@ export default function Settings() {
   }, [settings.navigate]);
 
   return (
-    <div className="min-h-screen w-full bg-[var(--tg-theme-secondary-bg-color)] text-black flex flex-col pb-10 relative font-sans overflow-x-hidden">
+    <div className="min-h-screen w-full bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-text-color)] flex flex-col pb-10 relative font-sans overflow-x-hidden">
       {/* Header */}
-      <div className="h-14 px-4 flex items-center justify-between sticky top-0 bg-white/80 backdrop-blur-xl z-20 border-b border-[#E5E5EA]">
+      <div className="h-14 px-4 flex items-center justify-between sticky top-0 bg-[var(--tg-theme-bg-color)]/80 backdrop-blur-xl z-20 border-b border-[#E5E5EA]">
         {!isTelegramWebApp() ? (
           <button
             onClick={() => settings.navigate("/profile")}
@@ -43,7 +43,7 @@ export default function Settings() {
           <div className="w-8"></div> // Пустой блок для баланса
         )}
 
-        <h2 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-black">
+        <h2 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-[var(--tg-theme-text-color)]">
           Настройки
         </h2>
 

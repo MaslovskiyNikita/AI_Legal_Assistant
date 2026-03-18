@@ -1,6 +1,5 @@
-// src/features/chat/components/ChatInput.tsx
 import React from "react";
-import { motion } from "motion/react"; // <-- ИМПОРТ MOTION
+import { motion } from "motion/react";
 import {
   X,
   FileText,
@@ -69,31 +68,36 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const hasAttachedFiles = Boolean(oldFile && newFile);
 
   return (
-    <div className="absolute bottom-0 left-0 w-full flex flex-col pt-2 pb-6 px-4 backdrop-blur-xl bg-white/90 border-t border-[#E5E5EA] z-20">
+    <div
+      className="absolute bottom-0 left-0 w-full flex flex-col pt-2 px-4 backdrop-blur-xl bg-[var(--tg-theme-bg-color)]/90 border-t border-[var(--tg-theme-secondary-bg-color)] z-20"
+      style={{
+        paddingBottom: "calc(1.5rem + var(--safe-bottom))",
+      }}
+    >
       {oldFile && newFile && (
-        <div className="mb-3 w-full bg-[var(--tg-theme-secondary-bg-color)] border border-[#E5E5EA] rounded-2xl p-3 flex flex-col gap-2 relative animate-in slide-in-from-bottom-2 duration-200 shadow-sm">
+        <div className="mb-3 w-full bg-[var(--tg-theme-secondary-bg-color)] border border-[var(--tg-theme-secondary-bg-color)] rounded-2xl p-3 flex flex-col gap-2 relative animate-in slide-in-from-bottom-2 duration-200 shadow-sm">
           <button
             onClick={() => {
               tgHaptic("light");
               setOldFile(null);
               setNewFile(null);
             }}
-            className="absolute top-2 right-2 p-1 text-[#8E8E93] hover:text-[#FF3B30] transition-colors rounded-full cursor-pointer bg-white shadow-sm"
+            className="absolute top-2 right-2 p-1 text-[var(--tg-theme-hint-color)] hover:text-[#FF3B30] transition-colors rounded-full cursor-pointer bg-[var(--tg-theme-bg-color)] shadow-sm"
           >
             <X size={16} />
           </button>
-          <span className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider pl-1">
+          <span className="text-[11px] font-semibold text-[var(--tg-theme-hint-color)] uppercase tracking-wider pl-1">
             Будут отправлены
           </span>
           <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-2.5 text-[14px] text-black truncate pr-6 bg-white p-2 rounded-xl shadow-sm">
+            <div className="flex items-center gap-2.5 text-[14px] text-[var(--tg-theme-text-color)] truncate pr-6 bg-[var(--tg-theme-bg-color)] p-2 rounded-xl shadow-sm">
               <FileText
                 size={18}
                 className="text-[var(--tg-theme-button-color)] shrink-0"
               />
               <span className="truncate font-medium">{oldFile.name}</span>
             </div>
-            <div className="flex items-center gap-2.5 text-[14px] text-black truncate pr-6 bg-white p-2 rounded-xl shadow-sm">
+            <div className="flex items-center gap-2.5 text-[14px] text-[var(--tg-theme-text-color)] truncate pr-6 bg-[var(--tg-theme-bg-color)] p-2 rounded-xl shadow-sm">
               <FileText
                 size={18}
                 className="text-[var(--tg-theme-button-color)] shrink-0"
@@ -111,16 +115,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           return (
             <motion.button
               key={action.id}
-              initial={{ opacity: 0, y: 15 }} // Начинают чуть ниже и прозрачные
-              animate={{ opacity: 1, y: 0 }} // Выезжают наверх
-              transition={{ delay: index * 0.1, duration: 0.3 }} // Задержка для каждого следующего (Stagger)
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.3 }}
               type="button"
               onClick={() => {
                 tgHaptic("light");
                 handleSend(action.prompt);
               }}
               disabled={isTyping}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-[var(--tg-theme-secondary-bg-color)] hover:bg-[#E5E5EA] active:bg-[#D1D1D6] text-[#3A3A3C] rounded-xl text-[12px] font-medium transition-colors disabled:opacity-50 border border-[#E5E5EA] min-w-0"
+              className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-[var(--tg-theme-secondary-bg-color)] hover:bg-[var(--tg-theme-secondary-bg-color)] active:bg-[var(--tg-theme-bg-color)] text-[var(--tg-theme-text-color)] rounded-xl text-[12px] font-medium transition-colors disabled:opacity-50 border border-[var(--tg-theme-secondary-bg-color)] min-w-0 shadow-sm"
             >
               <Icon
                 size={12}
@@ -145,8 +149,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           }}
           className={`w-10 h-10 mb-1 flex items-center justify-center rounded-full transition-colors shrink-0 cursor-pointer ${
             shouldShowAttachedIcon
-              ? "text-[var(--tg-theme-button-color)] bg-[#E5F1FF]"
-              : "text-[#8E8E93] hover:text-[var(--tg-theme-button-color)]"
+              ? "text-[var(--tg-theme-button-color)] bg-[var(--tg-theme-button-color)]/10"
+              : "text-[var(--tg-theme-hint-color)] hover:text-[var(--tg-theme-button-color)]"
           }`}
         >
           {shouldShowAttachedIcon ? (
@@ -156,7 +160,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           )}
         </button>
 
-        <div className="flex-1 bg-[var(--tg-theme-secondary-bg-color)] border border-[#E5E5EA] rounded-3xl min-h-[44px] max-h-[120px] flex items-end px-4 py-1.5 focus-within:border-[#3390EC] transition-colors">
+        <div className="flex-1 bg-[var(--tg-theme-secondary-bg-color)] border border-transparent rounded-3xl min-h-[44px] max-h-[120px] flex items-end px-4 py-1.5 focus-within:border-[var(--tg-theme-button-color)] transition-colors">
           <textarea
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
@@ -173,7 +177,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 : "Напишите сообщение..."
             }
             rows={1}
-            className="flex-1 max-h-[100px] bg-transparent border-none outline-none text-black text-[16px] placeholder:text-[#8E8E93] resize-none py-1.5"
+            className="flex-1 max-h-[100px] bg-transparent border-none outline-none text-[var(--tg-theme-text-color)] text-[16px] placeholder:text-[var(--tg-theme-hint-color)] resize-none py-1.5"
           />
         </div>
 
@@ -187,8 +191,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           className={`w-[44px] h-[44px] shrink-0 rounded-full flex items-center justify-center transition-all active:scale-90 shadow-sm mb-0.5
             ${
               inputText.trim() || hasAttachedFiles
-                ? "bg-[#3390EC] text-white shadow-blue-500/30"
-                : "bg-[#E5E5EA] text-[#8E8E93] cursor-not-allowed"
+                ? "bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] shadow-blue-500/30"
+                : "bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-hint-color)] cursor-not-allowed"
             }
           `}
         >

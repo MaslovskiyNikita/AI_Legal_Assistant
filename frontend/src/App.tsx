@@ -38,15 +38,19 @@ export default function App() {
     if (tg) {
       tg.ready();
       tg.expand();
+      // Отключаем закрытие приложения при случайном свайпе вниз по экрану
+      if (tg.disableVerticalSwipes) {
+        tg.disableVerticalSwipes();
+      }
     }
   }, []);
 
   return (
-    // 2. ИСПОЛЬЗУЕМ BrowserRouter 👇
     <BrowserRouter>
       <ToastProvider>
-        <div className="min-h-screen bg-black flex justify-center font-sans">
-          <div className="w-full max-w-md bg-[#1C1C1D] relative shadow-2xl overflow-hidden">
+        {/* ЗАМЕНИЛИ bg-black и bg-[#1C1C1D] на переменные темы */}
+        <div className="min-h-screen bg-[var(--tg-theme-secondary-bg-color)] flex justify-center font-sans">
+          <div className="w-full max-w-md bg-[var(--tg-theme-bg-color)] relative shadow-2xl overflow-hidden">
             <AuthRouter />
           </div>
         </div>

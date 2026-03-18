@@ -32,7 +32,7 @@ export const RecentChats: React.FC<RecentChatsProps> = ({
 
   return (
     <div className="w-full">
-      <h4 className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider mb-2 ml-1">
+      <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-2 ml-1">
         Продолжить
       </h4>
       <div className="grid grid-cols-3 gap-2 w-full">
@@ -52,8 +52,11 @@ export const RecentChats: React.FC<RecentChatsProps> = ({
             >
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">
-                  <Clock size={12} className="text-[#8E8E93] shrink-0" />
-                  <span className="text-[11px] font-semibold text-[#8E8E93] uppercase tracking-wider truncate">
+                  <Clock
+                    size={12}
+                    className="text-[var(--tg-theme-hint-color)] shrink-0"
+                  />
+                  <span className="text-[11px] font-semibold text-[var(--tg-theme-hint-color)] uppercase tracking-wider truncate">
                     {formatRecentDateShort(
                       chat.created_at || chat.createdAt || chat.updated_at,
                     )}
@@ -76,7 +79,7 @@ export const RecentChats: React.FC<RecentChatsProps> = ({
                 </div>
               </div>
 
-              <span className="text-[13px] font-semibold text-black leading-tight line-clamp-3 mt-1">
+              <span className="text-[13px] font-semibold text-[var(--tg-theme-text-color)] leading-tight line-clamp-3 mt-1">
                 {chat.title || "Новая консультация"}
               </span>
             </div>

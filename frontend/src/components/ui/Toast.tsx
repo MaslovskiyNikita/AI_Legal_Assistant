@@ -36,12 +36,12 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
       className={`flex items-center gap-3 p-4 rounded-2xl border shadow-lg backdrop-blur-md animate-in slide-in-from-top-5 fade-in duration-300 ${bgColors[type]}`}
     >
       {icons[type]}
-      <span className="text-[14px] font-medium text-black flex-1">
+      <span className="text-[14px] font-medium text-[var(--tg-theme-text-color)] flex-1">
         {message}
       </span>
       <button
         onClick={() => onClose(id)}
-        className="text-[#8E8E93] hover:text-black transition-colors"
+        className="text-[var(--tg-theme-hint-color)] hover:text-[var(--tg-theme-text-color)] transition-colors"
       >
         <X size={16} />
       </button>

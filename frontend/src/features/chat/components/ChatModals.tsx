@@ -78,17 +78,17 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-white flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
+          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E5EA] mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-[#FFEBEA] rounded-full flex items-center justify-center mb-4">
                   <Trash2 size={28} className="text-[#FF3B30]" />
                 </div>
-                <Drawer.Title className="text-[20px] font-bold text-black mb-2">
+                <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)] mb-2">
                   Удалить этот чат?
                 </Drawer.Title>
-                <Drawer.Description className="text-[15px] text-[#8E8E93] leading-snug max-w-[280px]">
+                <Drawer.Description className="text-[15px] text-[var(--tg-theme-hint-color)] leading-snug max-w-[280px]">
                   Переписка и прикрепленные файлы будут удалены навсегда.
                 </Drawer.Description>
               </div>
@@ -103,7 +103,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   Удалить
                 </button>
                 <Drawer.Close asChild>
-                  <button className="w-full py-4 bg-[#F2F2F7] text-black rounded-xl text-[17px] font-semibold active:scale-[0.98] transition-all">
+                  <button className="w-full py-4 bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-text-color)] rounded-xl text-[17px] font-semibold active:scale-[0.98] transition-all">
                     Отмена
                   </button>
                 </Drawer.Close>
@@ -123,13 +123,16 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-white flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none max-h-[80vh]">
+          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none max-h-[80vh]">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E5EA] mt-4 mb-2" />
             <div className="px-5 pb-3 flex items-center gap-3 border-b border-[#E5E5EA]">
               <div className="w-10 h-10 bg-[#F0F8FF] rounded-full flex items-center justify-center">
-                <FileText size={20} className="text-[#3390EC]" />
+                <FileText
+                  size={20}
+                  className="text-[var(--tg-theme-button-color)]"
+                />
               </div>
-              <Drawer.Title className="text-[20px] font-bold text-black">
+              <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)]">
                 Документы чата
               </Drawer.Title>
               <Drawer.Description className="sr-only">
@@ -138,18 +141,18 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-3 pb-10">
               {props.chatDocuments.length === 0 ? (
-                <div className="text-center py-8 text-[#8E8E93] text-[15px]">
+                <div className="text-center py-8 text-[var(--tg-theme-hint-color)] text-[15px]">
                   Нет прикрепленных документов
                 </div>
               ) : (
                 props.chatDocuments.map((doc, idx) => (
                   <div
                     key={doc.id || idx}
-                    className="flex items-center justify-between bg-[#F2F2F7] p-3 rounded-2xl"
+                    className="flex items-center justify-between bg-[var(--tg-theme-secondary-bg-color)] p-3 rounded-2xl"
                   >
                     <div className="flex items-center gap-3 overflow-hidden pr-3">
                       <FileIcon filename={doc.filename || doc.name || ""} />
-                      <span className="text-[15px] font-medium text-black truncate">
+                      <span className="text-[15px] font-medium text-[var(--tg-theme-text-color)] truncate">
                         {doc.filename || doc.name || `Документ #${doc.id}`}
                       </span>
                     </div>
@@ -161,7 +164,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                           doc.filename || "document",
                         );
                       }}
-                      className="w-10 h-10 bg-white rounded-full shadow-sm flex items-center justify-center text-[#3390EC] active:scale-95 transition-all shrink-0"
+                      className="w-10 h-10 bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm flex items-center justify-center text-[var(--tg-theme-button-color)] active:scale-95 transition-all shrink-0"
                     >
                       <Download size={18} />
                     </button>
@@ -183,17 +186,20 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-white flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
+          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E5EA] mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-[#F0F8FF] rounded-full flex items-center justify-center mb-4">
-                  <Share2 size={28} className="text-[#3390EC]" />
+                  <Share2
+                    size={28}
+                    className="text-[var(--tg-theme-button-color)]"
+                  />
                 </div>
-                <Drawer.Title className="text-[20px] font-bold text-black mb-2">
+                <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)] mb-2">
                   Экспорт чата
                 </Drawer.Title>
-                <Drawer.Description className="text-[15px] text-[#8E8E93] leading-snug">
+                <Drawer.Description className="text-[15px] text-[var(--tg-theme-hint-color)] leading-snug">
                   Сохраните историю переписки на устройство для дальнейшей
                   работы.
                 </Drawer.Description>
@@ -205,7 +211,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     props.handleExport("docx");
                   }}
                   disabled={props.isExporting}
-                  className="w-full py-4 bg-[#3390EC] text-white rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all"
+                  className="w-full py-4 bg-[var(--tg-theme-button-color)] text-white rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all"
                 >
                   {props.isExporting ? "Экспорт..." : "Скачать в формате .DOCX"}
                 </button>
@@ -215,7 +221,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     props.handleExport("pdf");
                   }}
                   disabled={props.isExporting}
-                  className="w-full py-4 bg-[#F2F2F7] text-[#3390EC] rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all"
+                  className="w-full py-4 bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-button-color)] rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all"
                 >
                   {props.isExporting ? "Экспорт..." : "Скачать в формате .PDF"}
                 </button>
@@ -235,33 +241,36 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-[#F2F2F7] flex flex-col rounded-t-[24px] mt-10 fixed bottom-0 left-0 right-0 z-[60] outline-none">
+          <Drawer.Content className="bg-[var(--tg-theme-secondary-bg-color)] flex flex-col rounded-t-[24px] mt-10 fixed bottom-0 left-0 right-0 z-[60] outline-none">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#D1D1D6] mt-4 mb-2" />
             <div className="px-5 pb-3 pt-2 text-center">
-              <Drawer.Title className="text-[20px] font-bold text-black">
+              <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)]">
                 Сравнение документов
               </Drawer.Title>
-              <Drawer.Description className="text-[14px] text-[#8E8E93] mt-1">
+              <Drawer.Description className="text-[14px] text-[var(--tg-theme-hint-color)] mt-1">
                 Загрузите две версии документа для поиска изменений и рисков.
               </Drawer.Description>
             </div>
 
             <div className="p-5 pb-10 space-y-4">
               {/* Старая версия */}
-              <div className="bg-white p-4 rounded-2xl shadow-sm">
-                <label className="text-[13px] font-bold text-[#8E8E93] uppercase tracking-wider block mb-3">
+              <div className="bg-[var(--tg-theme-bg-color)] p-4 rounded-2xl shadow-sm">
+                <label className="text-[13px] font-bold text-[var(--tg-theme-hint-color)] uppercase tracking-wider block mb-3">
                   Старая редакция
                 </label>
                 {!props.oldFile ? (
                   <label
                     htmlFor="old-file"
-                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[#E5E5EA] rounded-xl bg-[#F9FAFB] hover:bg-[#F2F2F7] transition-colors cursor-pointer"
+                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[#E5E5EA] rounded-xl bg-[#F9FAFB] hover:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer"
                   >
-                    <UploadCloud size={28} className="text-[#3390EC] mb-2" />
-                    <p className="text-[15px] text-black font-medium">
+                    <UploadCloud
+                      size={28}
+                      className="text-[var(--tg-theme-button-color)] mb-2"
+                    />
+                    <p className="text-[15px] text-[var(--tg-theme-text-color)] font-medium">
                       Выбрать файл
                     </p>
-                    <p className="text-[12px] text-[#8E8E93] mt-0.5">
+                    <p className="text-[12px] text-[var(--tg-theme-hint-color)] mt-0.5">
                       PDF, DOCX до 10 МБ
                     </p>
                     <input
@@ -282,10 +291,10 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     <div className="flex items-center gap-3 overflow-hidden">
                       <FileIcon filename={props.oldFile.name} />
                       <div className="flex flex-col overflow-hidden">
-                        <span className="text-[15px] font-semibold text-black truncate">
+                        <span className="text-[15px] font-semibold text-[var(--tg-theme-text-color)] truncate">
                           {props.oldFile.name}
                         </span>
-                        <span className="text-[13px] text-[#8E8E93]">
+                        <span className="text-[13px] text-[var(--tg-theme-hint-color)]">
                           {formatFileSize(props.oldFile.size)}
                         </span>
                       </div>
@@ -295,7 +304,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                         tgHaptic("light");
                         props.setOldFile(null);
                       }}
-                      className="w-8 h-8 flex items-center justify-center text-[#8E8E93] bg-white rounded-full shadow-sm"
+                      className="w-8 h-8 flex items-center justify-center text-[var(--tg-theme-hint-color)] bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm"
                     >
                       <X size={16} />
                     </button>
@@ -304,20 +313,23 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
               </div>
 
               {/* Новая версия */}
-              <div className="bg-white p-4 rounded-2xl shadow-sm">
-                <label className="text-[13px] font-bold text-[#8E8E93] uppercase tracking-wider block mb-3">
+              <div className="bg-[var(--tg-theme-bg-color)] p-4 rounded-2xl shadow-sm">
+                <label className="text-[13px] font-bold text-[var(--tg-theme-hint-color)] uppercase tracking-wider block mb-3">
                   Новая редакция
                 </label>
                 {!props.newFile ? (
                   <label
                     htmlFor="new-file"
-                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[#E5E5EA] rounded-xl bg-[#F9FAFB] hover:bg-[#F2F2F7] transition-colors cursor-pointer"
+                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[#E5E5EA] rounded-xl bg-[#F9FAFB] hover:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer"
                   >
-                    <UploadCloud size={28} className="text-[#3390EC] mb-2" />
-                    <p className="text-[15px] text-black font-medium">
+                    <UploadCloud
+                      size={28}
+                      className="text-[var(--tg-theme-button-color)] mb-2"
+                    />
+                    <p className="text-[15px] text-[var(--tg-theme-text-color)] font-medium">
                       Выбрать файл
                     </p>
-                    <p className="text-[12px] text-[#8E8E93] mt-0.5">
+                    <p className="text-[12px] text-[var(--tg-theme-hint-color)] mt-0.5">
                       PDF, DOCX до 10 МБ
                     </p>
                     <input
@@ -338,10 +350,10 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     <div className="flex items-center gap-3 overflow-hidden">
                       <FileIcon filename={props.newFile.name} />
                       <div className="flex flex-col overflow-hidden">
-                        <span className="text-[15px] font-semibold text-black truncate">
+                        <span className="text-[15px] font-semibold text-[var(--tg-theme-text-color)] truncate">
                           {props.newFile.name}
                         </span>
-                        <span className="text-[13px] text-[#8E8E93]">
+                        <span className="text-[13px] text-[var(--tg-theme-hint-color)]">
                           {formatFileSize(props.newFile.size)}
                         </span>
                       </div>
@@ -351,7 +363,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                         tgHaptic("light");
                         props.setNewFile(null);
                       }}
-                      className="w-8 h-8 flex items-center justify-center text-[#8E8E93] bg-white rounded-full shadow-sm"
+                      className="w-8 h-8 flex items-center justify-center text-[var(--tg-theme-hint-color)] bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm"
                     >
                       <X size={16} />
                     </button>
@@ -365,7 +377,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   props.setIsCompareModalOpen(false);
                 }}
                 disabled={!props.oldFile || !props.newFile}
-                className="w-full bg-[#3390EC] text-white font-semibold text-[17px] py-4 rounded-xl mt-4 disabled:opacity-50 active:scale-[0.98] transition-all"
+                className="w-full bg-[var(--tg-theme-button-color)] text-white font-semibold text-[17px] py-4 rounded-xl mt-4 disabled:opacity-50 active:scale-[0.98] transition-all"
               >
                 Готово
               </button>
@@ -384,17 +396,17 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-white flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
+          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E5EA] mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-[#FFF4E5] rounded-full flex items-center justify-center mb-4">
                   <AlertTriangle size={28} className="text-[#FF9500]" />
                 </div>
-                <Drawer.Title className="text-[20px] font-bold text-black mb-2">
+                <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)] mb-2">
                   Лимит документов
                 </Drawer.Title>
-                <Drawer.Description className="text-[15px] text-[#8E8E93] leading-snug">
+                <Drawer.Description className="text-[15px] text-[var(--tg-theme-hint-color)] leading-snug">
                   В этом чате уже загружены документы. Для новой проверки
                   создайте новый чат.
                 </Drawer.Description>
@@ -406,7 +418,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   props.setIsFileLimitModalOpen(false);
                   navigate("/chat/new", { state: { openCompareModal: true } });
                 }}
-                className="w-full py-4 bg-[#3390EC] text-white rounded-xl text-[17px] font-semibold active:scale-[0.98] transition-all"
+                className="w-full py-4 bg-[var(--tg-theme-button-color)] text-white rounded-xl text-[17px] font-semibold active:scale-[0.98] transition-all"
               >
                 Создать новый чат
               </button>

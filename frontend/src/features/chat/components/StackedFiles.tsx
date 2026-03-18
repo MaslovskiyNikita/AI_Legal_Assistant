@@ -1,6 +1,6 @@
 // src/features/chat/components/StackedFiles.tsx
 import React from "react";
-import { motion } from "motion/react"; // <-- ИМПОРТ ИЗ ТВОЕЙ БИБЛИОТЕКИ
+import { motion } from "motion/react";
 import { FileIcon } from "../../../components/ui/FileIcon";
 
 interface StackedFilesProps {
@@ -17,7 +17,6 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
   isScanning,
 }) => {
   return (
-    // Главный контейнер
     <motion.div
       onClick={onClick}
       className="relative flex flex-col items-end my-1 mt-10 cursor-pointer z-20"
@@ -26,7 +25,6 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
       whileTap="tap"
       variants={{
         hidden: { opacity: 0, scale: 0.9 },
-        // Запускаем дочерние анимации с задержкой 0.15с между ними
         visible: {
           opacity: 1,
           scale: 1,
@@ -35,19 +33,19 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
         tap: { scale: 0.96 },
       }}
     >
-      {/* Эффект сканера (если идет анализ) */}
+      {/* КРУТОЙ ЭФФЕКТ ЛАЗЕРНОГО СКАНЕРА */}
       {isScanning && (
-        <div className="absolute -inset-4 z-30 pointer-events-none overflow-hidden rounded-[24px]">
+        <div className="absolute -inset-2 z-40 pointer-events-none overflow-hidden rounded-[24px]">
           <motion.div
-            initial={{ y: "-100%" }}
-            animate={{ y: "150%" }}
+            initial={{ y: "-10%" }}
+            animate={{ y: "250%" }}
             transition={{
               repeat: Infinity,
-              duration: 1.5,
+              duration: 1.2,
               ease: "linear",
               repeatType: "reverse",
             }}
-            className="absolute left-0 right-0 h-[3px] bg-[#34C759] shadow-[0_0_12px_4px_rgba(52,199,89,0.6)] rounded-full"
+            className="absolute left-0 right-0 h-[2px] bg-[#34C759] shadow-[0_0_15px_5px_rgba(52,199,89,0.5)] z-40"
           />
         </div>
       )}
@@ -56,7 +54,6 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
       <motion.div
         variants={{
           hidden: { rotate: 0, y: 0, x: 0, opacity: 0 },
-          // Вылетает с поворотом на 6 градусов
           visible: {
             rotate: 6,
             y: -20,
@@ -65,14 +62,14 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
             transition: { type: "spring", stiffness: 300, damping: 20 },
           },
         }}
-        className="absolute inset-0 bg-[#297acc] rounded-[20px] p-2.5 pr-5 flex items-center shadow-md border border-white/20 origin-bottom-right z-0"
+        className="absolute inset-0 bg-[var(--tg-theme-button-color)] brightness-90 rounded-[20px] p-2.5 pr-5 flex items-center shadow-md border border-[var(--tg-theme-bg-color)]/20 origin-bottom-right z-0"
       >
         <FileIcon filename={file1} />
         <div className="ml-3 flex flex-col flex-1 min-w-0">
-          <span className="text-white text-[15px] font-medium truncate">
+          <span className="text-[var(--tg-theme-button-text-color)] text-[15px] font-medium truncate">
             {file1.replace(/\.(pdf|docx?)$/i, "")}
           </span>
-          <span className="text-blue-100/80 text-[13px] mt-0.5">
+          <span className="text-[var(--tg-theme-button-text-color)]/80 text-[13px] mt-0.5">
             Старая версия
           </span>
         </div>
@@ -89,14 +86,14 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
             transition: { type: "spring", stiffness: 300, damping: 24 },
           },
         }}
-        className="relative min-w-[200px] max-w-[280px] bg-[#3390EC] rounded-[20px] p-2.5 pr-5 flex items-center shadow-xl border border-white/20 z-10"
+        className="relative min-w-[200px] max-w-[280px] bg-[var(--tg-theme-button-color)] rounded-[20px] p-2.5 pr-5 flex items-center shadow-xl border border-[var(--tg-theme-bg-color)]/20 z-10"
       >
         <FileIcon filename={file2} />
         <div className="ml-3 flex flex-col flex-1 min-w-0">
-          <span className="text-white text-[16px] font-medium truncate">
+          <span className="text-[var(--tg-theme-button-text-color)] text-[16px] font-medium truncate">
             {file2.replace(/\.(pdf|docx?)$/i, "")}
           </span>
-          <span className="text-blue-100/80 text-[13px] mt-0.5">
+          <span className="text-[var(--tg-theme-button-text-color)]/80 text-[13px] mt-0.5">
             Новая версия
           </span>
         </div>

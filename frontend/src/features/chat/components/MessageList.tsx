@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Scale } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
 import { formatDateLabel } from "../../../utils/dateUtils";
-
+import { motion, AnimatePresence } from "motion/react";
 interface MessageListProps {
   messages: any[];
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
@@ -91,7 +91,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   return (
     <div
       ref={scrollContainerRef}
-      className="flex-1 overflow-y-auto px-4 pt-2 pb-[160px] z-10 relative bg-white scroll-smooth"
+      className="flex-1 overflow-y-auto px-4 pt-2 pb-[160px] z-10 relative bg-[var(--tg-theme-bg-color)] scroll-smooth"
       onScroll={handleScroll}
     >
       {groupedMessages.length > 0 && (
@@ -105,14 +105,14 @@ export const MessageList: React.FC<MessageListProps> = ({
       )}
 
       {groupedMessages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-center text-black mt-10">
+        <div className="flex flex-col items-center justify-center h-full text-center text-[var(--tg-theme-text-color)] mt-10">
           <div className="w-20 h-20 bg-[#F0F8FF] rounded-full flex items-center justify-center mb-4 shadow-sm">
             <Scale size={36} className="text-[var(--tg-theme-button-color)]" />
           </div>
-          <p className="text-[20px] font-semibold text-black mb-2">
+          <p className="text-[20px] font-semibold text-[var(--tg-theme-text-color)] mb-2">
             Готов помочь
           </p>
-          <p className="text-[15px] text-[#8E8E93] max-w-[260px] leading-relaxed">
+          <p className="text-[15px] text-[var(--tg-theme-hint-color)] max-w-[260px] leading-relaxed">
             Задайте юридический вопрос или прикрепите документ для анализа.
           </p>
         </div>
@@ -126,22 +126,33 @@ export const MessageList: React.FC<MessageListProps> = ({
             >
               {groupIndex !== 0 && (
                 <div className="flex justify-center my-3">
-                  <span className="bg-black/10 text-black/60 text-[12px] font-medium px-3 py-1 rounded-full">
+                  <span className="bg-black/10 text-[var(--tg-theme-text-color)]/60 text-[12px] font-medium px-3 py-1 rounded-full">
                     {group.label}
                   </span>
                 </div>
               )}
-              {group.messages.map((msg, index) => (
-                <MessageBubble
-                  key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
-                  msg={msg}
-                  copiedMessageId={copiedMessageId}
-                  onCopy={onCopy}
-                  onDownloadClick={onOpenDownload}
-                  onExportDocx={onExportDocx} // <-- ПЕРЕДАЛИ В ПУЗЫРЬ
-                  isScanning={isTyping && msg.id === lastUserMsgId}
-                />
-              ))}
+              {/* Оборачиваем список в AnimatePresence для поддержки появления */}
+              <AnimatePresence initial={false}>
+                {group.messages.map((msg, index) => (
+                  <motion.div
+                    key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
+                    layout // Автоматически двигает старые сообщения вверх при появлении новых
+                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    className="w-full"
+                  >
+                    <MessageBubble
+                      msg={msg}
+                      copiedMessageId={copiedMessageId}
+                      onCopy={onCopy}
+                      onDownloadClick={onOpenDownload}
+                      onExportDocx={onExportDocx}
+                      isScanning={isTyping && msg.id === lastUserMsgId}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           ))}
           <div ref={messagesEndRef} />

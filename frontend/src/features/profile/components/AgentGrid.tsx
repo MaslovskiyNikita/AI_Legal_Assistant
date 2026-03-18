@@ -31,17 +31,17 @@ export const AgentGrid: React.FC<AgentGridProps> = ({
               />
             )}
             <div
-              className={`w-10 h-10 rounded-full mb-auto flex items-center justify-center shrink-0 ${isSelected ? "bg-[#3390EC] text-white shadow-sm shadow-blue-500/20" : "bg-white text-[#8E8E93] shadow-sm"}`}
+              className={`w-10 h-10 rounded-full mb-auto flex items-center justify-center shrink-0 ${isSelected ? "bg-[var(--tg-theme-button-color)] text-white shadow-sm shadow-blue-500/20" : "bg-[var(--tg-theme-bg-color)] text-[var(--tg-theme-hint-color)] shadow-sm"}`}
             >
               <Icon size={20} />
             </div>
             <div className="mt-4">
-              <h3 className="text-[14px] font-semibold leading-tight text-black">
+              <h3 className="text-[14px] font-semibold leading-tight text-[var(--tg-theme-text-color)]">
                 {agent.title}
               </h3>
               {agent.description && (
                 <p
-                  className={`text-[12px] mt-1 line-clamp-2 ${isSelected ? "text-[var(--tg-theme-button-color)]" : "text-[#8E8E93]"}`}
+                  className={`text-[12px] mt-1 line-clamp-2 ${isSelected ? "text-[var(--tg-theme-button-color)]" : "text-[var(--tg-theme-hint-color)]"}`}
                 >
                   {agent.description}
                 </p>

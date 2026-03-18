@@ -20,12 +20,12 @@ export const WeeklyStats: React.FC = () => {
 
   return (
     <div className="mb-4 mt-4">
-      <h4 className="text-[13px] font-medium text-[#8E8E93] uppercase tracking-wider mb-2 ml-1">
+      <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-2 ml-1">
         Сводка за неделю
       </h4>
       <div className="bg-[var(--tg-theme-secondary-bg-color)] rounded-2xl overflow-hidden w-full p-2 space-y-2">
         {/* Карточка 1: Риски */}
-        <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
+        <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
               <AlertTriangle
@@ -33,7 +33,7 @@ export const WeeklyStats: React.FC = () => {
                 className="text-[var(--tg-theme-button-color)]"
               />
             </div>
-            <span className="font-semibold text-sm text-black">
+            <span className="font-semibold text-sm text-[var(--tg-theme-text-color)]">
               Критических рисков
             </span>
           </div>
@@ -50,7 +50,7 @@ export const WeeklyStats: React.FC = () => {
         </div>
 
         {/* Карточка 2: Страницы */}
-        <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
+        <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
               <FileText
@@ -58,7 +58,7 @@ export const WeeklyStats: React.FC = () => {
                 className="text-[var(--tg-theme-button-color)]"
               />
             </div>
-            <span className="font-semibold text-sm text-black">
+            <span className="font-semibold text-sm text-[var(--tg-theme-text-color)]">
               Проанализировано страниц
             </span>
           </div>
@@ -75,7 +75,7 @@ export const WeeklyStats: React.FC = () => {
         </div>
 
         {/* Карточка 3: Частые правки */}
-        <div className="bg-white rounded-xl p-3 flex items-center justify-between shadow-sm">
+        <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
               <PenSquare
@@ -83,7 +83,7 @@ export const WeeklyStats: React.FC = () => {
                 className="text-[var(--tg-theme-button-color)]"
               />
             </div>
-            <span className="font-semibold text-sm text-black">
+            <span className="font-semibold text-sm text-[var(--tg-theme-text-color)]">
               Частые точки правок
             </span>
           </div>
