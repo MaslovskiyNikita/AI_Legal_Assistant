@@ -78,10 +78,15 @@ async def generate_ai_response(
             logger.success(f"✨ Ответ AI: {full_ai_response[:200]}...")
         else:
             logger.error(f"❌ Не удалось загрузить историю для чата ID={chat_id}")
-            full_ai_response = "Ошибка: не удалось загрузить историю диалога."
+            full_ai_response = "Ошибка: не удалось загрузить историю диалога."\
+                
+    ai_data_to_save = {
+                        "diff_blocks": diff_blocks_out,
+                        "analisis": ai_analysis
+                    } if diff_blocks_out else None
 
     logger.info(f"💾 Сохранение ответа AI в базу данных...")
-    ai_message = Message(chat_id=chat_id, role="ai", text=full_ai_response.strip(), ai_data={"diff_blocks": diff_blocks_out} if diff_blocks_out else None)
+    ai_message = Message(chat_id=chat_id, role="ai", text=full_ai_response.strip(), ai_data=ai_data_to_save)
     db.add(ai_message)
     
     try:

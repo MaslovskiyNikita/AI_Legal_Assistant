@@ -6,14 +6,18 @@ from pydantic import BaseModel, computed_field
 class MessageBase(BaseModel):
     role: str # "user" или "ai"
     text: str
-    
+
 class DocumentResponse(BaseModel):
     id: int
     filename: str
-    
+
+    @computed_field
+    def download_url(self) -> str:
+        return f"/api/v1/documents/{self.id}/download"
+
     class Config:
         from_attributes = True
-
+    
 class MessageResponse(MessageBase):
     id: int
     created_at: datetime
@@ -50,15 +54,4 @@ class MessageStreamRequest(BaseModel):
     text: str
     comparison_id: Optional[int] = None # ID загруженных документов (если есть)
     
-
-class DocumentResponse(BaseModel):
-    id: int
-    filename: str
-
-    @computed_field
-    def download_url(self) -> str:
-        return f"/api/v1/documents/{self.id}/download"
-
-    class Config:
-        from_attributes = True
         
