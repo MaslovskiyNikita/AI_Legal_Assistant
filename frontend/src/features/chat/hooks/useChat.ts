@@ -225,13 +225,21 @@ export const useChat = (initialChatId: string | undefined) => {
       ]);
 
       // ЗАГРУЗКА ФАЙЛОВ НА БЭКЕНД
+      let comparisonMsgId: number | undefined = undefined;
+
       if (hasFiles && internalUserId) {
+        // 👇 ЗДЕСЬ ПЕРЕДАЕМ ТЕКСТ В API КЛИЕНТ
         const uploadResponse = await apiClient.compareDocuments(
           Number(activeChatId),
           internalUserId,
           currentOldFile!,
           currentNewFile!,
+          userTextForUI,
         );
+
+        // 👇 ЗАБИРАЕМ ПРАВИЛЬНЫЙ ID
+        comparisonMsgId = uploadResponse?.message_id;
+
         const newDocId = uploadResponse?.new_document_id || uploadResponse?.id;
         files.setChatDocuments((prev) => [
           ...prev,
@@ -249,9 +257,14 @@ export const useChat = (initialChatId: string | undefined) => {
         .find((m) => typeof m.id === "number");
       const lastMessageId = lastRealMessage ? lastRealMessage.id : undefined;
 
+      // 👇 Если есть загруженные файлы, берем их ID. Иначе берем последний ID.
+      const targetComparisonId = comparisonMsgId
+        ? comparisonMsgId
+        : lastMessageId;
+
       const responseData = await apiClient.sendMessage(Number(activeChatId), {
         text: userTextForUI,
-        comparison_id: lastMessageId,
+        comparison_id: targetComparisonId, // 🚀 ПЕРЕДАЕМ ВЕРНЫЙ ID!
       });
 
       // ПАРСИНГ ОТВЕТА

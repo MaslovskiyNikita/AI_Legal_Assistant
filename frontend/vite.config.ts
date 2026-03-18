@@ -17,14 +17,7 @@ export default defineConfig({
     },
     watch: {
       usePolling: false,
-      // 👇 МАГИЯ ЗДЕСЬ: Запрещаем Vite перезагружать страницу, когда бэкенд сохраняет файлы!
-      ignored: [
-        "**/backend/**",
-        "**/uploads/**",
-        "**/*.pdf",
-        "**/*.docx",
-        "**/*.doc",
-      ],
+      ignored: ["!**/src/**"],
     },
   },
   assetsInclude: ["**/*.svg", "**/*.csv"],
