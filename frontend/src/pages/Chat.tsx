@@ -15,7 +15,8 @@ export default function Chat() {
   return (
     <div className="h-[100dvh] w-full relative flex flex-col bg-[var(--tg-theme-bg-color)] overflow-hidden font-sans">
       <ChatHeader
-        chatId={chatId}
+        // 👇 Используем стабильный локальный ID из хука
+        chatId={chat.chatId}
         onOpenDownload={() => chat.setIsDownloadModalOpen(true)}
         onOpenExport={() => chat.setIsExportModalOpen(true)}
         onOpenDelete={() => chat.setIsDeleteModalOpen(true)}
@@ -29,7 +30,7 @@ export default function Chat() {
         copiedMessageId={chat.copiedMessageId}
         onCopy={chat.handleCopy}
         onOpenDownload={() => chat.setIsDownloadModalOpen(true)}
-        onExportDocx={() => chat.handleExport("docx")} // <-- ПЕРЕДАЛИ
+        onExportDocx={() => chat.handleExport("docx")}
         isTyping={chat.isTyping}
       />
 

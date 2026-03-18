@@ -5,33 +5,41 @@ import { apiClient } from "../../../api/client";
 import { exportToDocx, exportToPdf } from "../../../utils/exportUtils";
 import { getTg, tgAlert, tgHapticNotification } from "../../../utils/telegram";
 
-// Импортируем наши новые микро-хуки
 import { useChatModals } from "./useChatModals";
 import { useChatFiles } from "./useChatFiles";
 import { useChatMessages } from "./useChatMessages";
 
-export const useChat = (chatId: string | undefined) => {
+export const useChat = (initialChatId: string | undefined) => {
   const navigate = useNavigate();
   const location = useLocation();
   const userStr = localStorage.getItem("user");
   const internalUserId = userStr ? JSON.parse(userStr).id : null;
 
-  // 1. ИНИЦИАЛИЗАЦИЯ МИКРО-ХУКОВ
+  // 👇 РЕШЕНИЕ: Храним ID локально, чтобы менять его без перезагрузки страницы
+  const [currentChatId, setCurrentChatId] = useState(initialChatId);
+  const hasFetchedHistory = useRef(false);
+
   const modals = useChatModals();
   const files = useChatFiles();
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
   const chatMessages = useChatMessages(
-    chatId,
+    currentChatId,
     isTyping,
     files.hasAttachedFiles,
   );
-
-  const isCreatingChat = useRef(false);
   const hasHandledInitialPrompt = useRef(false);
 
-  // 2. НАТИВНАЯ КНОПКА "НАЗАД"
+  // Синхронизация локального ID с URL при реальных переходах (кнопка Назад и т.д.)
+  useEffect(() => {
+    setCurrentChatId(initialChatId);
+    if (initialChatId === "new") {
+      hasFetchedHistory.current = false;
+    }
+  }, [initialChatId]);
+
+  // Нативная кнопка "Назад"
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.BackButton) {
@@ -45,38 +53,29 @@ export const useChat = (chatId: string | undefined) => {
     }
   }, [navigate]);
 
-  // ==========================================
-  // 👇 ИСПРАВЛЕНИЕ: РАЗДЕЛИЛИ USE-EFFECT НА ДВА
-  // ==========================================
-
-  // 3A. ОЧИСТКА СОСТОЯНИЯ ПРИ НОВОМ ЧАТЕ
+  // 1. ОЧИСТКА СОСТОЯНИЯ ПРИ НОВОМ ЧАТЕ
   useEffect(() => {
-    if (chatId === "new") {
+    if (currentChatId === "new") {
       chatMessages.setMessages([]);
       files.setChatDocuments([]);
       files.setOldFile(null);
       files.setNewFile(null);
       setInputText("");
       hasHandledInitialPrompt.current = false;
-      isCreatingChat.current = false;
     }
-  }, [chatId]); // <-- Убрали isTyping! Теперь чат не стирается при начале печатания
+  }, [currentChatId]);
 
-  // 3B. ЗАГРУЗКА ИСТОРИИ СУЩЕСТВУЮЩЕГО ЧАТА
+  // 2. ЗАГРУЗКА ИСТОРИИ СУЩЕСТВУЮЩЕГО ЧАТА (Ровно 1 раз!)
   useEffect(() => {
-    if (!chatId || chatId === "new") return;
+    if (!currentChatId || currentChatId === "new") return;
+    if (hasFetchedHistory.current) return; // Блокируем перезапрос истории
+    if (isTyping) return; // Ждем, пока ИИ допечатает
 
-    if (isCreatingChat.current) {
-      isCreatingChat.current = false;
-      return;
-    }
-
-    // Если ИИ сейчас генерирует ответ - ждем, не перезапрашиваем историю
-    if (isTyping) return;
+    hasFetchedHistory.current = true;
 
     Promise.all([
-      apiClient.getChat(Number(chatId)),
-      apiClient.getChatDocuments(Number(chatId)),
+      apiClient.getChat(Number(currentChatId)),
+      apiClient.getChatDocuments(Number(currentChatId)),
     ])
       .then(([chatRes, docsRes]) => {
         const historicalMessages = (chatRes.messages || []).map((msg: any) => ({
@@ -87,34 +86,25 @@ export const useChat = (chatId: string | undefined) => {
         files.setChatDocuments(docsRes || []);
       })
       .catch((err) => console.error("Failed to load chat", err));
-  }, [chatId, isTyping]); // <-- Здесь isTyping нужен, чтобы обновить чат после ответа
+  }, [currentChatId, isTyping]);
 
-  // Обработка initialPrompt и открытия модалок из роутера
+  // Обработка стартового промпта (когда жмем "Начать" из профиля)
   useEffect(() => {
     const prompt = location.state?.initialPrompt;
-    if (prompt && chatId === "new" && !hasHandledInitialPrompt.current) {
+    if (prompt && currentChatId === "new" && !hasHandledInitialPrompt.current) {
       hasHandledInitialPrompt.current = true;
       const newState = { ...location.state };
       delete newState.initialPrompt;
       navigate(location.pathname, { replace: true, state: newState });
       setTimeout(() => handleSend(prompt), 150);
     }
-  }, [location.state, chatId, navigate, location.pathname]);
+  }, [location.state, currentChatId, navigate, location.pathname]);
 
-  useEffect(() => {
-    if (location.state?.openCompareModal) {
-      modals.setIsCompareModalOpen(true);
-      const newState = { ...location.state };
-      delete newState.openCompareModal;
-      navigate(location.pathname, { replace: true, state: newState });
-    }
-  }, [location.state, navigate, location.pathname]);
-
-  // 4. ЭКСПОРТ И УДАЛЕНИЕ ЧАТА
+  // Удаление и Экспорт
   const executeDeleteChat = async () => {
-    if (!chatId || chatId === "new") return;
+    if (!currentChatId || currentChatId === "new") return;
     try {
-      await apiClient.deleteChat(Number(chatId));
+      await apiClient.deleteChat(Number(currentChatId));
       modals.setIsDeleteModalOpen(false);
       navigate("/profile", { replace: true });
     } catch (error) {
@@ -142,7 +132,7 @@ export const useChat = (chatId: string | undefined) => {
     }
   };
 
-  // 5. ГЛАВНАЯ БИЗНЕС-ЛОГИКА (ОТПРАВКА СООБЩЕНИЯ)
+  // 3. ГЛАВНАЯ БИЗНЕС-ЛОГИКА (ОТПРАВКА)
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
     const textToSend =
       typeof textOverride === "string" ? textOverride : inputText;
@@ -152,7 +142,7 @@ export const useChat = (chatId: string | undefined) => {
     setInputText("");
     setIsTyping(true);
     const finalPrompt = textToSend.trim();
-    let activeChatId = chatId;
+    let activeChatId = currentChatId;
 
     try {
       if (activeChatId === "new" || !activeChatId) {
@@ -161,20 +151,25 @@ export const useChat = (chatId: string | undefined) => {
           files.hasAttachedFiles && files.oldFile
             ? `Сравнение: ${files.oldFile.name.substring(0, 10)}...`
             : finalPrompt.substring(0, 30) + "...";
+
         const newChat = await apiClient.createChat({
           user_id: internalUserId,
           title: chatTitle,
         });
+
         activeChatId = newChat.id.toString();
-        isCreatingChat.current = true;
-        navigate(`/chat/${activeChatId}`, { replace: true });
+        hasFetchedHistory.current = true; // ЗАЩИТА: Больше не запрашиваем историю!
+        setCurrentChatId(activeChatId);
+
+        // 👇 ТИХАЯ СМЕНА URL (Без ререндера страницы!)
+        window.history.replaceState(null, "", `/chat/${activeChatId}`);
       }
 
       const userMsgId = `msg_${Date.now()}_user`;
       let userTextForUI = finalPrompt;
 
       if (files.hasAttachedFiles && files.oldFile && files.newFile) {
-        userTextForUI = `Прикреплены документы для сравнения: 1. ${files.oldFile.name} 2. ${files.newFile.name}`;
+        userTextForUI = `Прикреплены документы для сравнения:\n1. ${files.oldFile.name}\n2. ${files.newFile.name}`;
         if (finalPrompt) userTextForUI += `\n\n${finalPrompt}`;
       }
 
@@ -277,11 +272,11 @@ export const useChat = (chatId: string | undefined) => {
     }
   };
 
-  // 6. ВОЗВРАЩАЕМ ФАСАД ДЛЯ КОМПОНЕНТОВ
   return {
     ...chatMessages,
     ...files,
     ...modals,
+    chatId: currentChatId, // Экспортируем правильный стабильный ID
     inputText,
     setInputText,
     isTyping,
