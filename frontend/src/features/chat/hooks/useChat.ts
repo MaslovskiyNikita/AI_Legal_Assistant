@@ -15,23 +15,19 @@ export const useChat = (initialChatId: string | undefined) => {
   const userStr = localStorage.getItem("user");
   const internalUserId = userStr ? JSON.parse(userStr).id : null;
 
-  // 👇 РЕШЕНИЕ: Храним ID локально, чтобы менять его без перезагрузки страницы
   const [currentChatId, setCurrentChatId] = useState(initialChatId);
   const hasFetchedHistory = useRef(false);
+  const isCreatingChat = useRef(false); // Флаг, блокирующий дублирующиеся запросы
+  const hasHandledInitialPrompt = useRef(false);
 
   const modals = useChatModals();
   const files = useChatFiles();
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  const chatMessages = useChatMessages(
-    currentChatId,
-    isTyping,
-    files.hasAttachedFiles,
-  );
-  const hasHandledInitialPrompt = useRef(false);
+  const chatMessages = useChatMessages(currentChatId, isTyping, files.hasAttachedFiles);
 
-  // Синхронизация локального ID с URL при реальных переходах (кнопка Назад и т.д.)
+  // Синхронизация ID с URL
   useEffect(() => {
     setCurrentChatId(initialChatId);
     if (initialChatId === "new") {
@@ -62,14 +58,15 @@ export const useChat = (initialChatId: string | undefined) => {
       files.setNewFile(null);
       setInputText("");
       hasHandledInitialPrompt.current = false;
+      isCreatingChat.current = false;
     }
   }, [currentChatId]);
 
-  // 2. ЗАГРУЗКА ИСТОРИИ СУЩЕСТВУЮЩЕГО ЧАТА (Ровно 1 раз!)
+  // 2. ЗАГРУЗКА ИСТОРИИ (СТРОГО ОДИН РАЗ ДЛЯ СТАРЫХ ЧАТОВ)
   useEffect(() => {
     if (!currentChatId || currentChatId === "new") return;
-    if (hasFetchedHistory.current) return; // Блокируем перезапрос истории
-    if (isTyping) return; // Ждем, пока ИИ допечатает
+    if (hasFetchedHistory.current) return; 
+    if (isCreatingChat.current) return; // Если мы только что создали чат - не запрашиваем историю!
 
     hasFetchedHistory.current = true;
 
@@ -86,9 +83,9 @@ export const useChat = (initialChatId: string | undefined) => {
         files.setChatDocuments(docsRes || []);
       })
       .catch((err) => console.error("Failed to load chat", err));
-  }, [currentChatId, isTyping]);
+  }, [currentChatId]); // <-- Убрали isTyping, чтобы фон не перезапрашивал историю!
 
-  // Обработка стартового промпта (когда жмем "Начать" из профиля)
+  // Обработка стартового промпта (переход из профиля)
   useEffect(() => {
     const prompt = location.state?.initialPrompt;
     if (prompt && currentChatId === "new" && !hasHandledInitialPrompt.current) {
@@ -96,9 +93,20 @@ export const useChat = (initialChatId: string | undefined) => {
       const newState = { ...location.state };
       delete newState.initialPrompt;
       navigate(location.pathname, { replace: true, state: newState });
-      setTimeout(() => handleSend(prompt), 150);
+      
+      // Небольшая задержка, чтобы UI успел отрендериться перед отправкой
+      setTimeout(() => handleSend(prompt), 300);
     }
   }, [location.state, currentChatId, navigate, location.pathname]);
+
+  useEffect(() => {
+    if (location.state?.openCompareModal) {
+      modals.setIsCompareModalOpen(true);
+      const newState = { ...location.state };
+      delete newState.openCompareModal;
+      navigate(location.pathname, { replace: true, state: newState });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   // Удаление и Экспорт
   const executeDeleteChat = async () => {
@@ -115,12 +123,9 @@ export const useChat = (initialChatId: string | undefined) => {
   const handleExport = async (format: "docx" | "pdf") => {
     files.setIsExporting(true);
     try {
-      const chatTitle =
-        chatMessages.messages[0]?.text.substring(0, 20).replace(/\s/g, "_") ||
-        "chat";
+      const chatTitle = chatMessages.messages[0]?.text.substring(0, 20).replace(/\s/g, "_") || "chat";
       const filename = `${chatTitle}_${new Date().toISOString().split("T")[0]}`;
-      if (format === "docx")
-        exportToDocx(chatMessages.messages, `${filename}.docx`);
+      if (format === "docx") exportToDocx(chatMessages.messages, `${filename}.docx`);
       else exportToPdf(chatMessages.messages, `${filename}.pdf`);
     } catch (error) {
       tgAlert("Не удалось экспортировать чат.");
@@ -134,8 +139,7 @@ export const useChat = (initialChatId: string | undefined) => {
 
   // 3. ГЛАВНАЯ БИЗНЕС-ЛОГИКА (ОТПРАВКА)
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
-    const textToSend =
-      typeof textOverride === "string" ? textOverride : inputText;
+    const textToSend = typeof textOverride === "string" ? textOverride : inputText;
     if (!textToSend.trim() && !files.hasAttachedFiles) return;
     if (isTyping) return;
 
@@ -145,26 +149,30 @@ export const useChat = (initialChatId: string | undefined) => {
     let activeChatId = currentChatId;
 
     try {
+      // СОЗДАНИЕ НОВОГО ЧАТА
       if (activeChatId === "new" || !activeChatId) {
         if (!internalUserId) throw new Error("User ID not found");
-        const chatTitle =
-          files.hasAttachedFiles && files.oldFile
+        
+        isCreatingChat.current = true; // Блокируем фоновые обновления
+        hasFetchedHistory.current = true; // Запрещаем скачивать историю, мы её сами строим
+
+        const chatTitle = files.hasAttachedFiles && files.oldFile
             ? `Сравнение: ${files.oldFile.name.substring(0, 10)}...`
             : finalPrompt.substring(0, 30) + "...";
-
+            
         const newChat = await apiClient.createChat({
           user_id: internalUserId,
           title: chatTitle,
         });
-
+        
         activeChatId = newChat.id.toString();
-        hasFetchedHistory.current = true; // ЗАЩИТА: Больше не запрашиваем историю!
         setCurrentChatId(activeChatId);
-
-        // 👇 ТИХАЯ СМЕНА URL (Без ререндера страницы!)
-        window.history.replaceState(null, "", `/chat/${activeChatId}`);
+        
+        // Меняем URL через роутер (теперь безопасно, т.к. в App.tsx стоит ключ '/chat')
+        navigate(`/chat/${activeChatId}`, { replace: true, state: location.state });
       }
 
+      // ДОБАВЛЯЕМ СООБЩЕНИЕ ЮЗЕРА
       const userMsgId = `msg_${Date.now()}_user`;
       let userTextForUI = finalPrompt;
 
@@ -175,55 +183,31 @@ export const useChat = (initialChatId: string | undefined) => {
 
       chatMessages.setMessages((prev) => [
         ...prev,
-        {
-          id: userMsgId,
-          role: "user",
-          text: userTextForUI,
-          created_at: new Date().toISOString(),
-        },
+        { id: userMsgId, role: "user", text: userTextForUI, created_at: new Date().toISOString() },
       ]);
 
+      // ДОБАВЛЯЕМ ЛОАДЕР ИИ ("..." или сканер)
       const assistantMsgId = `msg_${Date.now()}_ai`;
-      const loadingTextPlaceholder =
-        files.hasAttachedFiles && files.oldFile && files.newFile ? "{" : "...";
+      const loadingTextPlaceholder = files.hasAttachedFiles && files.oldFile && files.newFile ? "{" : "...";
 
       chatMessages.setMessages((prev) => [
         ...prev,
-        {
-          id: assistantMsgId,
-          role: "ai",
-          text: loadingTextPlaceholder,
-          created_at: new Date().toISOString(),
-          isComplete: false,
-        },
+        { id: assistantMsgId, role: "ai", text: loadingTextPlaceholder, created_at: new Date().toISOString(), isComplete: false },
       ]);
 
-      if (
-        files.hasAttachedFiles &&
-        files.oldFile &&
-        files.newFile &&
-        internalUserId
-      ) {
-        const uploadResponse = await apiClient.compareDocuments(
-          Number(activeChatId),
-          internalUserId,
-          files.oldFile,
-          files.newFile,
-        );
+      // ЕСЛИ ЕСТЬ ФАЙЛЫ - ЗАГРУЖАЕМ ИХ
+      if (files.hasAttachedFiles && files.oldFile && files.newFile && internalUserId) {
+        const uploadResponse = await apiClient.compareDocuments(Number(activeChatId), internalUserId, files.oldFile, files.newFile);
         const newDocId = uploadResponse?.new_document_id || uploadResponse?.id;
         files.setChatDocuments((prev) => [
           ...prev,
-          {
-            id: newDocId ? newDocId - 1 : Date.now(),
-            filename: files.oldFile!.name,
-          },
+          { id: newDocId ? newDocId - 1 : Date.now(), filename: files.oldFile!.name },
           { id: newDocId || Date.now() + 1, filename: files.newFile!.name },
         ]);
       }
 
-      const lastRealMessage = [...chatMessages.messages]
-        .reverse()
-        .find((m) => typeof m.id === "number");
+      // ОТПРАВЛЯЕМ ТЕКСТОВЫЙ ЗАПРОС К ИИ
+      const lastRealMessage = [...chatMessages.messages].reverse().find((m) => typeof m.id === "number");
       const lastMessageId = lastRealMessage ? lastRealMessage.id : undefined;
 
       const responseData = await apiClient.sendMessage(Number(activeChatId), {
@@ -233,6 +217,7 @@ export const useChat = (initialChatId: string | undefined) => {
 
       let finalAiText = responseData.text || "";
 
+      // ПАРСИМ ОТВЕТ (ЕСЛИ ЭТО РИСКИ/ТАБЛИЦЫ)
       if (responseData.diff_blocks && responseData.diff_blocks.length > 0) {
         finalAiText = JSON.stringify({
           analysis: { summary: responseData.text },
@@ -243,14 +228,12 @@ export const useChat = (initialChatId: string | undefined) => {
         tgHapticNotification("success");
       }
 
+      // МЯГКО ОБНОВЛЯЕМ ПУЗЫРЬ ИИ (ЗАМЕНЯЕМ ЛОАДЕР НА ТЕКСТ)
       chatMessages.setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === assistantMsgId
-            ? { ...msg, text: finalAiText, isComplete: true }
-            : msg,
-        ),
+        prev.map((msg) => msg.id === assistantMsgId ? { ...msg, text: finalAiText, isComplete: true } : msg)
       );
 
+      // ОЧИЩАЕМ ФАЙЛЫ ИЗ ИНПУТА
       if (files.hasAttachedFiles) {
         files.setOldFile(null);
         files.setNewFile(null);
@@ -259,16 +242,11 @@ export const useChat = (initialChatId: string | undefined) => {
       tgHapticNotification("error");
       chatMessages.setMessages((prev) => [
         ...prev,
-        {
-          id: `msg_err_${Date.now()}`,
-          role: "ai",
-          text: "❌ Произошла ошибка при обработке запроса.",
-          created_at: new Date().toISOString(),
-          isComplete: true,
-        },
+        { id: `msg_err_${Date.now()}`, role: "ai", text: "❌ Произошла ошибка при обработке запроса.", created_at: new Date().toISOString(), isComplete: true },
       ]);
     } finally {
       setIsTyping(false);
+      isCreatingChat.current = false; // Снимаем блокировку
     }
   };
 
@@ -276,12 +254,7 @@ export const useChat = (initialChatId: string | undefined) => {
     ...chatMessages,
     ...files,
     ...modals,
-    chatId: currentChatId, // Экспортируем правильный стабильный ID
-    inputText,
-    setInputText,
-    isTyping,
-    executeDeleteChat,
-    handleExport,
-    handleSend,
+    chatId: currentChatId, 
+    inputText, setInputText, isTyping, executeDeleteChat, handleExport, handleSend,
   };
 };
