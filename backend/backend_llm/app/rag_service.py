@@ -155,15 +155,13 @@ class RagService:
         """
         structured_docs = self._structured_search(query)
 
-        if structured_docs:
-            return structured_docs[:limit]
-
         if not self._articles_cache:
             return []
 
         # EnsembleRetriever делает всю работу по гибридизации
         # Мы запрашиваем чуть больше, чтобы гарантированно отдать limit после маппинга
         raw_results = self.ensemble_retriever.invoke(query)
+        structured_docs = structured_docs[: max(2, limit // 2)]
 
         combined = structured_docs + raw_results
 
