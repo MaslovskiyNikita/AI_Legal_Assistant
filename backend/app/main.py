@@ -1,7 +1,6 @@
 import logging
 import sys
 from app.utils.logging import InterceptHandler
-from backend.app.api.v1 import export
 from loguru import logger
 
 SILENT_LOGGERS = [
@@ -17,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import app.models.user 
 import app.models.chat
-from app.api.v1 import auth, chats, documents
+from app.api.v1 import auth, chats, documents, export
 
 logging.getLogger("uvicorn.access").handlers = []
 logging.getLogger("uvicorn.error").handlers = []
