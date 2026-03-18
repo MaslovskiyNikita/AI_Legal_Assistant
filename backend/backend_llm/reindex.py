@@ -4,14 +4,10 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_postgres.vectorstores import PGVector
 from langchain_core.documents import Document
 from app.settings import settings
-
+from backend_llm.app.embeddings import CustomGeminiEmbeddings
 
 def build_index():
-    embeddings = HuggingFaceEndpointEmbeddings(
-        model=settings.EMBEDDINGS_MODEL,
-        huggingfacehub_api_token=settings.HF_TOKEN,
-        task="feature-extraction"
-    )
+    embeddings = CustomGeminiEmbeddings()
 
     if not settings.DATA_DIR.exists():
         print(f"Ошибка: Папка {settings.DATA_DIR} не найдена!")
@@ -54,7 +50,7 @@ def build_index():
                     }
                 ))
 
-    print(f"Всего собрано {len(all_chunks)} чанков. Отправка в Hugging Face API...")
+    print(f"Всего собрано {len(all_chunks)} чанков. Отправка в Gemini API...")
     vector_db = PGVector.from_documents(
         embedding=embeddings,
         documents=all_chunks,

@@ -9,10 +9,10 @@ from functools import lru_cache
 from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.retrievers import BM25Retriever
 from langchain_core.documents import Document
-from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_postgres.vectorstores import PGVector
 
 from backend_llm.app.settings import settings
+from backend_llm.app.embeddings import CustomGeminiEmbeddings
 
 logger = logging.getLogger(__name__)
 
@@ -38,15 +38,11 @@ class CachedEmbeddings:
 class RagService:
     def __init__(self):
         self._lock = asyncio.Lock()
-        if not settings.HF_TOKEN:
-            logger.warning("HUGGINGFACEHUB_API_TOKEN не найден. RAG может не работать.")
+        if not settings.GEMINI_API_KEY:
+            logger.warning("GEMINI_API_KEY не найден. RAG может не работать.")
 
-        # 1. Эмбеддинги
-        base_embeddings = HuggingFaceEndpointEmbeddings(
-            model=settings.EMBEDDINGS_MODEL,
-            huggingfacehub_api_token=settings.HF_TOKEN,
-            task="feature-extraction",
-        )
+            # 1. Эмбеддинги (Gemini)
+        base_embeddings = CustomGeminiEmbeddings()
 
         self.embeddings = CachedEmbeddings(base_embeddings)
 
