@@ -10,7 +10,6 @@ import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 
-// Обертка для красивых анимаций перехода между экранами
 const PageTransition = ({ children }: { children: React.ReactNode }) => (
   <motion.div
     initial={{ opacity: 0, x: 15 }}
@@ -36,13 +35,8 @@ function AuthRouter() {
     );
   }
 
-  // 👇 РЕШЕНИЕ ПРОБЛЕМЫ 👇
-  // Если мы находимся в любом чате (/chat/new, /chat/123 и т.д.),
-  // используем один и тот же ключ "/chat".
-  // Это запретит Framer Motion уничтожать страницу при подмене ID.
-  const routeKey = location.pathname.startsWith("/chat/")
-    ? "/chat"
-    : location.pathname;
+  // Надежный ключ: все роуты внутри /chat/ считаются одной страницей для аниматора
+  const routeKey = location.pathname.split("/")[1] || "/";
 
   return (
     <AnimatePresence mode="wait">
@@ -90,14 +84,8 @@ export default function App() {
     if (tg) {
       tg.ready();
       tg.expand();
-
-      if (tg.disableVerticalSwipes) {
-        tg.disableVerticalSwipes();
-      }
-
-      if (tg.setHeaderColor) {
-        tg.setHeaderColor("secondary_bg_color");
-      }
+      if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
+      if (tg.setHeaderColor) tg.setHeaderColor("secondary_bg_color");
     }
   }, []);
 

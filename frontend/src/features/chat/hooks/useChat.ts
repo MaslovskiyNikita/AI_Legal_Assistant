@@ -46,6 +46,7 @@ export const useChat = (chatId: string | undefined) => {
   }, [navigate]);
 
   // 3. ЗАГРУЗКА ИСТОРИИ ЧАТА
+  // 3. ЗАГРУЗКА ИСТОРИИ ЧАТА
   useEffect(() => {
     if (chatId === "new") {
       chatMessages.setMessages([]);
@@ -60,6 +61,8 @@ export const useChat = (chatId: string | undefined) => {
         isCreatingChat.current = false;
         return;
       }
+      if (isTyping) return;
+
       Promise.all([
         apiClient.getChat(Number(chatId)),
         apiClient.getChatDocuments(Number(chatId)),
@@ -76,7 +79,7 @@ export const useChat = (chatId: string | undefined) => {
         })
         .catch((err) => console.error("Failed to load chat", err));
     }
-  }, [chatId]);
+  }, [chatId, isTyping]); // <-- Добавили isTyping в зависимости
 
   // Обработка initialPrompt и открытия модалок из роутера
   useEffect(() => {
