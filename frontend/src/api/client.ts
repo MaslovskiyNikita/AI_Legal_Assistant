@@ -3,20 +3,20 @@
 const BASE_URL = "https://legal-assistant-api.kawun.su/api/v1";
 
 export const apiClient = {
-  // Метод для сравнения (добавлены chatId и userId)
+  // Метод для сравнения
   async compareDocuments(
     chatId: number,
     userId: number,
     oldFile: File,
     newFile: File,
-    text: string, // <--- 👇 ДОБАВИЛИ прием текста
+    text: string,
   ) {
     const formData = new FormData();
     formData.append("chat_id", chatId.toString());
     formData.append("user_id", userId.toString());
     formData.append("old_file", oldFile);
     formData.append("new_file", newFile);
-    formData.append("text", text); // <--- 👇 Отправляем текст на бэкенд
+    formData.append("text", text);
 
     const response = await fetch(`${BASE_URL}/documents/compare`, {
       method: "POST",
@@ -34,23 +34,39 @@ export const apiClient = {
     return await response.text();
   },
 
-  // Метод для скачивания документа (Адаптирован под Telegram)
+  // Скачивание обычного документа
   async downloadDocument(documentId: number, filename: string = "document") {
     const downloadUrl = `${BASE_URL}/documents/${documentId}/download`;
 
-    // Проверяем, открыто ли приложение внутри Telegram
     // @ts-ignore
     if (window.Telegram?.WebApp?.initData) {
-      // Отдаем ссылку самому Телеграму, он откроет её нативным загрузчиком iOS/Android
       // @ts-ignore
       window.Telegram.WebApp.openLink(downloadUrl);
       return;
     }
 
-    // Фолбэк: если открыто просто в браузере Chrome/Safari на ПК
     const response = await fetch(downloadUrl);
     if (!response.ok) throw new Error("Download failed");
 
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
+  // 👇 НОВЫЙ МЕТОД: Экспорт чата с бэкенда
+  async exportChat(chatId: number, format: "docx" | "pdf", filename: string) {
+    const downloadUrl = `${BASE_URL}/chats/${chatId}/export/${format}`;
+
+    const response = await fetch(downloadUrl);
+    if (!response.ok) throw new Error("Export failed");
+
+    // Скачиваем через Blob, чтобы работало и в Telegram WebApp, и в браузере, и сохранялось нужное имя файла
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -130,7 +146,6 @@ export const apiClient = {
     return r.json();
   },
 
-  // НОВЫЙ МЕТОД ДЛЯ УДАЛЕНИЯ ЧАТА
   async deleteAllChats(user_id: number) {
     const r = await fetch(`${BASE_URL}/chats/?user_id=${user_id}`, {
       method: "DELETE",
@@ -154,7 +169,6 @@ export const apiClient = {
     });
 
     if (!r.ok) {
-      // Пытаемся достать текст ошибки с бэкенда, если он есть
       let errorDetail = `deleteChat failed: ${r.status}`;
       try {
         const errorData = await r.json();
@@ -166,12 +180,10 @@ export const apiClient = {
     return r.json();
   },
 
-  // src/api/client.ts (Метод sendMessageStream)
   async sendMessage(
     chat_id: number,
     payload: { text: string; comparison_id?: number },
   ) {
-    // Внимание: путь бэкенда остался /stream, хотя он больше не стримит
     const r = await fetch(`${BASE_URL}/chats/${chat_id}/messages/stream`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -182,7 +194,6 @@ export const apiClient = {
       throw new Error(`sendMessage failed: ${r.status}`);
     }
 
-    // Бэкенд теперь возвращает обычный JSON сразу целиком
     return r.json();
   },
 };

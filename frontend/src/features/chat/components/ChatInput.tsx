@@ -1,3 +1,4 @@
+// src/features/chat/components/ChatInput.tsx
 import React from "react";
 import { motion } from "motion/react";
 import {
@@ -8,7 +9,7 @@ import {
   Loader2,
   ArrowUp,
   Sparkles,
-  Table,
+  AlertTriangle, // Заменили Table на AlertTriangle
   ShieldAlert,
 } from "lucide-react";
 import { tgHaptic } from "../../../utils/telegram";
@@ -36,11 +37,11 @@ const QUICK_ACTIONS = [
     prompt: "Сделай краткую выжимку главных изменений в документах.",
   },
   {
-    id: "table",
-    label: "Таблица",
-    icon: Table,
+    id: "errors", // <-- Заменили Таблицу на Ошибки
+    label: "Ошибки",
+    icon: AlertTriangle,
     prompt:
-      "Покажи изменения в виде таблицы со столбцами: Было | Стало | Уровень риска.",
+      "Перечисли главные юридические ошибки и противоречия закону в новой редакции.",
   },
   {
     id: "risks",
@@ -70,9 +71,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   return (
     <div
       className="absolute bottom-0 left-0 w-full flex flex-col pt-2 px-4 backdrop-blur-xl bg-[var(--tg-theme-bg-color)]/90 border-t border-[var(--tg-theme-secondary-bg-color)] z-20"
-      style={{
-        paddingBottom: "calc(1.5rem + var(--safe-bottom))",
-      }}
+      style={{ paddingBottom: "calc(1.5rem + var(--safe-bottom))" }}
     >
       {oldFile && newFile && (
         <div className="mb-3 w-full bg-[var(--tg-theme-secondary-bg-color)] border border-[var(--tg-theme-secondary-bg-color)] rounded-2xl p-3 flex flex-col gap-2 relative animate-in slide-in-from-bottom-2 duration-200 shadow-sm">

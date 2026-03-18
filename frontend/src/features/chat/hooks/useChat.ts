@@ -2,7 +2,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
-import { exportToDocx, exportToPdf } from "../../../utils/exportUtils";
 import { getTg, tgAlert, tgHapticNotification } from "../../../utils/telegram";
 
 import { useChatModals } from "./useChatModals";
@@ -19,7 +18,6 @@ export const useChat = (initialChatId: string | undefined) => {
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  // Мутексы для защиты от гонки состояний
   const isSendingRef = useRef(false);
   const localSessionLock = useRef(false);
   const hasFetchedHistory = useRef(false);
@@ -33,14 +31,12 @@ export const useChat = (initialChatId: string | undefined) => {
     files.hasAttachedFiles,
   );
 
-  // Синхронизация ID с URL
   useEffect(() => {
     if (initialChatId !== currentChatId) {
       setCurrentChatId(initialChatId);
     }
   }, [initialChatId]);
 
-  // Нативная кнопка "Назад"
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.BackButton) {
@@ -54,7 +50,6 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   }, [navigate]);
 
-  // 1. ОЧИСТКА СОСТОЯНИЯ (Только когда заходим в /chat/new)
   useEffect(() => {
     if (initialChatId === "new") {
       chatMessages.setMessages([]);
@@ -68,11 +63,10 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   }, [initialChatId]);
 
-  // 2. ЗАГРУЗКА ИСТОРИИ (СТРОГО ОДИН РАЗ И ТОЛЬКО ДЛЯ СТАРЫХ ЧАТОВ)
   useEffect(() => {
     if (!currentChatId || currentChatId === "new") return;
     if (hasFetchedHistory.current) return;
-    if (localSessionLock.current) return; // Блокируем запрос, если чат создан только что
+    if (localSessionLock.current) return;
 
     hasFetchedHistory.current = true;
 
@@ -91,12 +85,10 @@ export const useChat = (initialChatId: string | undefined) => {
       .catch((err) => console.error("Failed to load chat", err));
   }, [currentChatId]);
 
-  // 3. ОБРАБОТКА СТАРТОВОГО ПРОМПТА (ИЗ ПРОФИЛЯ)
   useEffect(() => {
     const prompt = location.state?.initialPrompt;
     if (prompt && initialChatId === "new" && !hasHandledInitialPrompt.current) {
       hasHandledInitialPrompt.current = true;
-      // Очищаем стейт роутера, чтобы при ререндере не отправить промпт второй раз
       navigate(location.pathname, { replace: true, state: {} });
       setTimeout(() => handleSend(prompt), 100);
     }
@@ -109,7 +101,6 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   }, [location.state, navigate]);
 
-  // Экспорт и Удаление
   const executeDeleteChat = async () => {
     if (!currentChatId || currentChatId === "new") return;
     try {
@@ -121,17 +112,24 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   };
 
+  // 👇 НОВАЯ ЛОГИКА ЭКСПОРТА (Работает через бэкенд)
   const handleExport = async (format: "docx" | "pdf") => {
+    if (!currentChatId || currentChatId === "new") {
+      tgAlert("Для экспорта необходимо сначала начать диалог.");
+      return;
+    }
+
     files.setIsExporting(true);
     try {
-      const chatTitle =
-        chatMessages.messages[0]?.text.substring(0, 20).replace(/\s/g, "_") ||
-        "chat";
-      const filename = `${chatTitle}_${new Date().toISOString().split("T")[0]}`;
-      if (format === "docx")
-        exportToDocx(chatMessages.messages, `${filename}.docx`);
-      else exportToPdf(chatMessages.messages, `${filename}.pdf`);
+      const dateStr = new Date().toISOString().split("T")[0];
+      const filename = `Отчет_Legal_Expert_${dateStr}.${format}`;
+
+      // Запрашиваем файл у бэкенда
+      await apiClient.exportChat(Number(currentChatId), format, filename);
+
+      tgHapticNotification("success");
     } catch (error) {
+      console.error("Export error", error);
       tgAlert("Не удалось экспортировать чат.");
     } finally {
       setTimeout(() => {
@@ -141,14 +139,12 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   };
 
-  // 4. ГЛАВНАЯ БИЗНЕС-ЛОГИКА
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
     if (isSendingRef.current || isTyping) return;
 
     const textToSend =
       typeof textOverride === "string" ? textOverride : inputText;
 
-    // Фиксируем файлы до рендера
     const currentOldFile = files.oldFile;
     const currentNewFile = files.newFile;
     const hasFiles = Boolean(currentOldFile && currentNewFile);
@@ -158,7 +154,6 @@ export const useChat = (initialChatId: string | undefined) => {
     isSendingRef.current = true;
     setIsTyping(true);
 
-    // Моментальная очистка инпута UI
     setInputText("");
     if (hasFiles) {
       files.setOldFile(null);
@@ -169,11 +164,10 @@ export const useChat = (initialChatId: string | undefined) => {
     let activeChatId = currentChatId;
 
     try {
-      // СОЗДАНИЕ ЧАТА
       if (activeChatId === "new" || !activeChatId) {
         if (!internalUserId) throw new Error("User ID not found");
 
-        localSessionLock.current = true; // БЛОКИРУЕМ ФОНОВЫЕ ЗАПРОСЫ
+        localSessionLock.current = true;
 
         const chatTitle = hasFiles
           ? `Сравнение: ${currentOldFile!.name.substring(0, 10)}...`
@@ -186,11 +180,9 @@ export const useChat = (initialChatId: string | undefined) => {
         activeChatId = newChat.id.toString();
 
         setCurrentChatId(activeChatId);
-        // Безопасный переход
         navigate(`/chat/${activeChatId}`, { replace: true, state: {} });
       }
 
-      // СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЯ В UI
       const userMsgId = `msg_${Date.now()}_user`;
       let userTextForUI = finalPrompt;
 
@@ -209,7 +201,6 @@ export const useChat = (initialChatId: string | undefined) => {
         },
       ]);
 
-      // ЛОАДЕР ИИ В UI
       const assistantMsgId = `msg_${Date.now()}_ai`;
       const loadingTextPlaceholder = hasFiles ? "{" : "...";
 
@@ -224,11 +215,9 @@ export const useChat = (initialChatId: string | undefined) => {
         },
       ]);
 
-      // ЗАГРУЗКА ФАЙЛОВ НА БЭКЕНД
       let comparisonMsgId: number | undefined = undefined;
 
       if (hasFiles && internalUserId) {
-        // 👇 ЗДЕСЬ ПЕРЕДАЕМ ТЕКСТ В API КЛИЕНТ
         const uploadResponse = await apiClient.compareDocuments(
           Number(activeChatId),
           internalUserId,
@@ -237,7 +226,6 @@ export const useChat = (initialChatId: string | undefined) => {
           userTextForUI,
         );
 
-        // 👇 ЗАБИРАЕМ ПРАВИЛЬНЫЙ ID
         comparisonMsgId = uploadResponse?.message_id;
 
         const newDocId = uploadResponse?.new_document_id || uploadResponse?.id;
@@ -251,13 +239,6 @@ export const useChat = (initialChatId: string | undefined) => {
         ]);
       }
 
-      // ЗАПРОС К ИИ
-      const lastRealMessage = [...chatMessages.messages]
-        .reverse()
-        .find((m) => typeof m.id === "number");
-      const lastMessageId = lastRealMessage ? lastRealMessage.id : undefined;
-
-      // 👇 Если есть загруженные файлы, берем их ID. Иначе берем последний ID.
       const targetComparisonId = comparisonMsgId ? comparisonMsgId : undefined;
 
       const responseData = await apiClient.sendMessage(Number(activeChatId), {
@@ -265,7 +246,6 @@ export const useChat = (initialChatId: string | undefined) => {
         comparison_id: targetComparisonId,
       });
 
-      // ПАРСИНГ ОТВЕТА
       let finalAiText = responseData.text || "";
       if (responseData.diff_blocks && responseData.diff_blocks.length > 0) {
         finalAiText = JSON.stringify({
@@ -277,7 +257,6 @@ export const useChat = (initialChatId: string | undefined) => {
         tgHapticNotification("success");
       }
 
-      // ОБНОВЛЯЕМ ЛОАДЕР НА РЕАЛЬНЫЙ ТЕКСТ
       chatMessages.setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMsgId

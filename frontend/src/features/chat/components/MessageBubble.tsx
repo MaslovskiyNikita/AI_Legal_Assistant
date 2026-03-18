@@ -81,6 +81,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     if (onExportDocx) onExportDocx();
   };
 
+  // ФУНКЦИЯ ОЧИСТКИ ТЕКСТА (Убирает звездочки и меняет RiskLevel на красивый русский текст)
+  const cleanSummaryText = (text: string) => {
+    if (!text) return "";
+    return text
+      .replace(/\*\*/g, "") // Убираем жирность
+      .replace(/RiskLevel\.RED/g, "Критический")
+      .replace(/RiskLevel\.YELLOW/g, "Средний")
+      .replace(/RiskLevel\.GREEN/g, "Низкий");
+  };
+
+  let textToCopy = rawText;
+  if (isComplexAnalysis && parsedData?.analysis?.summary) {
+    textToCopy = `РЕЗУЛЬТАТ АУДИТА\n\n${cleanSummaryText(parsedData.analysis.summary)}`;
+  }
+
   const renderRiskBadge = (risk: string) => {
     switch (risk) {
       case "RED":
@@ -171,7 +186,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <TypingLoader />
                 ) : isComplexAnalysis && parsedData ? (
                   <div className="flex flex-col gap-3 pb-4">
-                    {/* ОСНОВНОЙ ЧАТ: Только короткое резюме и кнопки */}
+                    {/* ОСНОВНОЙ ЧАТ: Короткое резюме ОЧИЩЕННОЕ ОТ ТЕХНИЧЕСКОГО ТЕКСТА */}
                     <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 shadow-sm border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-bold text-[13px] uppercase tracking-wide text-[var(--tg-theme-hint-color)]">
@@ -180,8 +195,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         {parsedData.analysis?.overall_risk &&
                           renderRiskBadge(parsedData.analysis.overall_risk)}
                       </div>
-                      <p className="text-[14px] font-medium text-[var(--tg-theme-text-color)]">
-                        {parsedData.analysis?.summary ||
+                      <p className="text-[14px] font-medium text-[var(--tg-theme-text-color)] leading-snug">
+                        {cleanSummaryText(parsedData.analysis?.summary) ||
                           "Сравнение завершено. Найдены изменения."}
                       </p>
                     </div>
@@ -225,12 +240,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         </button>
                       </div>
 
+                      {/* 👇 ТА САМАЯ КНОПКА ЭКСПОРТА (КАК НА СКРИНЕ В МОДАЛКЕ) 👇 */}
                       <button
                         onClick={handleExportClick}
-                        className="w-full mt-1 bg-[#3390EC]/10 text-[#3390EC] border border-[#3390EC]/30 text-[13px] font-semibold py-3 px-3 rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-center leading-tight"
+                        className="w-full mt-2 py-3.5 bg-[#3390EC] text-white rounded-2xl flex flex-col items-center justify-center active:scale-[0.98] transition-all shadow-sm"
                       >
-                        <Download size={18} className="shrink-0" />
-                        Экспорт отчета в .docx с гиперссылками на НЦПИ
+                        <div className="flex items-center gap-2 text-[17px] font-semibold">
+                          <Download size={20} />
+                          Экспорт отчета (.DOCX)
+                        </div>
+                        <span className="text-[12px] font-medium opacity-90 mt-0.5">
+                          с гиперссылками на pravo.by
+                        </span>
                       </button>
                     </div>
                   </div>
@@ -270,7 +291,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     !isTypingText && (
                       <button
                         type="button"
-                        onClick={() => onCopy(rawText, msg.id)}
+                        onClick={() => onCopy(textToCopy, msg.id)}
                         className="flex items-center hover:opacity-70 transition-colors cursor-pointer mr-0.5 text-[var(--tg-theme-hint-color)]"
                       >
                         {copiedMessageId === msg.id ? (
@@ -294,6 +315,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
             </div>
           )}
+
           {isUser && !isFileStack && (
             <svg
               viewBox="0 0 8 13"
@@ -308,7 +330,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       </div>
 
       {/* ============================================================
-          МОДАЛКА 1: "Дорожка изменений" (Цветовая маркировка рисков по ТЗ)
+          МОДАЛКА 1: "Дорожка изменений"
       ============================================================= */}
       <Drawer.Root open={isDiffModalOpen} onOpenChange={setIsDiffModalOpen}>
         <Drawer.Portal>
@@ -340,10 +362,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   detail?.risk ||
                   (diff.change_type === "ADDED" ? "YELLOW" : "GREEN");
 
-                // Выделение "Красных зон" как просят в ТЗ
-                let borderColor = "border-l-[#34C759]"; // Зеленый
-                if (riskLevel === "YELLOW") borderColor = "border-l-[#FF9500]"; // Желтый
-                if (riskLevel === "RED") borderColor = "border-l-[#FF3B30]"; // Красный
+                let borderColor = "border-l-[#34C759]";
+                if (riskLevel === "YELLOW") borderColor = "border-l-[#FF9500]";
+                if (riskLevel === "RED") borderColor = "border-l-[#FF3B30]";
 
                 return (
                   <div
@@ -371,7 +392,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       </Drawer.Root>
 
       {/* ============================================================
-          МОДАЛКА 2: "Сводная таблица" (Строго по ТЗ: Было -> Стало -> Статья -> Риск -> Рекомендация)
+          МОДАЛКА 2: "Сводная таблица"
       ============================================================= */}
       <Drawer.Root open={isTableModalOpen} onOpenChange={setIsTableModalOpen}>
         <Drawer.Portal>
