@@ -2,6 +2,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import { FileIcon } from "../../../components/ui/FileIcon";
+import { Sparkles } from "lucide-react";
 
 interface StackedFilesProps {
   file1: string;
@@ -33,30 +34,6 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
         tap: { scale: 0.96 },
       }}
     >
-      {/* КРУТОЙ ЭФФЕКТ ЛАЗЕРНОГО СКАНЕРА */}
-      {isScanning && (
-        <div className="absolute -inset-2 z-40 pointer-events-none overflow-hidden rounded-[24px]">
-          {/* Полупрозрачный оверлей для акцента на сканере */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute inset-0 bg-[var(--tg-theme-button-color)]/5 backdrop-blur-[1px] z-30 rounded-[24px]"
-          />
-          {/* Сама линия сканера с мощным свечением */}
-          <motion.div
-            initial={{ y: "-20%" }}
-            animate={{ y: "250%" }}
-            transition={{
-              repeat: Infinity,
-              duration: 1.4,
-              ease: "easeInOut", // Плавное замедление на краях
-              repeatType: "reverse",
-            }}
-            className="absolute left-0 right-0 h-[2px] bg-[#34C759] shadow-[0_0_20px_6px_rgba(52,199,89,0.7)] z-40"
-          />
-        </div>
-      )}
-
       {/* Файл 1 (Старая версия - сзади) */}
       <motion.div
         variants={{
@@ -73,10 +50,10 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
       >
         <FileIcon filename={file1} />
         <div className="ml-3 flex flex-col flex-1 min-w-0">
-          <span className="text-[var(--tg-theme-button-text-color)] text-[15px] font-medium truncate">
+          <span className="text-white text-[15px] font-medium truncate">
             {file1.replace(/\.(pdf|docx?)$/i, "")}
           </span>
-          <span className="text-[var(--tg-theme-button-text-color)]/80 text-[13px] mt-0.5">
+          <span className="text-white/80 text-[13px] mt-0.5">
             Старая версия
           </span>
         </div>
@@ -93,17 +70,59 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
             transition: { type: "spring", stiffness: 300, damping: 24 },
           },
         }}
-        className="relative min-w-[200px] max-w-[280px] bg-[var(--tg-theme-button-color)] rounded-[20px] p-2.5 pr-5 flex items-center shadow-xl border border-white/20 z-10"
+        className="relative min-w-[200px] max-w-[280px] z-10"
       >
-        <FileIcon filename={file2} />
-        <div className="ml-3 flex flex-col flex-1 min-w-0">
-          <span className="text-[var(--tg-theme-button-text-color)] text-[16px] font-medium truncate">
-            {file2.replace(/\.(pdf|docx?)$/i, "")}
-          </span>
-          <span className="text-[var(--tg-theme-button-text-color)]/80 text-[13px] mt-0.5">
-            Новая версия
-          </span>
+        {/* Карточка документа */}
+        <div className="relative bg-[var(--tg-theme-button-color)] rounded-[20px] p-2.5 pr-5 flex items-center shadow-xl border border-white/20 overflow-hidden">
+          <FileIcon filename={file2} />
+          <div className="ml-3 flex flex-col flex-1 min-w-0 z-10 relative">
+            <span className="text-white text-[16px] font-medium truncate">
+              {file2.replace(/\.(pdf|docx?)$/i, "")}
+            </span>
+            <span className="text-white/80 text-[13px] mt-0.5">
+              Новая версия
+            </span>
+          </div>
+
+          {/* AI: Бегающий блик (Shimmer) внутри карточки */}
+          {isScanning && (
+            <motion.div
+              className="absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none z-20"
+              initial={{ x: "-100%", opacity: 0 }}
+              animate={{ x: "50%", opacity: 0.25 }}
+              transition={{
+                repeat: Infinity,
+                duration: 1.5,
+                ease: "easeInOut",
+              }}
+            />
+          )}
         </div>
+
+        {/* AI: Дышащая неоновая обводка вокруг карточки */}
+        {isScanning && (
+          <motion.div
+            className="absolute inset-0 rounded-[20px] pointer-events-none border-[2px] border-[var(--tg-theme-button-color)] z-0"
+            animate={{ opacity: [0, 0.8, 0], scale: [1, 1.02, 1] }}
+            transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+          />
+        )}
+
+        {/* AI: Парящая искорка в углу */}
+        {isScanning && (
+          <motion.div
+            className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--tg-theme-bg-color)] rounded-full flex items-center justify-center shadow-lg border border-[color-mix(in_srgb,var(--tg-theme-text-color)_10%,transparent)] z-50 text-[var(--tg-theme-button-color)]"
+            animate={{ scale: [1, 1.15, 1] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 5, ease: "linear" }}
+            >
+              <Sparkles size={16} fill="currentColor" />
+            </motion.div>
+          </motion.div>
+        )}
       </motion.div>
     </motion.div>
   );

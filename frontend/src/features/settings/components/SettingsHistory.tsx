@@ -106,7 +106,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
       <div className="px-4 mb-4">
         <div
           ref={containerRef}
-          className="flex items-center bg-[var(--tg-theme-secondary-bg-color)] p-1 rounded-xl relative"
+          className="flex items-center bg-[color-mix(in_srgb,var(--tg-theme-text-color)_8%,transparent)] p-1 rounded-xl relative"
         >
           {/* Плавающий белый фон */}
           <div

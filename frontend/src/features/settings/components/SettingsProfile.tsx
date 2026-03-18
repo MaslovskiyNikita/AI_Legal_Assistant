@@ -45,7 +45,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
     <div className="w-full flex gap-3">
       <div
         onClick={() => setActiveTab("chats")}
-        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "chats" ? "bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] border-[#3390EC]" : "bg-[var(--tg-theme-bg-color)] border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
+        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "chats" ? "bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] border-[#3390EC]" : "bg-[var(--tg-theme-bg-color)] border-[color-mix(in_srgb,var(--tg-theme-text-color)_12%,transparent)] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
       >
         {activeTab === "chats" && (
           <CheckCircle2
@@ -78,7 +78,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
 
       <div
         onClick={() => setActiveTab("documents")}
-        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "documents" ? "bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] border-[#3390EC]" : "bg-[var(--tg-theme-bg-color)] border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
+        className={`flex-1 border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm relative transition-all cursor-pointer ${activeTab === "documents" ? "bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] border-[#3390EC]" : "bg-[var(--tg-theme-bg-color)] border-[color-mix(in_srgb,var(--tg-theme-text-color)_12%,transparent)] active:bg-[var(--tg-theme-secondary-bg-color)]"}`}
       >
         {activeTab === "documents" && (
           <CheckCircle2

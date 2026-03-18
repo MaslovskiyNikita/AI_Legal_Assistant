@@ -45,8 +45,11 @@ export const useChat = (chatId: string | undefined) => {
     }
   }, [navigate]);
 
-  // 3. ЗАГРУЗКА ИСТОРИИ ЧАТА
-  // 3. ЗАГРУЗКА ИСТОРИИ ЧАТА
+  // ==========================================
+  // 👇 ИСПРАВЛЕНИЕ: РАЗДЕЛИЛИ USE-EFFECT НА ДВА
+  // ==========================================
+
+  // 3A. ОЧИСТКА СОСТОЯНИЯ ПРИ НОВОМ ЧАТЕ
   useEffect(() => {
     if (chatId === "new") {
       chatMessages.setMessages([]);
@@ -56,30 +59,35 @@ export const useChat = (chatId: string | undefined) => {
       setInputText("");
       hasHandledInitialPrompt.current = false;
       isCreatingChat.current = false;
-    } else if (chatId) {
-      if (isCreatingChat.current) {
-        isCreatingChat.current = false;
-        return;
-      }
-      if (isTyping) return;
-
-      Promise.all([
-        apiClient.getChat(Number(chatId)),
-        apiClient.getChatDocuments(Number(chatId)),
-      ])
-        .then(([chatRes, docsRes]) => {
-          const historicalMessages = (chatRes.messages || []).map(
-            (msg: any) => ({
-              ...msg,
-              isComplete: true,
-            }),
-          );
-          chatMessages.setMessages(historicalMessages);
-          files.setChatDocuments(docsRes || []);
-        })
-        .catch((err) => console.error("Failed to load chat", err));
     }
-  }, [chatId, isTyping]); // <-- Добавили isTyping в зависимости
+  }, [chatId]); // <-- Убрали isTyping! Теперь чат не стирается при начале печатания
+
+  // 3B. ЗАГРУЗКА ИСТОРИИ СУЩЕСТВУЮЩЕГО ЧАТА
+  useEffect(() => {
+    if (!chatId || chatId === "new") return;
+
+    if (isCreatingChat.current) {
+      isCreatingChat.current = false;
+      return;
+    }
+
+    // Если ИИ сейчас генерирует ответ - ждем, не перезапрашиваем историю
+    if (isTyping) return;
+
+    Promise.all([
+      apiClient.getChat(Number(chatId)),
+      apiClient.getChatDocuments(Number(chatId)),
+    ])
+      .then(([chatRes, docsRes]) => {
+        const historicalMessages = (chatRes.messages || []).map((msg: any) => ({
+          ...msg,
+          isComplete: true,
+        }));
+        chatMessages.setMessages(historicalMessages);
+        files.setChatDocuments(docsRes || []);
+      })
+      .catch((err) => console.error("Failed to load chat", err));
+  }, [chatId, isTyping]); // <-- Здесь isTyping нужен, чтобы обновить чат после ответа
 
   // Обработка initialPrompt и открытия модалок из роутера
   useEffect(() => {
@@ -115,7 +123,7 @@ export const useChat = (chatId: string | undefined) => {
   };
 
   const handleExport = async (format: "docx" | "pdf") => {
-    files.setIsExporting(true); // <-- ИСПРАВЛЕНО (было modals.setIsExporting)
+    files.setIsExporting(true);
     try {
       const chatTitle =
         chatMessages.messages[0]?.text.substring(0, 20).replace(/\s/g, "_") ||
@@ -128,7 +136,7 @@ export const useChat = (chatId: string | undefined) => {
       tgAlert("Не удалось экспортировать чат.");
     } finally {
       setTimeout(() => {
-        files.setIsExporting(false); // <-- ИСПРАВЛЕНО (было modals.setIsExporting)
+        files.setIsExporting(false);
         modals.setIsExportModalOpen(false);
       }, 500);
     }
