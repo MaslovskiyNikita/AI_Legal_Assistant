@@ -16,25 +16,6 @@ from backend_llm.app.embeddings import CustomGeminiEmbeddings
 
 logger = logging.getLogger(__name__)
 
-class CachedEmbeddings:
-    def __init__(self, base_embeddings, maxsize: int = 1000):
-        self.base = base_embeddings
-
-        # делаем LRU-кэш
-        @lru_cache(maxsize=maxsize)
-        def cached_embed(query: str):
-            return tuple(self.base.embed_query(query))  # tuple чтобы был hashable
-
-        self._cached_embed = cached_embed
-
-    def embed_query(self, text: str):
-        normalized = " ".join(text.lower().split())
-        return list(self._cached_embed(normalized))
-
-    def embed_documents(self, texts):
-        # документы обычно не повторяются → не кэшируем
-        return self.base.embed_documents(texts)
-
 class RagService:
     def __init__(self):
         self._lock = asyncio.Lock()
@@ -42,9 +23,7 @@ class RagService:
             logger.warning("GEMINI_API_KEY не найден. RAG может не работать.")
 
             # 1. Эмбеддинги (Gemini)
-        base_embeddings = CustomGeminiEmbeddings()
-
-        self.embeddings = CachedEmbeddings(base_embeddings)
+        self.embeddings = CustomGeminiEmbeddings()
 
         # 2. Векторная база данных (PostgreSQL)
         self.vector_db = PGVector(
