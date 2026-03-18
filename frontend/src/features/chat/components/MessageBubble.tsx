@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { AILoader, TypingLoader } from "./AILoader";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Drawer } from "vaul"; // Импортируем модалки
+import { Drawer } from "vaul";
 import {
   CheckCheck,
   Copy,
@@ -42,7 +42,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     minute: "2-digit",
   });
 
-  // Состояния для новых модалок
+  // Состояния для новых модалок (каждое сообщение управляет своими модалками)
   const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
 
@@ -52,6 +52,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   let parsedData = null;
   let isComplexAnalysis = false;
 
+  // Пытаемся распарсить JSON, если это сложный ответ ИИ
   if (!isUser && rawText.trim().startsWith("{")) {
     try {
       parsedData = JSON.parse(rawText);
@@ -87,20 +88,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     switch (risk) {
       case "RED":
         return (
-          <span className="flex items-center gap-1 bg-[#FF3B30]/15 text-[#FF3B30] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#FF3B30]/20 tracking-wide">
+          <span className="flex items-center gap-1 bg-[#FF3B30]/15 text-[#FF3B30] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#FF3B30]/20 tracking-wide whitespace-nowrap">
             <AlertTriangle size={13} strokeWidth={2.5} /> ВЫСОКИЙ РИСК
           </span>
         );
       case "YELLOW":
         return (
-          <span className="flex items-center gap-1 bg-[#FF9500]/15 text-[#FF9500] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#FF9500]/20 tracking-wide">
+          <span className="flex items-center gap-1 bg-[#FF9500]/15 text-[#FF9500] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#FF9500]/20 tracking-wide whitespace-nowrap">
             <Info size={13} strokeWidth={2.5} /> ВНИМАНИЕ
           </span>
         );
       case "GREEN":
       default:
         return (
-          <span className="flex items-center gap-1 bg-[#34C759]/15 text-[#34C759] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#34C759]/20 tracking-wide">
+          <span className="flex items-center gap-1 bg-[#34C759]/15 text-[#34C759] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#34C759]/20 tracking-wide whitespace-nowrap">
             <CheckCircle size={13} strokeWidth={2.5} /> БЕЗОПАСНО
           </span>
         );
@@ -172,12 +173,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 ) : isTypingText ? (
                   <TypingLoader />
                 ) : isComplexAnalysis && parsedData ? (
-                  <div className="flex flex-col gap-4 pb-4">
-                    {/* КАРТОЧКА: Результат аудита (Оставляем как есть) */}
-                    <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 shadow-sm border border-[var(--tg-theme-secondary-bg-color)]">
+                  <div className="flex flex-col gap-3 pb-4">
+                    {/* КАРТОЧКА: Короткий результат аудита */}
+                    <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 shadow-sm border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                       <div className="flex items-center justify-between mb-2">
                         <span className="font-bold text-[14px] uppercase tracking-wide text-[var(--tg-theme-hint-color)]">
-                          Результат аудита
+                          Результат проверки
                         </span>
                         {parsedData.analysis?.overall_risk &&
                           renderRiskBadge(parsedData.analysis.overall_risk)}
@@ -187,51 +188,16 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                       </p>
                     </div>
 
-                    {/* КАРТОЧКИ РИСКОВ (Оставляем как есть) */}
-                    {parsedData.analysis?.details?.length > 0 && (
-                      <div className="flex flex-col gap-2">
-                        <span className="font-bold text-[13px] uppercase text-[var(--tg-theme-hint-color)] tracking-wider ml-1">
-                          Детализация рисков:
-                        </span>
-                        {parsedData.analysis.details.map(
-                          (detail: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 shadow-sm border border-[var(--tg-theme-secondary-bg-color)] flex flex-col gap-1.5"
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <span className="font-bold text-[14px] leading-tight text-[var(--tg-theme-text-color)]">
-                                  {detail.title}
-                                </span>
-                                <div className="shrink-0 mt-0.5">
-                                  {renderRiskBadge(detail.risk)}
-                                </div>
-                              </div>
-                              <p className="text-[13px] text-[var(--tg-theme-text-color)]/80">
-                                {detail.explanation}
-                              </p>
-                              {detail.violated_law &&
-                                detail.violated_law !== "null" && (
-                                  <span className="text-[11px] font-semibold text-[var(--tg-theme-button-color)] bg-[var(--tg-theme-button-color)]/10 px-2 py-1 rounded inline-block w-fit mt-1 border border-[var(--tg-theme-button-color)]/20">
-                                    Статья: {detail.violated_law}
-                                  </span>
-                                )}
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    )}
-
-                    {/* НОВЫЙ БЛОК: 3 КНОПКИ ДЕЙСТВИЙ (Вместо открытого списка фрагментов) */}
-                    <div className="flex flex-col gap-2 mt-2">
-                      <div className="grid grid-cols-2 gap-2">
-                        {/* Кнопка 1: Дорожка изменений (Модалка) */}
+                    {/* НОВЫЙ БЛОК: Кнопки действий (вместо длинного списка фрагментов) */}
+                    <div className="flex flex-col gap-2 mt-1">
+                      <div className="flex items-center gap-2">
+                        {/* Кнопка 1: Дорожка изменений */}
                         <button
                           onClick={() => {
                             tgHaptic("light");
                             setIsDiffModalOpen(true);
                           }}
-                          className="flex flex-col items-center justify-center gap-1.5 bg-[var(--tg-theme-bg-color)] border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl p-3 shadow-sm active:scale-95 transition-transform"
+                          className="flex-1 flex flex-col items-center justify-center gap-1.5 bg-[var(--tg-theme-bg-color)] border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl p-3 shadow-sm active:scale-95 transition-transform"
                         >
                           <Waypoints
                             size={20}
@@ -244,13 +210,13 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           </span>
                         </button>
 
-                        {/* Кнопка 2: Таблица (Модалка) */}
+                        {/* Кнопка 2: Сводная таблица */}
                         <button
                           onClick={() => {
                             tgHaptic("light");
                             setIsTableModalOpen(true);
                           }}
-                          className="flex flex-col items-center justify-center gap-1.5 bg-[var(--tg-theme-bg-color)] border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl p-3 shadow-sm active:scale-95 transition-transform"
+                          className="flex-1 flex flex-col items-center justify-center gap-1.5 bg-[var(--tg-theme-bg-color)] border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl p-3 shadow-sm active:scale-95 transition-transform"
                         >
                           <TableProperties
                             size={20}
@@ -264,14 +230,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         </button>
                       </div>
 
-                      {/* Кнопка 3: Экспорт (Вызов функции) */}
+                      {/* Кнопка 3: Экспорт (Вызов генерации docx) */}
                       <button
                         onClick={handleExportClick}
-                        className="w-full mt-2 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] text-[13px] font-semibold py-3.5 px-4 rounded-xl shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-center leading-tight"
+                        className="w-full mt-1 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] border border-[color-mix(in_srgb,var(--tg-theme-button-color)_30%,transparent)] text-[13px] font-semibold py-3 px-3 rounded-xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 text-center leading-tight"
                       >
                         <Download size={18} className="shrink-0" />
-                        Экспорт отчета в .docx с юр. комментариями и
-                        гиперссылками на pravo.by
+                        Экспорт отчета в .docx с юридически корректными
+                        комментариями и гиперссылками на НЦПИ
                       </button>
                     </div>
                   </div>
@@ -350,7 +316,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       </div>
 
       {/* ============================================================
-          МОДАЛКА 1: "Дорожка изменений" (Визуализация фрагментов) 
+          МОДАЛКА 1: "Дорожка изменений"
       ============================================================= */}
       <Drawer.Root open={isDiffModalOpen} onOpenChange={setIsDiffModalOpen}>
         <Drawer.Portal>
@@ -382,8 +348,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
-                // Попытаемся найти оценку риска для этого блока, если она есть
-                // Для демо подсветим рамку в зависимости от типа (тут можно улучшить логику маппинга с details)
                 return (
                   <div
                     key={idx}
@@ -409,7 +373,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       </Drawer.Root>
 
       {/* ============================================================
-          МОДАЛКА 2: "Сводная таблица" (Было/Стало/Статья/Риск/Рекомендация) 
+          МОДАЛКА 2: "Сводная таблица"
       ============================================================= */}
       <Drawer.Root open={isTableModalOpen} onOpenChange={setIsTableModalOpen}>
         <Drawer.Portal>
@@ -419,7 +383,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
             <div className="px-5 pb-3 flex items-center justify-between border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
               <Drawer.Title className="text-[18px] font-bold text-[var(--tg-theme-text-color)]">
-                Автоматическая таблица рисков
+                Сводная таблица рисков
               </Drawer.Title>
               <button
                 onClick={() => setIsTableModalOpen(false)}
@@ -429,23 +393,23 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               </button>
             </div>
 
-            <div className="flex-1 overflow-auto p-4">
-              <table className="w-full text-left border-collapse min-w-[600px]">
+            <div className="flex-1 overflow-x-auto p-4">
+              <table className="w-full text-left border-collapse min-w-[900px]">
                 <thead>
                   <tr className="bg-[var(--tg-theme-secondary-bg-color)] text-[12px] uppercase text-[var(--tg-theme-hint-color)]">
-                    <th className="p-3 rounded-tl-xl font-semibold">Было</th>
-                    <th className="p-3 font-semibold">Стало</th>
-                    <th className="p-3 font-semibold">Уровень риска</th>
-                    <th className="p-3 font-semibold">Статья закона</th>
-                    <th className="p-3 rounded-tr-xl font-semibold">
+                    <th className="p-3 rounded-tl-xl font-semibold w-[20%]">
+                      Было
+                    </th>
+                    <th className="p-3 font-semibold w-[20%]">Стало</th>
+                    <th className="p-3 font-semibold w-[15%]">Статья закона</th>
+                    <th className="p-3 font-semibold w-[15%]">Уровень риска</th>
+                    <th className="p-3 rounded-tr-xl font-semibold w-[30%]">
                       Рекомендация
                     </th>
                   </tr>
                 </thead>
                 <tbody className="text-[13px] text-[var(--tg-theme-text-color)] align-top">
                   {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
-                    // Ищем соответствующий этому блоку анализ (если бэкенд отдает)
-                    // Для надежности берем деталь по индексу, либо ставим заглушку
                     const detail = parsedData.analysis?.details?.[idx] || null;
 
                     return (
@@ -453,13 +417,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         key={idx}
                         className="border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]"
                       >
-                        <td className="p-3 min-w-[150px] bg-[#FF3B30]/5 text-[#FF3B30]">
+                        <td className="p-3 bg-[#FF3B30]/5 text-[#FF3B30] border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                           {diff.old_block?.text || "—"}
                         </td>
-                        <td className="p-3 min-w-[150px] bg-[#34C759]/5 text-[#34C759]">
+                        <td className="p-3 bg-[#34C759]/5 text-[#34C759] border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                           {diff.new_block?.text || "—"}
                         </td>
-                        <td className="p-3">
+                        <td className="p-3 text-[var(--tg-theme-button-color)] cursor-pointer hover:underline border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
+                          {detail?.violated_law &&
+                          detail.violated_law !== "null"
+                            ? detail.violated_law
+                            : "—"}
+                        </td>
+                        <td className="p-3 border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                           {detail
                             ? renderRiskBadge(detail.risk)
                             : renderRiskBadge(
@@ -468,15 +438,9 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                                   : "GREEN",
                               )}
                         </td>
-                        <td className="p-3 text-[var(--tg-theme-button-color)] underline cursor-pointer">
-                          {detail?.violated_law &&
-                          detail.violated_law !== "null"
-                            ? detail.violated_law
-                            : "—"}
-                        </td>
-                        <td className="p-3 text-[12px] min-w-[150px]">
+                        <td className="p-3 text-[12px] font-medium opacity-90">
                           {detail?.explanation ||
-                            "Изменение носит технический характер. Правки не требуются."}
+                            "Носит технический характер. Дополнительные правки не требуются."}
                         </td>
                       </tr>
                     );
