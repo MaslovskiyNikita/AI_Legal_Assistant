@@ -7,7 +7,7 @@ SQLALCHEMY_DATABASE_URL = os.getenv(
     "postgresql+asyncpg://postgres:superpassword@db-backend:6432/hackathon_db"
 )
 
-engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=True)
+engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=False)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine, 

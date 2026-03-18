@@ -20,7 +20,9 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
   const icons = {
     success: <CheckCircle2 className="text-[#34C759]" size={20} />,
     error: <AlertCircle className="text-[#FF3B30]" size={20} />,
-    info: <AlertCircle className="text-[#3390EC]" size={20} />,
+    info: (
+      <AlertCircle className="text-[var(--tg-theme-button-color)]" size={20} />
+    ),
   };
 
   const bgColors = {
@@ -34,12 +36,12 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
       className={`flex items-center gap-3 p-4 rounded-2xl border shadow-lg backdrop-blur-md animate-in slide-in-from-top-5 fade-in duration-300 ${bgColors[type]}`}
     >
       {icons[type]}
-      <span className="text-[14px] font-medium text-black flex-1">
+      <span className="text-[14px] font-medium text-[var(--tg-theme-text-color)] flex-1">
         {message}
       </span>
       <button
         onClick={() => onClose(id)}
-        className="text-[#8E8E93] hover:text-black transition-colors"
+        className="text-[var(--tg-theme-hint-color)] hover:text-[var(--tg-theme-text-color)] transition-colors"
       >
         <X size={16} />
       </button>

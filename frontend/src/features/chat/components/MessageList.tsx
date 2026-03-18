@@ -3,26 +3,28 @@ import React, { useState, useEffect, useRef } from "react";
 import { Scale } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
 import { formatDateLabel } from "../../../utils/dateUtils";
-
+import { motion, AnimatePresence } from "motion/react";
 interface MessageListProps {
   messages: any[];
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
-  scrollContainerRef: React.RefObject<HTMLDivElement | null>; // <-- Добавили
-  setIsUserScrollingUp: (val: boolean) => void; // <-- Добавили
+  scrollContainerRef: React.RefObject<HTMLDivElement | null>;
+  setIsUserScrollingUp: (val: boolean) => void;
   copiedMessageId: string | number | null;
   onCopy: (text: string, id: string | number) => void;
   onOpenDownload: () => void;
+  onExportDocx: () => void; // <-- ДОБАВИЛИ
   isTyping: boolean;
 }
 
 export const MessageList: React.FC<MessageListProps> = ({
   messages,
   messagesEndRef,
-  scrollContainerRef, // <-- Достали из пропсов
-  setIsUserScrollingUp, // <-- Достали из пропсов
+  scrollContainerRef,
+  setIsUserScrollingUp,
   copiedMessageId,
   onCopy,
   onOpenDownload,
+  onExportDocx, // <-- ДОСТАЛИ ИЗ ПРОПСОВ
   isTyping,
 }) => {
   const [isScrolling, setIsScrolling] = useState(false);
@@ -30,11 +32,9 @@ export const MessageList: React.FC<MessageListProps> = ({
   const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
   const lastScrollCheck = useRef<number>(0);
 
-  // Находим ID последнего сообщения от пользователя (чтобы сканер работал только на новых файлах)
   const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
   const lastUserMsgId = lastUserMsg?.id;
 
-  // Группировка сообщений по датам
   const groupedMessages: { label: string; messages: any[] }[] = [];
   let currentGroup: { label: string; messages: any[] } | null = null;
 
@@ -56,10 +56,9 @@ export const MessageList: React.FC<MessageListProps> = ({
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
 
-    // Проверяем, прокрутил ли юзер вверх (если до низа больше 100px)
     const isNearBottom =
       target.scrollHeight - target.scrollTop - target.clientHeight < 100;
-    setIsUserScrollingUp(!isNearBottom); // <-- Сообщаем хуку, что юзер скроллит вверх
+    setIsUserScrollingUp(!isNearBottom);
 
     setIsScrolling(true);
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
@@ -91,8 +90,8 @@ export const MessageList: React.FC<MessageListProps> = ({
 
   return (
     <div
-      ref={scrollContainerRef} // <-- Привязали реф к контейнеру
-      className="flex-1 overflow-y-auto px-4 pt-2 pb-[160px] z-10 relative bg-white scroll-smooth"
+      ref={scrollContainerRef}
+      className="flex-1 overflow-y-auto px-4 pt-2 pb-[160px] z-10 relative bg-[var(--tg-theme-bg-color)] scroll-smooth"
       onScroll={handleScroll}
     >
       {groupedMessages.length > 0 && (
@@ -106,14 +105,14 @@ export const MessageList: React.FC<MessageListProps> = ({
       )}
 
       {groupedMessages.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-full text-center text-black mt-10">
-          <div className="w-20 h-20 bg-[#F0F8FF] rounded-full flex items-center justify-center mb-4 shadow-sm">
-            <Scale size={36} className="text-[#3390EC]" />
+        <div className="flex flex-col items-center justify-center h-full text-center text-[var(--tg-theme-text-color)] mt-10">
+          <div className="w-20 h-20 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] rounded-full flex items-center justify-center mb-4 shadow-sm">
+            <Scale size={36} className="text-[var(--tg-theme-button-color)]" />
           </div>
-          <p className="text-[20px] font-semibold text-black mb-2">
+          <p className="text-[20px] font-semibold text-[var(--tg-theme-text-color)] mb-2">
             Готов помочь
           </p>
-          <p className="text-[15px] text-[#8E8E93] max-w-[260px] leading-relaxed">
+          <p className="text-[15px] text-[var(--tg-theme-hint-color)] max-w-[260px] leading-relaxed">
             Задайте юридический вопрос или прикрепите документ для анализа.
           </p>
         </div>
@@ -127,21 +126,44 @@ export const MessageList: React.FC<MessageListProps> = ({
             >
               {groupIndex !== 0 && (
                 <div className="flex justify-center my-3">
-                  <span className="bg-black/10 text-black/60 text-[12px] font-medium px-3 py-1 rounded-full">
+                  <span className="bg-black/10 text-[var(--tg-theme-text-color)]/60 text-[12px] font-medium px-3 py-1 rounded-full">
                     {group.label}
                   </span>
                 </div>
               )}
-              {group.messages.map((msg, index) => (
-                <MessageBubble
-                  key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
-                  msg={msg}
-                  copiedMessageId={copiedMessageId}
-                  onCopy={onCopy}
-                  onDownloadClick={onOpenDownload}
-                  isScanning={isTyping && msg.id === lastUserMsgId}
-                />
-              ))}
+              {/* Оборачиваем список в AnimatePresence для поддержки появления */}
+              <AnimatePresence initial={false}>
+                {group.messages.map((msg, index) => (
+                  <motion.div
+                    key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
+                    layout // Плавно сдвигает старые сообщения вверх
+                    initial={{
+                      opacity: 0,
+                      y: 20,
+                      scale: 0.9,
+                      transformOrigin:
+                        msg.role === "user" ? "bottom right" : "bottom left",
+                    }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 450, // Натяжение пружины (скорость)
+                      damping: 30, // Торможение (убирает лишнюю "тряску")
+                      mass: 0.8, // Легкость элемента
+                    }}
+                    className="w-full"
+                  >
+                    <MessageBubble
+                      msg={msg}
+                      copiedMessageId={copiedMessageId}
+                      onCopy={onCopy}
+                      onDownloadClick={onOpenDownload}
+                      onExportDocx={onExportDocx}
+                      isScanning={isTyping && msg.id === lastUserMsgId}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
             </div>
           ))}
           <div ref={messagesEndRef} />

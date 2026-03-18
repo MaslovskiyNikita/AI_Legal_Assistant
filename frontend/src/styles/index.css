@@ -1,23 +1,50 @@
-@import "./fonts.css";
-@import "./tailwind.css";
-@import "./theme.css";
-@keyframes scan {
-  0% {
-    top: -10%;
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    top: 110%;
-    opacity: 0;
-  }
+@import "tailwindcss";
+
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  --tg-theme-bg-color: #ffffff;
+  --tg-theme-text-color: #000000;
+  --tg-theme-hint-color: #8e8e93;
+  --tg-theme-button-color: #3390ec;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-secondary-bg-color: #f2f2f7;
+  --tg-theme-section-separator-color: #c8c7cc;
 }
 
-.animate-scan {
-  animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+html[data-theme="dark"] {
+  --tg-theme-bg-color: #1c1c1d !important;
+  --tg-theme-text-color: #ffffff !important;
+  --tg-theme-hint-color: #8e8e93 !important;
+  --tg-theme-button-color: #3390ec !important;
+  --tg-theme-button-text-color: #ffffff !important;
+  --tg-theme-secondary-bg-color: #000000 !important;
+  --tg-theme-section-separator-color: #38383a !important;
+}
+
+html[data-theme="light"] {
+  --tg-theme-bg-color: #ffffff !important;
+  --tg-theme-text-color: #000000 !important;
+  --tg-theme-hint-color: #8e8e93 !important;
+  --tg-theme-button-color: #3390ec !important;
+  --tg-theme-button-text-color: #ffffff !important;
+  --tg-theme-secondary-bg-color: #f2f2f7 !important;
+  --tg-theme-section-separator-color: #c8c7cc !important;
+}
+
+body {
+  background-color: var(--tg-theme-secondary-bg-color);
+  color: var(--tg-theme-text-color);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }

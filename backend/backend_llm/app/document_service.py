@@ -42,5 +42,4 @@ class DocumentComparisonManager:
                 "diff_blocks": [b.model_dump() for b in meaningful_diffs],
                 "analysis": analysis.model_dump()
             }
-
         return await asyncio.to_thread(prepare_response)

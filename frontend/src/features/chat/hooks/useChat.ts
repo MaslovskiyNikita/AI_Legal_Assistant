@@ -2,200 +2,194 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
-import { exportToDocx, exportToPdf } from "../../../utils/exportUtils";
+import { getTg, tgAlert, tgHapticNotification } from "../../../utils/telegram";
 
-export const useChat = (chatId: string | undefined) => {
+import { useChatModals } from "./useChatModals";
+import { useChatFiles } from "./useChatFiles";
+import { useChatMessages } from "./useChatMessages";
+
+export const useChat = (initialChatId: string | undefined) => {
   const navigate = useNavigate();
   const location = useLocation();
   const userStr = localStorage.getItem("user");
   const internalUserId = userStr ? JSON.parse(userStr).id : null;
 
-  // Основные стейты
-  const [messages, setMessages] = useState<any[]>([]);
+  const [currentChatId, setCurrentChatId] = useState(initialChatId);
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isCreatingChat = useRef(false);
+
+  const isSendingRef = useRef(false);
+  const localSessionLock = useRef(false);
+  const hasFetchedHistory = useRef(false);
   const hasHandledInitialPrompt = useRef(false);
-  const [chatDocuments, setChatDocuments] = useState<any[]>([]);
-  const [copiedMessageId, setCopiedMessageId] = useState<
-    number | string | null
-  >(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [isUserScrollingUp, setIsUserScrollingUp] = useState(false);
 
-  // Стейты файлов
-  const [oldFile, setOldFile] = useState<File | null>(null);
-  const [newFile, setNewFile] = useState<File | null>(null);
+  const modals = useChatModals();
+  const files = useChatFiles();
+  const chatMessages = useChatMessages(
+    currentChatId,
+    isTyping,
+    files.hasAttachedFiles,
+  );
 
-  // Стейты модалок
-  const [isCompareModalOpen, setIsCompareModalOpen] = useState(false);
-  const [isFileLimitModalOpen, setIsFileLimitModalOpen] = useState(false);
-  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
-
-  // Вычисляемые значения
-  const hasAttachedFiles = Boolean(oldFile && newFile);
-  const isFilesAttachedToChat = chatDocuments.length >= 2;
-  const canAttachFiles = !isFilesAttachedToChat;
-  const shouldShowAttachedIcon = hasAttachedFiles || isFilesAttachedToChat;
-
-  const handleCopy = (text: string, id: number | string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedMessageId(id);
-    setTimeout(() => setCopiedMessageId(null), 2000);
-  };
-
-  const scrollToBottom = () => {
-    // Скроллим вниз ТОЛЬКО если пользователь не читает старые сообщения
-    if (!isUserScrollingUp) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    if (initialChatId !== currentChatId) {
+      setCurrentChatId(initialChatId);
     }
-  };
+  }, [initialChatId]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping, oldFile, newFile]);
+    const tg = getTg();
+    if (tg && tg.BackButton) {
+      tg.BackButton.show();
+      const handleBack = () => navigate("/profile");
+      tg.BackButton.onClick(handleBack);
+      return () => {
+        tg.BackButton.offClick(handleBack);
+        tg.BackButton.hide();
+      };
+    }
+  }, [navigate]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages, isTyping, oldFile, newFile]);
-
-  // Загрузка чата
-  useEffect(() => {
-    if (chatId === "new") {
-      setMessages([]);
-      setChatDocuments([]);
-      setOldFile(null);
-      setNewFile(null);
+    if (initialChatId === "new") {
+      chatMessages.setMessages([]);
+      files.setChatDocuments([]);
+      files.setOldFile(null);
+      files.setNewFile(null);
       setInputText("");
       hasHandledInitialPrompt.current = false;
-      isCreatingChat.current = false;
-    } else if (chatId) {
-      if (isCreatingChat.current) {
-        isCreatingChat.current = false;
-        return;
-      }
-      Promise.all([
-        apiClient.getChat(Number(chatId)),
-        apiClient.getChatDocuments(Number(chatId)),
-      ])
-        .then(([chatRes, docsRes]) => {
-          const historicalMessages = (chatRes.messages || []).map(
-            (msg: any) => ({
-              ...msg,
-              isComplete: true,
-            }),
-          );
-          setMessages(historicalMessages);
-          setChatDocuments(docsRes || []);
-        })
-        .catch((err) => console.error("Failed to load chat or documents", err));
+      localSessionLock.current = false;
+      hasFetchedHistory.current = false;
     }
-  }, [chatId]);
+  }, [initialChatId]);
 
-  // Обработка initialPrompt
+  useEffect(() => {
+    if (!currentChatId || currentChatId === "new") return;
+    if (hasFetchedHistory.current) return;
+    if (localSessionLock.current) return;
+
+    hasFetchedHistory.current = true;
+
+    Promise.all([
+      apiClient.getChat(Number(currentChatId)),
+      apiClient.getChatDocuments(Number(currentChatId)),
+    ])
+      .then(([chatRes, docsRes]) => {
+        const historicalMessages = (chatRes.messages || []).map((msg: any) => ({
+          ...msg,
+          isComplete: true,
+        }));
+        chatMessages.setMessages(historicalMessages);
+        files.setChatDocuments(docsRes || []);
+      })
+      .catch((err) => console.error("Failed to load chat", err));
+  }, [currentChatId]);
+
   useEffect(() => {
     const prompt = location.state?.initialPrompt;
-    if (prompt && chatId === "new" && !hasHandledInitialPrompt.current) {
+    if (prompt && initialChatId === "new" && !hasHandledInitialPrompt.current) {
       hasHandledInitialPrompt.current = true;
-      const state = { ...location.state };
-      delete state.initialPrompt;
-      window.history.replaceState(state, document.title);
-      setTimeout(async () => {
-        await handleSend(prompt);
-      }, 150);
+      navigate(location.pathname, { replace: true, state: {} });
+      setTimeout(() => handleSend(prompt), 100);
     }
-  }, [location.state?.initialPrompt, chatId]);
+  }, [location.state, initialChatId, navigate]);
 
-  // Обработка автоматического открытия модалки
   useEffect(() => {
     if (location.state?.openCompareModal) {
-      setIsCompareModalOpen(true);
-      const state = { ...location.state };
-      delete state.openCompareModal;
-      window.history.replaceState(state, document.title);
+      modals.setIsCompareModalOpen(true);
+      navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state]);
+  }, [location.state, navigate]);
 
   const executeDeleteChat = async () => {
-    if (!chatId || chatId === "new") return;
+    if (!currentChatId || currentChatId === "new") return;
     try {
-      await apiClient.deleteChat(Number(chatId));
-      setIsDeleteModalOpen(false);
+      await apiClient.deleteChat(Number(currentChatId));
+      modals.setIsDeleteModalOpen(false);
       navigate("/profile", { replace: true });
     } catch (error) {
-      console.error("Failed to delete chat", error);
-      alert("Не удалось удалить чат. Пожалуйста, попробуйте еще раз.");
+      tgAlert("Не удалось удалить чат.");
     }
   };
 
   const handleExport = async (format: "docx" | "pdf") => {
-    setIsExporting(true);
-    try {
-      const chatTitle =
-        messages[0]?.text.substring(0, 20).replace(/\s/g, "_") || "chat";
-      const filename = `${chatTitle}_${new Date().toISOString().split("T")[0]}`;
+    if (!currentChatId || currentChatId === "new") {
+      tgAlert("Для экспорта необходимо сначала начать диалог.");
+      return;
+    }
 
-      if (format === "docx") {
-        exportToDocx(messages, `${filename}.docx`);
-      } else {
-        exportToPdf(messages, `${filename}.pdf`);
-      }
+    files.setIsExporting(true);
+    try {
+      const dateStr = new Date().toISOString().split("T")[0];
+      const filename = `Отчет_Legal_Expert_${dateStr}.${format}`;
+
+      await apiClient.exportChat(Number(currentChatId), format, filename);
+
+      tgHapticNotification("success");
     } catch (error) {
-      console.error("Export failed", error);
-      alert("Не удалось экспортировать чат.");
+      console.error("Export error", error);
+      tgAlert("Не удалось экспортировать чат.");
     } finally {
       setTimeout(() => {
-        setIsExporting(false);
-        setIsExportModalOpen(false);
+        files.setIsExporting(false);
+        modals.setIsExportModalOpen(false);
       }, 500);
     }
   };
 
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
+    if (isSendingRef.current || isTyping) return;
+
     const textToSend =
       typeof textOverride === "string" ? textOverride : inputText;
 
-    if (!textToSend.trim() && !hasAttachedFiles) return;
-    if (isTyping) return;
+    const currentOldFile = files.oldFile;
+    const currentNewFile = files.newFile;
+    const hasFiles = Boolean(currentOldFile && currentNewFile);
 
-    setInputText("");
+    if (!textToSend.trim() && !hasFiles) return;
+
+    isSendingRef.current = true;
     setIsTyping(true);
 
+    setInputText("");
+    if (hasFiles) {
+      files.setOldFile(null);
+      files.setNewFile(null);
+    }
+
     const finalPrompt = textToSend.trim();
-    let activeChatId = chatId;
+    let activeChatId = currentChatId;
 
     try {
       if (activeChatId === "new" || !activeChatId) {
         if (!internalUserId) throw new Error("User ID not found");
-        const chatTitle =
-          hasAttachedFiles && oldFile
-            ? `Сравнение: ${oldFile.name.substring(0, 10)}...`
-            : finalPrompt.substring(0, 30) + "...";
+
+        localSessionLock.current = true;
+
+        const chatTitle = hasFiles
+          ? `Сравнение: ${currentOldFile!.name.substring(0, 10)}...`
+          : finalPrompt.substring(0, 30) + "...";
 
         const newChat = await apiClient.createChat({
           user_id: internalUserId,
           title: chatTitle,
         });
         activeChatId = newChat.id.toString();
-        isCreatingChat.current = true;
-        navigate(`/chat/${activeChatId}`, { replace: true });
+
+        setCurrentChatId(activeChatId);
+        navigate(`/chat/${activeChatId}`, { replace: true, state: {} });
       }
 
       const userMsgId = `msg_${Date.now()}_user`;
       let userTextForUI = finalPrompt;
 
-      if (hasAttachedFiles && oldFile && newFile) {
-        userTextForUI = `Прикреплены документы для сравнения: 1. ${oldFile.name} 2. ${newFile.name}`;
-        if (finalPrompt) {
-          userTextForUI += `\n\n${finalPrompt}`;
-        }
+      if (hasFiles) {
+        userTextForUI = `Прикреплены документы для сравнения:\n1. ${currentOldFile!.name}\n2. ${currentNewFile!.name}`;
+        if (finalPrompt) userTextForUI += `\n\n${finalPrompt}`;
       }
 
-      setMessages((prev) => [
+      chatMessages.setMessages((prev) => [
         ...prev,
         {
           id: userMsgId,
@@ -206,64 +200,77 @@ export const useChat = (chatId: string | undefined) => {
       ]);
 
       const assistantMsgId = `msg_${Date.now()}_ai`;
-      setMessages((prev) => [
+      const loadingTextPlaceholder = hasFiles ? "{" : "...";
+
+      chatMessages.setMessages((prev) => [
         ...prev,
         {
           id: assistantMsgId,
           role: "ai",
-          text: "",
+          text: loadingTextPlaceholder,
           created_at: new Date().toISOString(),
           isComplete: false,
         },
       ]);
 
-      let comparisonId: number | undefined = undefined;
+      let comparisonMsgId: number | undefined = undefined;
 
-      if (hasAttachedFiles && oldFile && newFile && internalUserId) {
+      if (hasFiles && internalUserId) {
         const uploadResponse = await apiClient.compareDocuments(
           Number(activeChatId),
           internalUserId,
-          oldFile,
-          newFile,
+          currentOldFile!,
+          currentNewFile!,
+          userTextForUI,
         );
-        comparisonId = uploadResponse?.new_document_id || uploadResponse?.id;
-        setChatDocuments((prev) => [
+
+        comparisonMsgId = uploadResponse?.message_id;
+
+        const newDocId = uploadResponse?.new_document_id || uploadResponse?.id;
+        files.setChatDocuments((prev) => [
           ...prev,
           {
-            id: comparisonId ? comparisonId - 1 : Date.now(),
-            filename: oldFile.name,
+            id: newDocId ? newDocId - 1 : Date.now(),
+            filename: currentOldFile!.name,
           },
-          { id: comparisonId || Date.now() + 1, filename: newFile.name },
+          { id: newDocId || Date.now() + 1, filename: currentNewFile!.name },
         ]);
       }
 
-      await apiClient.sendMessageStream(
-        Number(activeChatId),
-        { text: userTextForUI, comparison_id: comparisonId },
-        (chunk) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMsgId
-                ? { ...msg, text: (msg.text || "") + chunk }
-                : msg,
-            ),
-          );
-        },
-      );
+      const targetComparisonId = comparisonMsgId ? comparisonMsgId : undefined;
 
-      setMessages((prev) =>
+      const responseData = await apiClient.sendMessage(Number(activeChatId), {
+        text: userTextForUI,
+        comparison_id: targetComparisonId,
+      });
+
+      let finalAiText = responseData.text || "";
+      const newAiData =
+        responseData.diff_blocks && responseData.diff_blocks.length > 0
+          ? { diff_blocks: responseData.diff_blocks }
+          : null;
+
+      if (newAiData) {
+        tgHapticNotification("warning");
+      } else {
+        tgHapticNotification("success");
+      }
+
+      chatMessages.setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === assistantMsgId ? { ...msg, isComplete: true } : msg,
+          msg.id === assistantMsgId
+            ? {
+                ...msg,
+                text: finalAiText,
+                ai_data: newAiData,
+                isComplete: true,
+              }
+            : msg,
         ),
       );
-
-      if (hasAttachedFiles) {
-        setOldFile(null);
-        setNewFile(null);
-      }
     } catch (error) {
-      console.error("Error sending message or uploading files:", error);
-      setMessages((prev) => [
+      tgHapticNotification("error");
+      chatMessages.setMessages((prev) => [
         ...prev,
         {
           id: `msg_err_${Date.now()}`,
@@ -274,43 +281,21 @@ export const useChat = (chatId: string | undefined) => {
         },
       ]);
     } finally {
+      isSendingRef.current = false;
       setIsTyping(false);
     }
   };
 
-  // Возвращаем всё, что нужно для UI
   return {
-    messages,
-    setMessages,
+    ...chatMessages,
+    ...files,
+    ...modals,
+    chatId: currentChatId,
     inputText,
     setInputText,
     isTyping,
-    messagesEndRef,
-    chatDocuments,
-    copiedMessageId,
-    handleCopy,
-    oldFile,
-    setOldFile,
-    newFile,
-    setNewFile,
-    isCompareModalOpen,
-    setIsCompareModalOpen,
-    isFileLimitModalOpen,
-    setIsFileLimitModalOpen,
-    isDownloadModalOpen,
-    setIsDownloadModalOpen,
-    isDeleteModalOpen,
-    setIsDeleteModalOpen,
-    isExportModalOpen,
-    setIsExportModalOpen,
-    isExporting,
-    hasAttachedFiles,
-    canAttachFiles,
-    shouldShowAttachedIcon,
     executeDeleteChat,
     handleExport,
     handleSend,
-    scrollContainerRef,
-    setIsUserScrollingUp,
   };
 };

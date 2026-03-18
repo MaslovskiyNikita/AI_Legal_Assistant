@@ -1,20 +1,21 @@
 // src/api/client.ts
 
-const BASE_URL = "http://localhost:8023/api/v1";
+const BASE_URL = "https://legal-assistant-api.kawun.su/api/v1";
 
 export const apiClient = {
-  // Метод для сравнения (добавлены chatId и userId)
   async compareDocuments(
     chatId: number,
     userId: number,
     oldFile: File,
     newFile: File,
+    text: string,
   ) {
     const formData = new FormData();
     formData.append("chat_id", chatId.toString());
     formData.append("user_id", userId.toString());
     formData.append("old_file", oldFile);
     formData.append("new_file", newFile);
+    formData.append("text", text);
 
     const response = await fetch(`${BASE_URL}/documents/compare`, {
       method: "POST",
@@ -25,7 +26,6 @@ export const apiClient = {
       throw new Error(`compareDocuments failed: ${response.status}`);
     }
 
-    // Проверяем, в каком формате отвечает бэк (если JSON - парсим, иначе текст)
     const contentType = response.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
       return await response.json();
@@ -33,22 +33,46 @@ export const apiClient = {
     return await response.text();
   },
 
-  // Метод для скачивания документа (Адаптирован под Telegram)
   async downloadDocument(documentId: number, filename: string = "document") {
     const downloadUrl = `${BASE_URL}/documents/${documentId}/download`;
 
-    // Проверяем, открыто ли приложение внутри Telegram
     // @ts-ignore
     if (window.Telegram?.WebApp?.initData) {
-      // Отдаем ссылку самому Телеграму, он откроет её нативным загрузчиком iOS/Android
       // @ts-ignore
       window.Telegram.WebApp.openLink(downloadUrl);
       return;
     }
 
-    // Фолбэк: если открыто просто в браузере Chrome/Safari на ПК
     const response = await fetch(downloadUrl);
     if (!response.ok) throw new Error("Download failed");
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
+  // 👇 ИСПРАВЛЕННЫЙ МЕТОД ЭКСПОРТА (Работает в Telegram)
+  async exportChat(chatId: number, format: "docx" | "pdf", filename: string) {
+    const downloadUrl = `${BASE_URL}/chats/${chatId}/export/${format}`;
+
+    // Проверяем, открыто ли приложение внутри Telegram
+    // @ts-ignore
+    if (window.Telegram?.WebApp?.initData) {
+      // Внутри телеграма скачивание работает только через внешний линк (openLink)
+      // @ts-ignore
+      window.Telegram.WebApp.openLink(downloadUrl);
+      return;
+    }
+
+    // Фолбэк для браузера Chrome/Safari на компьютере
+    const response = await fetch(downloadUrl);
+    if (!response.ok) throw new Error("Export failed");
 
     const blob = await response.blob();
     const url = window.URL.createObjectURL(blob);
@@ -129,7 +153,6 @@ export const apiClient = {
     return r.json();
   },
 
-  // НОВЫЙ МЕТОД ДЛЯ УДАЛЕНИЯ ЧАТА
   async deleteAllChats(user_id: number) {
     const r = await fetch(`${BASE_URL}/chats/?user_id=${user_id}`, {
       method: "DELETE",
@@ -153,7 +176,6 @@ export const apiClient = {
     });
 
     if (!r.ok) {
-      // Пытаемся достать текст ошибки с бэкенда, если он есть
       let errorDetail = `deleteChat failed: ${r.status}`;
       try {
         const errorData = await r.json();
@@ -165,10 +187,9 @@ export const apiClient = {
     return r.json();
   },
 
-  async sendMessageStream(
+  async sendMessage(
     chat_id: number,
     payload: { text: string; comparison_id?: number },
-    onChunk: (chunk: string) => void,
   ) {
     const r = await fetch(`${BASE_URL}/chats/${chat_id}/messages/stream`, {
       method: "POST",
@@ -176,34 +197,10 @@ export const apiClient = {
       body: JSON.stringify(payload),
     });
 
-    if (!r.ok || !r.body)
-      throw new Error(`sendMessageStream failed: ${r.status}`);
-
-    const reader = r.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunkString = decoder.decode(value, { stream: true });
-      const lines = chunkString.split("\n");
-
-      for (const line of lines) {
-        if (line.trim().startsWith("data:")) {
-          const dataStr = line.replace("data:", "").trim();
-          if (!dataStr || dataStr === "[DONE]") continue;
-
-          try {
-            const parsed = JSON.parse(dataStr);
-            if (parsed.chunk) {
-              onChunk(parsed.chunk);
-            }
-          } catch (e) {
-            console.error("Ошибка при парсинге чанка:", dataStr, e);
-          }
-        }
-      }
+    if (!r.ok) {
+      throw new Error(`sendMessage failed: ${r.status}`);
     }
+
+    return r.json();
   },
 };

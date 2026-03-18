@@ -8,7 +8,7 @@
   --primary-foreground: #ffffff;
   --muted: #f2f2f7;
   --muted-foreground: #8e8e93;
-  --border: #e5e5ea;
+  --border: bg-[var(--tg-theme-secondary-bg-color)];
   --destructive: #ff3b30;
   --destructive-foreground: #ffffff;
   --radius: 1rem;

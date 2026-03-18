@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../../../api/client";
+import { getTg, tgAlert, tgClose } from "../../../utils/telegram";
 
 export const useSettings = () => {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ export const useSettings = () => {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
+  // Инициализируем тему из локалстораджа, дефолт - темная
   const [theme, setTheme] = useState(user?.theme || "dark");
   const [notifications, setNotifications] = useState(
     user?.notifications_enabled ?? true,
@@ -90,7 +92,6 @@ export const useSettings = () => {
     }
   }, [internalUserId]);
 
-  // Внутри useSettings добавь эту функцию:
   const handleDeleteChat = async (chatId: number) => {
     try {
       await apiClient.deleteChat(chatId);
@@ -99,13 +100,18 @@ export const useSettings = () => {
       setAllDocuments((prev) => prev.filter((d) => d.chatId !== chatId));
     } catch (error) {
       console.error("Failed to delete chat", error);
-      alert("Не удалось удалить чат.");
+      tgAlert("Не удалось удалить чат.");
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem("user");
-    navigate("/", { replace: true });
+    const tg = getTg();
+    if (tg && tg.initDataUnsafe?.user) {
+      tgClose(); // Закрываем Mini App в Telegram
+    } else {
+      navigate("/", { replace: true }); // Фолбэк для браузера
+    }
   };
 
   const executeClearHistory = async () => {
@@ -119,7 +125,7 @@ export const useSettings = () => {
       }
       setIsClearHistoryModalOpen(false);
     } catch (error) {
-      alert("Не удалось очистить историю.");
+      tgAlert("Не удалось очистить историю.");
     } finally {
       setIsClearing(false);
     }
@@ -135,24 +141,50 @@ export const useSettings = () => {
     try {
       await apiClient.downloadDocument(docId, filename);
     } catch (err) {
-      alert("Не удалось скачать файл");
+      tgAlert("Не удалось скачать файл");
     } finally {
       setDownloadingDocId(null);
     }
   };
 
+  // --- ОБНОВЛЕННАЯ ЛОГИКА СМЕНЫ ТЕМЫ ---
   const toggleTheme = async () => {
     if (!internalUserId) return;
     const newTheme = theme === "dark" ? "light" : "dark";
+
+    // 1. Оптимистичное обновление UI (меняем моментально)
     setTheme(newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+
+    // 2. Меняем цвета системных рамок Telegram (header/background)
+    const tg = getTg();
+    if (tg) {
+      const bgColor = newTheme === "dark" ? "#1c1c1d" : "#ffffff";
+      const secBgColor = newTheme === "dark" ? "#000000" : "#f2f2f7";
+
+      if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
+      if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
+    }
+
     try {
+      // 3. Сохраняем на бэке и локально
       await apiClient.updateSettings(internalUserId, { theme: newTheme });
       localStorage.setItem(
         "user",
         JSON.stringify({ ...user, theme: newTheme }),
       );
     } catch (error) {
+      console.error("Ошибка при смене темы:", error);
+      // 4. Откатываем назад, если запрос упал
       setTheme(theme);
+      document.documentElement.setAttribute("data-theme", theme);
+
+      if (tg) {
+        const oldBgColor = theme === "dark" ? "#1c1c1d" : "#ffffff";
+        const oldSecBgColor = theme === "dark" ? "#000000" : "#f2f2f7";
+        if (tg.setBackgroundColor) tg.setBackgroundColor(oldBgColor);
+        if (tg.setHeaderColor) tg.setHeaderColor(oldSecBgColor);
+      }
     }
   };
 
@@ -221,9 +253,12 @@ export const useSettings = () => {
     ? filteredDocuments
     : filteredDocuments.slice(0, 5);
 
+  const photoUrl = user?.photo_url || null;
+
   return {
     firstName,
     username,
+    photoUrl,
     activeTab,
     setActiveTab,
     chats,

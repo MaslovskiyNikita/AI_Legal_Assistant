@@ -31,7 +31,7 @@ const TokenCircleMenu = ({ percent }: { percent: number }) => {
       {/* Само кольцо */}
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className="group relative flex items-center justify-center w-10 h-10 bg-white rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-[#F2F2F7] cursor-pointer active:scale-95 transition-all"
+        className="group relative flex items-center justify-center w-10 h-10 bg-[var(--tg-theme-bg-color)] rounded-full shadow-[0_2px_10px_rgba(0,0,0,0.06)] border border-[#F2F2F7] cursor-pointer active:scale-95 transition-all"
       >
         <svg width="36" height="36" className="transform -rotate-90">
           <circle
@@ -55,31 +55,32 @@ const TokenCircleMenu = ({ percent }: { percent: number }) => {
             className="transition-all duration-1000 ease-out"
           />
         </svg>
-        <span className="absolute text-[10px] font-bold text-black tracking-tighter">
+        <span className="absolute text-[10px] font-bold text-[var(--tg-theme-text-color)] tracking-tighter">
           {percent}%
         </span>
       </div>
 
       {/* Выпадающее меню (Pop-over) */}
       {isOpen && (
-        <div className="absolute top-12 right-0 w-56 bg-white/90 backdrop-blur-xl border border-[#E5E5EA] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-          <div className="p-4 border-b border-[#E5E5EA]">
+        <div className="absolute top-12 right-0 w-56 bg-[var(--tg-theme-bg-color)]/90 backdrop-blur-xl border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+          <div className="p-4 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
             <div className="flex items-center gap-2 mb-1">
               <Zap size={16} className="text-[#FFCC00] fill-current" />
-              <span className="text-[14px] font-semibold text-black">
+              <span className="text-[14px] font-semibold text-[var(--tg-theme-text-color)]">
                 Баланс токенов
               </span>
             </div>
-            <p className="text-[12px] text-[#8E8E93] leading-snug">
+            <p className="text-[12px] text-[var(--tg-theme-hint-color)] leading-snug">
               Осталось {percent}% на сегодня. Токены обновятся завтра.
             </p>
           </div>
           <button
+            type="button"
             onClick={() => {
               setIsOpen(false);
               alert("Тут будет оплата через Telegram Stars ⭐️");
             }}
-            className="w-full flex items-center justify-between p-4 text-[14px] font-medium text-[#3390EC] active:bg-[#F2F2F7] transition-colors"
+            className="w-full flex items-center justify-between p-4 text-[14px] font-medium text-[var(--tg-theme-button-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors"
           >
             Пополнить баланс
             <ChevronRight size={16} />
@@ -92,12 +93,14 @@ const TokenCircleMenu = ({ percent }: { percent: number }) => {
 
 interface ProfileHeaderProps {
   firstName: string;
+  photoUrl?: string | null;
   greeting: string;
   onSettingsClick: () => void;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   firstName,
+  photoUrl,
   greeting,
   onSettingsClick,
 }) => (
@@ -106,14 +109,24 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
       className="flex items-center gap-3 cursor-pointer"
       onClick={onSettingsClick}
     >
-      <div className="w-10 h-10 rounded-full bg-[#3390EC] flex items-center justify-center text-white font-medium text-lg shadow-sm">
-        {firstName.charAt(0).toUpperCase()}
-      </div>
+      {photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={firstName}
+          className="w-10 h-10 rounded-full object-cover shadow-sm"
+        />
+      ) : (
+        <div className="w-10 h-10 rounded-full bg-[var(--tg-theme-button-color)] flex items-center justify-center text-white font-medium text-lg shadow-sm">
+          {firstName.charAt(0).toUpperCase()}
+        </div>
+      )}
       <div className="flex flex-col">
-        <span className="text-[16px] font-semibold leading-tight text-black">
+        <span className="text-[16px] font-semibold leading-tight text-[var(--tg-theme-text-color)]">
           {firstName}
         </span>
-        <span className="text-[13px] text-[#8E8E93]">{greeting}</span>
+        <span className="text-[13px] text-[var(--tg-theme-hint-color)]">
+          {greeting}
+        </span>
       </div>
     </div>
     {/* Передай сюда реальный процент (например, 15, чтобы увидеть красное кольцо) */}
