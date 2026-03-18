@@ -1,6 +1,7 @@
 import logging
 import sys
 from app.utils.logging import InterceptHandler
+from backend.app.api.v1 import export
 from loguru import logger
 
 SILENT_LOGGERS = [
@@ -45,6 +46,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(chats.router)
 app.include_router(documents.router)
+app.include_router(export.router)
 
 @app.get("/api/v1/ping")
 async def ping():
