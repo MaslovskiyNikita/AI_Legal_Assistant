@@ -46,23 +46,62 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
 
   const rawText = msg.text || msg.content || "";
+  const aiData = msg.ai_data || null; // Читаем новое поле от бэкенда
   const showFooter = isUser || msg.isComplete;
 
   let parsedData: any = null;
   let isComplexAnalysis = false;
 
-  if (!isUser && rawText.trim().startsWith("{")) {
+  // 👇 НОВАЯ ЛОГИКА ПАРСИНГА AI DATA
+  if (
+    !isUser &&
+    aiData &&
+    aiData.diff_blocks &&
+    aiData.diff_blocks.length > 0
+  ) {
+    isComplexAnalysis = true;
+
+    // Бэкенд склеивает risk и summary прямо в текст ответа: "**Уровень риска: RED**\n\nТекст..."
+    // Вытаскиваем их оттуда регулярками, чтобы нарисовать нашу красивую карточку
+    let extractedRisk = "GREEN";
+    const riskMatch = rawText.match(
+      /\*\*Уровень риска:\s*(RED|YELLOW|GREEN|UNKNOWN)\*\*/i,
+    );
+    if (riskMatch) {
+      extractedRisk = riskMatch[1].toUpperCase();
+    }
+
+    const extractedSummary = rawText
+      .replace(/\*\*Уровень риска:.*?\*\*\s*/i, "")
+      .trim();
+
+    parsedData = {
+      diff_blocks: aiData.diff_blocks,
+      analysis: aiData.analysis || {
+        overall_risk: extractedRisk,
+        summary: extractedSummary,
+        details: [],
+      },
+    };
+  }
+  // Фолбэк для старых чатов в БД (где JSON лежал строкой в поле text)
+  else if (!isUser && rawText.trim().startsWith("{")) {
     try {
-      parsedData = JSON.parse(rawText);
-      if (parsedData.analysis || parsedData.diff_blocks) {
+      const fallbackData = JSON.parse(rawText);
+      if (fallbackData.analysis || fallbackData.diff_blocks) {
         isComplexAnalysis = true;
+        parsedData = fallbackData;
       }
     } catch (e) {}
   }
 
   const isStillStreamingJson =
     !isUser && !msg.isComplete && rawText.trim() === "{";
-  const isTypingText = !isUser && !msg.isComplete && rawText.trim() === "...";
+  const isTypingText =
+    !isUser &&
+    !msg.isComplete &&
+    (rawText.trim() === "..." || rawText.trim() === "{");
+
   const fileMatch = rawText.match(
     /Прикреплены документы для сравнения:\s*1\.\s*(.*?)\s*2\.\s*([^\n]+)/,
   );
@@ -193,7 +232,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         {parsedData.analysis?.overall_risk &&
                           renderRiskBadge(parsedData.analysis.overall_risk)}
                       </div>
-                      <p className="text-[14px] font-medium text-[var(--tg-theme-text-color)] leading-snug">
+                      <p className="text-[14px] font-medium text-[var(--tg-theme-text-color)] leading-snug whitespace-pre-wrap">
                         {cleanSummaryText(parsedData.analysis?.summary) ||
                           "Сравнение завершено. Найдены изменения."}
                       </p>
@@ -238,7 +277,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         </button>
                       </div>
 
-                      {/* 👇 ТУТ ИЗМЕНЕН ЦВЕТ НА ЦВЕТ ТЕМЫ ТЕЛЕГРАМА 👇 */}
                       <button
                         onClick={handleExportClick}
                         className="w-full mt-2 py-3.5 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] rounded-2xl flex flex-col items-center justify-center active:scale-[0.98] transition-all shadow-sm"

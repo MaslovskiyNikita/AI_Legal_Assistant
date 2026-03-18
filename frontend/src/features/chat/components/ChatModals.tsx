@@ -1,5 +1,5 @@
 // src/features/chat/components/ChatModals.tsx
-import React from "react";
+import React, { useState } from "react";
 import { Drawer } from "vaul";
 import {
   X,
@@ -38,6 +38,76 @@ interface ChatModalsProps {
   setIsFileLimitModalOpen: (val: boolean) => void;
 }
 
+// === НОВЫЙ КОМПОНЕНТ ДЛЯ DRAG & DROP ===
+const DropzoneArea = ({
+  id,
+  onFileSelect,
+}: {
+  id: string;
+  onFileSelect: (file: File | null) => void;
+}) => {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      onFileSelect(e.dataTransfer.files[0]);
+      e.dataTransfer.clearData();
+    }
+  };
+
+  return (
+    <label
+      htmlFor={id}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+      className={`flex flex-col items-center justify-center w-full h-28 border-2 border-dashed rounded-xl transition-all duration-200 cursor-pointer ${
+        isDragging
+          ? "border-[var(--tg-theme-button-color)] bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] scale-[1.02]"
+          : "border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] bg-[var(--tg-theme-secondary-bg-color)] hover:opacity-80"
+      }`}
+    >
+      <UploadCloud
+        size={28}
+        className={`mb-2 transition-colors ${
+          isDragging
+            ? "text-[var(--tg-theme-button-color)]"
+            : "text-[var(--tg-theme-button-color)]"
+        }`}
+      />
+      <p className="text-[15px] text-[var(--tg-theme-text-color)] font-medium pointer-events-none">
+        {isDragging ? "Отпустите файл здесь" : "Выбрать или перетащить файл"}
+      </p>
+      <p className="text-[12px] text-[var(--tg-theme-hint-color)] mt-0.5 pointer-events-none">
+        PDF, DOCX до 10 МБ
+      </p>
+      <input
+        id={id}
+        type="file"
+        className="hidden"
+        onChange={(e) => onFileSelect(e.target.files?.[0] || null)}
+        accept=".pdf,.doc,.docx"
+      />
+    </label>
+  );
+};
+
 export const ChatModals: React.FC<ChatModalsProps> = (props) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
@@ -63,6 +133,8 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       showToast("Неверный формат. Загрузите PDF или DOCX.", "error");
       return;
     }
+
+    tgHaptic("light"); // Даем виброотклик при успешном выборе/дропе
     setFile(file);
   };
 
@@ -265,33 +337,12 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   Старая редакция
                 </label>
                 {!props.oldFile ? (
-                  <label
-                    htmlFor="old-file"
-                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl bg-[var(--tg-theme-secondary-bg-color)] hover:opacity-80 transition-opacity cursor-pointer"
-                  >
-                    <UploadCloud
-                      size={28}
-                      className="text-[var(--tg-theme-button-color)] mb-2"
-                    />
-                    <p className="text-[15px] text-[var(--tg-theme-text-color)] font-medium">
-                      Выбрать файл
-                    </p>
-                    <p className="text-[12px] text-[var(--tg-theme-hint-color)] mt-0.5">
-                      PDF, DOCX до 10 МБ
-                    </p>
-                    <input
-                      id="old-file"
-                      type="file"
-                      className="hidden"
-                      onChange={(e) =>
-                        handleFileSelect(
-                          e.target.files?.[0] || null,
-                          props.setOldFile,
-                        )
-                      }
-                      accept=".pdf,.doc,.docx"
-                    />
-                  </label>
+                  <DropzoneArea
+                    id="old-file"
+                    onFileSelect={(file) =>
+                      handleFileSelect(file, props.setOldFile)
+                    }
+                  />
                 ) : (
                   <div className="flex items-center justify-between p-3 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--tg-theme-button-color)_30%,transparent)]">
                     <div className="flex items-center gap-3 overflow-hidden">
@@ -310,7 +361,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                         tgHaptic("light");
                         props.setOldFile(null);
                       }}
-                      className="w-8 h-8 flex items-center justify-center text-[var(--tg-theme-hint-color)] bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm"
+                      className="w-8 h-8 flex items-center justify-center text-[var(--tg-theme-hint-color)] bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm active:scale-95 transition-transform cursor-pointer"
                     >
                       <X size={16} />
                     </button>
@@ -324,33 +375,12 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   Новая редакция
                 </label>
                 {!props.newFile ? (
-                  <label
-                    htmlFor="new-file"
-                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl bg-[var(--tg-theme-secondary-bg-color)] hover:opacity-80 transition-opacity cursor-pointer"
-                  >
-                    <UploadCloud
-                      size={28}
-                      className="text-[var(--tg-theme-button-color)] mb-2"
-                    />
-                    <p className="text-[15px] text-[var(--tg-theme-text-color)] font-medium">
-                      Выбрать файл
-                    </p>
-                    <p className="text-[12px] text-[var(--tg-theme-hint-color)] mt-0.5">
-                      PDF, DOCX до 10 МБ
-                    </p>
-                    <input
-                      id="new-file"
-                      type="file"
-                      className="hidden"
-                      onChange={(e) =>
-                        handleFileSelect(
-                          e.target.files?.[0] || null,
-                          props.setNewFile,
-                        )
-                      }
-                      accept=".pdf,.doc,.docx"
-                    />
-                  </label>
+                  <DropzoneArea
+                    id="new-file"
+                    onFileSelect={(file) =>
+                      handleFileSelect(file, props.setNewFile)
+                    }
+                  />
                 ) : (
                   <div className="flex items-center justify-between p-3 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--tg-theme-button-color)_30%,transparent)]">
                     <div className="flex items-center gap-3 overflow-hidden">
@@ -369,7 +399,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                         tgHaptic("light");
                         props.setNewFile(null);
                       }}
-                      className="w-8 h-8 flex items-center justify-center text-[var(--tg-theme-hint-color)] bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm"
+                      className="w-8 h-8 flex items-center justify-center text-[var(--tg-theme-hint-color)] bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm active:scale-95 transition-transform cursor-pointer"
                     >
                       <X size={16} />
                     </button>
@@ -383,7 +413,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   props.setIsCompareModalOpen(false);
                 }}
                 disabled={!props.oldFile || !props.newFile}
-                className="w-full bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] font-semibold text-[17px] py-4 rounded-xl mt-4 disabled:opacity-50 active:scale-[0.98] transition-all"
+                className="w-full bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] font-semibold text-[17px] py-4 rounded-xl mt-4 disabled:opacity-50 active:scale-[0.98] transition-all cursor-pointer"
               >
                 Готово
               </button>
@@ -427,7 +457,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   props.setIsFileLimitModalOpen(false);
                   navigate("/chat/new", { state: { openCompareModal: true } });
                 }}
-                className="w-full py-4 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] rounded-xl text-[17px] font-semibold active:scale-[0.98] transition-all"
+                className="w-full py-4 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] rounded-xl text-[17px] font-semibold active:scale-[0.98] transition-all cursor-pointer"
               >
                 Создать новый чат
               </button>

@@ -81,11 +81,20 @@ function AuthRouter() {
 export default function App() {
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
+    const userStr = localStorage.getItem("user");
+    const userTheme = userStr ? JSON.parse(userStr).theme : null;
+    if (userTheme) {
+      document.documentElement.setAttribute("data-theme", userTheme);
+    } else if (tg?.colorScheme) {
+      document.documentElement.setAttribute("data-theme", tg.colorScheme);
+    }
+
     if (tg) {
       tg.ready();
       tg.expand();
       if (tg.disableVerticalSwipes) tg.disableVerticalSwipes();
-      if (tg.setHeaderColor) tg.setHeaderColor("secondary_bg_color");
+      const currentTheme = document.documentElement.getAttribute("data-theme");
+      tg.setHeaderColor(currentTheme === "dark" ? "#000000" : "#f2f2f7");
     }
   }, []);
 

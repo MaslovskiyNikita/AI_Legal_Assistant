@@ -23,6 +23,7 @@ export const useSettings = () => {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
+  // Инициализируем тему из локалстораджа, дефолт - темная
   const [theme, setTheme] = useState(user?.theme || "dark");
   const [notifications, setNotifications] = useState(
     user?.notifications_enabled ?? true,
@@ -91,7 +92,6 @@ export const useSettings = () => {
     }
   }, [internalUserId]);
 
-  // Внутри useSettings добавь эту функцию:
   const handleDeleteChat = async (chatId: number) => {
     try {
       await apiClient.deleteChat(chatId);
@@ -147,18 +147,44 @@ export const useSettings = () => {
     }
   };
 
+  // --- ОБНОВЛЕННАЯ ЛОГИКА СМЕНЫ ТЕМЫ ---
   const toggleTheme = async () => {
     if (!internalUserId) return;
     const newTheme = theme === "dark" ? "light" : "dark";
+
+    // 1. Оптимистичное обновление UI (меняем моментально)
     setTheme(newTheme);
+    document.documentElement.setAttribute("data-theme", newTheme);
+
+    // 2. Меняем цвета системных рамок Telegram (header/background)
+    const tg = getTg();
+    if (tg) {
+      const bgColor = newTheme === "dark" ? "#1c1c1d" : "#ffffff";
+      const secBgColor = newTheme === "dark" ? "#000000" : "#f2f2f7";
+
+      if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
+      if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
+    }
+
     try {
+      // 3. Сохраняем на бэке и локально
       await apiClient.updateSettings(internalUserId, { theme: newTheme });
       localStorage.setItem(
         "user",
         JSON.stringify({ ...user, theme: newTheme }),
       );
     } catch (error) {
+      console.error("Ошибка при смене темы:", error);
+      // 4. Откатываем назад, если запрос упал
       setTheme(theme);
+      document.documentElement.setAttribute("data-theme", theme);
+
+      if (tg) {
+        const oldBgColor = theme === "dark" ? "#1c1c1d" : "#ffffff";
+        const oldSecBgColor = theme === "dark" ? "#000000" : "#f2f2f7";
+        if (tg.setBackgroundColor) tg.setBackgroundColor(oldBgColor);
+        if (tg.setHeaderColor) tg.setHeaderColor(oldSecBgColor);
+      }
     }
   };
 

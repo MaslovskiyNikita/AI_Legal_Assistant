@@ -112,7 +112,6 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   };
 
-  // 👇 НОВАЯ ЛОГИКА ЭКСПОРТА (Работает через бэкенд)
   const handleExport = async (format: "docx" | "pdf") => {
     if (!currentChatId || currentChatId === "new") {
       tgAlert("Для экспорта необходимо сначала начать диалог.");
@@ -124,7 +123,6 @@ export const useChat = (initialChatId: string | undefined) => {
       const dateStr = new Date().toISOString().split("T")[0];
       const filename = `Отчет_Legal_Expert_${dateStr}.${format}`;
 
-      // Запрашиваем файл у бэкенда
       await apiClient.exportChat(Number(currentChatId), format, filename);
 
       tgHapticNotification("success");
@@ -247,11 +245,12 @@ export const useChat = (initialChatId: string | undefined) => {
       });
 
       let finalAiText = responseData.text || "";
-      if (responseData.diff_blocks && responseData.diff_blocks.length > 0) {
-        finalAiText = JSON.stringify({
-          analysis: { summary: responseData.text },
-          diff_blocks: responseData.diff_blocks,
-        });
+      const newAiData =
+        responseData.diff_blocks && responseData.diff_blocks.length > 0
+          ? { diff_blocks: responseData.diff_blocks }
+          : null;
+
+      if (newAiData) {
         tgHapticNotification("warning");
       } else {
         tgHapticNotification("success");
@@ -260,7 +259,12 @@ export const useChat = (initialChatId: string | undefined) => {
       chatMessages.setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMsgId
-            ? { ...msg, text: finalAiText, isComplete: true }
+            ? {
+                ...msg,
+                text: finalAiText,
+                ai_data: newAiData,
+                isComplete: true,
+              }
             : msg,
         ),
       );
