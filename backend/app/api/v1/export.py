@@ -34,13 +34,14 @@ async def export_chat_to_docx(chat_id: int, db: AsyncSession = Depends(get_db)):
 
 @router.get("/{chat_id}/export/pdf")
 async def export_chat_to_pdf(chat_id: int, db: AsyncSession = Depends(get_db)):
-    logger.info(f"📄 Экспорт чата ID={chat_id} в PDF")
-    
     chat = await chat_service.get_chat_with_messages(db, chat_id)
-    if not chat:
-        raise HTTPException(status_code=404, detail="Чат не найден")
+    if not chat: raise HTTPException(status_code=404, detail="Чат не найден")
         
-    file_stream = await export_service.generate_pdf_stream(chat.messages)
+    messages_data = [
+        {"role": m.role, "text": getattr(m, 'text', getattr(m, 'content', '')), "created_at": m.created_at}
+        for m in chat.messages
+    ]
+    file_stream = await export_service.generate_pdf_stream(messages_data)
     
     return StreamingResponse(
         file_stream, 
