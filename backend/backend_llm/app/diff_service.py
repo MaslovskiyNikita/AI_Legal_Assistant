@@ -129,29 +129,47 @@ class DiffService:
         if not old_text: return f"<ins>{new_text}</ins>"
         if not new_text: return f"<del>{old_text}</del>"
 
-        # Регулярка, которая разбивает текст на слова, пробелы и знаки препинания
-        # Это позволяет сравнивать ТОКЕНЫ, а не буквы
+        # Токенизация: разбиваем на слова, пробелы и знаки препинания
+        # Это предотвращает разрыв слов на буквы
         tokenizer = re.compile(r'(\s+|[^\w\s]|\w+)', re.UNICODE)
-
         old_tokens = tokenizer.findall(old_text)
         new_tokens = tokenizer.findall(new_text)
 
-        result = []
         matcher = difflib.SequenceMatcher(None, old_tokens, new_tokens)
+        result = []
+
+        # Буферы для группировки идущих подряд изменений
+        pending_del = []
+        pending_ins = []
+
+        def flush_buffers():
+            """Сбрасывает накопленные изменения в результат: сначала всё удаленное, потом всё добавленное"""
+            if pending_del:
+                result.append(f"<del>{''.join(pending_del)}</del>")
+                pending_del.clear()
+            if pending_ins:
+                result.append(f"<ins>{''.join(pending_ins)}</ins>")
+                pending_ins.clear()
 
         for tag, i1, i2, j1, j2 in matcher.get_opcodes():
-            old_part = "".join(old_tokens[i1:i2])
-            new_part = "".join(new_tokens[j1:j2])
-
             if tag == 'equal':
-                result.append(old_part)
-            elif tag == 'delete':
-                result.append(f"<del>{old_part}</del>")
-            elif tag == 'insert':
-                result.append(f"<ins>{new_part}</ins>")
-            elif tag == 'replace':
-                # Вместо того чтобы мешать буквы внутри слов,
-                # мы просто зачеркиваем старое слово/фразу и вставляем новое
-                result.append(f"<del>{old_part}</del><ins>{new_part}</ins>")
+                # Если встретили одинаковый текст — сначала выводим все накопленные правки
+                flush_buffers()
+                result.append("".join(old_tokens[i1:i2]))
 
-        return "".join(result)
+            elif tag == 'delete':
+                pending_del.append("".join(old_tokens[i1:i2]))
+
+            elif tag == 'insert':
+                pending_ins.append("".join(tokens_new_part := new_tokens[j1:j2]))
+
+            elif tag == 'replace':
+                pending_del.append("".join(old_tokens[i1:i2]))
+                pending_ins.append("".join(new_tokens[j1:j2]))
+
+        # Не забываем сбросить остатки после цикла
+        flush_buffers()
+
+        # Финальная чистка: убираем пустые теги, если они возникли
+        final_html = "".join(result).replace("<del></del>", "").replace("<ins></ins>", "")
+        return final_html
