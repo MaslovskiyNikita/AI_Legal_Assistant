@@ -12,15 +12,19 @@ export default defineConfig({
   },
   server: {
     allowedHosts: ["legal-assistant.kawun.su"],
-    // 👇 ДОБАВЬ ЭТОТ БЛОК 👇
     hmr: {
-      // Это запретит Vite перезагружать страницу при ошибках HMR-сокета
       overlay: false,
     },
-    // Отключаем наблюдение за файлами, если они не меняются,
-    // чтобы снизить нагрузку на туннель
     watch: {
       usePolling: false,
+      // 👇 МАГИЯ ЗДЕСЬ: Запрещаем Vite перезагружать страницу, когда бэкенд сохраняет файлы!
+      ignored: [
+        "**/backend/**",
+        "**/uploads/**",
+        "**/*.pdf",
+        "**/*.docx",
+        "**/*.doc",
+      ],
     },
   },
   assetsInclude: ["**/*.svg", "**/*.csv"],

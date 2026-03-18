@@ -19,9 +19,9 @@ export const useChat = (initialChatId: string | undefined) => {
   const [inputText, setInputText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
 
-  // 👇 ЖЕСТКИЕ БЛОКИРОВКИ (Мутексы)
-  const isSendingRef = useRef(false); // Защита от двойного клика
-  const localSessionLock = useRef(false); // Защита от фоновой загрузки истории
+  // Мутексы для защиты от гонки состояний
+  const isSendingRef = useRef(false);
+  const localSessionLock = useRef(false);
   const hasFetchedHistory = useRef(false);
   const hasHandledInitialPrompt = useRef(false);
 
@@ -33,7 +33,7 @@ export const useChat = (initialChatId: string | undefined) => {
     files.hasAttachedFiles,
   );
 
-  // Синхронизация ID с URL (когда роутер нас реально перенаправляет)
+  // Синхронизация ID с URL
   useEffect(() => {
     if (initialChatId !== currentChatId) {
       setCurrentChatId(initialChatId);
@@ -54,7 +54,7 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   }, [navigate]);
 
-  // 1. ОЧИСТКА СОСТОЯНИЯ (Только когда реально заходим в /chat/new)
+  // 1. ОЧИСТКА СОСТОЯНИЯ (Только когда заходим в /chat/new)
   useEffect(() => {
     if (initialChatId === "new") {
       chatMessages.setMessages([]);
@@ -66,13 +66,13 @@ export const useChat = (initialChatId: string | undefined) => {
       localSessionLock.current = false;
       hasFetchedHistory.current = false;
     }
-  }, [initialChatId]); // <-- Строго следим за initialChatId от роутера
+  }, [initialChatId]);
 
   // 2. ЗАГРУЗКА ИСТОРИИ (СТРОГО ОДИН РАЗ И ТОЛЬКО ДЛЯ СТАРЫХ ЧАТОВ)
   useEffect(() => {
     if (!currentChatId || currentChatId === "new") return;
     if (hasFetchedHistory.current) return;
-    if (localSessionLock.current) return; // Если чат создан только что - не тянем с сервера!
+    if (localSessionLock.current) return; // Блокируем запрос, если чат создан только что
 
     hasFetchedHistory.current = true;
 
@@ -141,26 +141,24 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   };
 
-  // 4. ГЛАВНАЯ БИЗНЕС-ЛОГИКА (ОТПРАВКА С ЗАЩИТОЙ ОТ ДУБЛЕЙ)
+  // 4. ГЛАВНАЯ БИЗНЕС-ЛОГИКА
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
-    // ЗАЩИТА: Если уже отправляем - игнорируем клик
     if (isSendingRef.current || isTyping) return;
 
     const textToSend =
       typeof textOverride === "string" ? textOverride : inputText;
 
-    // Фиксируем текущие файлы, чтобы они не потерялись при рендере
+    // Фиксируем файлы до рендера
     const currentOldFile = files.oldFile;
     const currentNewFile = files.newFile;
     const hasFiles = Boolean(currentOldFile && currentNewFile);
 
     if (!textToSend.trim() && !hasFiles) return;
 
-    // Включаем блокировку
     isSendingRef.current = true;
     setIsTyping(true);
 
-    // 👇 ОЧИЩАЕМ UI МОМЕНТАЛЬНО, чтобы не было дублей на экране
+    // Моментальная очистка инпута UI
     setInputText("");
     if (hasFiles) {
       files.setOldFile(null);
@@ -175,8 +173,7 @@ export const useChat = (initialChatId: string | undefined) => {
       if (activeChatId === "new" || !activeChatId) {
         if (!internalUserId) throw new Error("User ID not found");
 
-        // ЗАЩИТА: Запрещаем хуку скачивать историю, так как мы сами всё построим
-        localSessionLock.current = true;
+        localSessionLock.current = true; // БЛОКИРУЕМ ФОНОВЫЕ ЗАПРОСЫ
 
         const chatTitle = hasFiles
           ? `Сравнение: ${currentOldFile!.name.substring(0, 10)}...`
@@ -189,11 +186,11 @@ export const useChat = (initialChatId: string | undefined) => {
         activeChatId = newChat.id.toString();
 
         setCurrentChatId(activeChatId);
-        // Сообщаем React Router'у, что URL изменился (без моргания благодаря настройкам App.tsx)
-        navigate(`/chat/${activeChatId}`, { replace: true });
+        // Безопасный переход
+        navigate(`/chat/${activeChatId}`, { replace: true, state: {} });
       }
 
-      // СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЯ
+      // СООБЩЕНИЕ ПОЛЬЗОВАТЕЛЯ В UI
       const userMsgId = `msg_${Date.now()}_user`;
       let userTextForUI = finalPrompt;
 
@@ -212,7 +209,7 @@ export const useChat = (initialChatId: string | undefined) => {
         },
       ]);
 
-      // ЛОАДЕР ИИ
+      // ЛОАДЕР ИИ В UI
       const assistantMsgId = `msg_${Date.now()}_ai`;
       const loadingTextPlaceholder = hasFiles ? "{" : "...";
 
@@ -227,7 +224,7 @@ export const useChat = (initialChatId: string | undefined) => {
         },
       ]);
 
-      // ЗАГРУЗКА ФАЙЛОВ НА СЕРВЕР
+      // ЗАГРУЗКА ФАЙЛОВ НА БЭКЕНД
       if (hasFiles && internalUserId) {
         const uploadResponse = await apiClient.compareDocuments(
           Number(activeChatId),
@@ -269,7 +266,7 @@ export const useChat = (initialChatId: string | undefined) => {
         tgHapticNotification("success");
       }
 
-      // ЗАМЕНЯЕМ ЛОАДЕР НА ТЕКСТ
+      // ОБНОВЛЯЕМ ЛОАДЕР НА РЕАЛЬНЫЙ ТЕКСТ
       chatMessages.setMessages((prev) =>
         prev.map((msg) =>
           msg.id === assistantMsgId
@@ -290,7 +287,6 @@ export const useChat = (initialChatId: string | undefined) => {
         },
       ]);
     } finally {
-      // Снимаем блокировки
       isSendingRef.current = false;
       setIsTyping(false);
     }
