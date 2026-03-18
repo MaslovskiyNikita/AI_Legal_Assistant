@@ -36,16 +36,23 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
       {/* КРУТОЙ ЭФФЕКТ ЛАЗЕРНОГО СКАНЕРА */}
       {isScanning && (
         <div className="absolute -inset-2 z-40 pointer-events-none overflow-hidden rounded-[24px]">
+          {/* Полупрозрачный оверлей для акцента на сканере */}
           <motion.div
-            initial={{ y: "-10%" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 bg-[var(--tg-theme-button-color)]/5 backdrop-blur-[1px] z-30 rounded-[24px]"
+          />
+          {/* Сама линия сканера с мощным свечением */}
+          <motion.div
+            initial={{ y: "-20%" }}
             animate={{ y: "250%" }}
             transition={{
               repeat: Infinity,
-              duration: 1.2,
-              ease: "linear",
+              duration: 1.4,
+              ease: "easeInOut", // Плавное замедление на краях
               repeatType: "reverse",
             }}
-            className="absolute left-0 right-0 h-[2px] bg-[#34C759] shadow-[0_0_15px_5px_rgba(52,199,89,0.5)] z-40"
+            className="absolute left-0 right-0 h-[2px] bg-[#34C759] shadow-[0_0_20px_6px_rgba(52,199,89,0.7)] z-40"
           />
         </div>
       )}
@@ -62,7 +69,7 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
             transition: { type: "spring", stiffness: 300, damping: 20 },
           },
         }}
-        className="absolute inset-0 bg-[var(--tg-theme-button-color)] brightness-90 rounded-[20px] p-2.5 pr-5 flex items-center shadow-md border border-[var(--tg-theme-bg-color)]/20 origin-bottom-right z-0"
+        className="absolute inset-0 bg-[var(--tg-theme-button-color)] brightness-90 rounded-[20px] p-2.5 pr-5 flex items-center shadow-md border border-white/20 origin-bottom-right z-0"
       >
         <FileIcon filename={file1} />
         <div className="ml-3 flex flex-col flex-1 min-w-0">
@@ -86,7 +93,7 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
             transition: { type: "spring", stiffness: 300, damping: 24 },
           },
         }}
-        className="relative min-w-[200px] max-w-[280px] bg-[var(--tg-theme-button-color)] rounded-[20px] p-2.5 pr-5 flex items-center shadow-xl border border-[var(--tg-theme-bg-color)]/20 z-10"
+        className="relative min-w-[200px] max-w-[280px] bg-[var(--tg-theme-button-color)] rounded-[20px] p-2.5 pr-5 flex items-center shadow-xl border border-white/20 z-10"
       >
         <FileIcon filename={file2} />
         <div className="ml-3 flex flex-col flex-1 min-w-0">

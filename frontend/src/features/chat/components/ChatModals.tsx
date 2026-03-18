@@ -78,8 +78,11 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] mt-4 mb-2" />
+          <Drawer.Content
+            className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none"
+            style={{ paddingBottom: "var(--safe-bottom)" }}
+          >
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-hint-color)] opacity-20 mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-[#FFEBEA] rounded-full flex items-center justify-center mb-4">
@@ -123,14 +126,14 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none max-h-[80vh]">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] mt-4 mb-2" />
+          <Drawer.Content
+            className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none max-h-[80vh]"
+            style={{ paddingBottom: "var(--safe-bottom)" }}
+          >
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-hint-color)] opacity-20 mt-4 mb-2" />
             <div className="px-5 pb-3 flex items-center gap-3 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
               <div className="w-10 h-10 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] rounded-full flex items-center justify-center">
-                <FileText
-                  size={20}
-                  className="text-[var(--tg-theme-button-color)]"
-                />
+                <FileText size={20} />
               </div>
               <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)]">
                 Документы чата
@@ -186,15 +189,15 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] mt-4 mb-2" />
+          <Drawer.Content
+            className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none"
+            style={{ paddingBottom: "var(--safe-bottom)" }}
+          >
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-hint-color)] opacity-20 mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] rounded-full flex items-center justify-center mb-4">
-                  <Share2
-                    size={28}
-                    className="text-[var(--tg-theme-button-color)]"
-                  />
+                  <Share2 size={28} />
                 </div>
                 <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)] mb-2">
                   Экспорт чата
@@ -211,7 +214,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     props.handleExport("docx");
                   }}
                   disabled={props.isExporting}
-                  className="w-full py-4 bg-[var(--tg-theme-button-color)] text-white rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all"
+                  className="w-full py-4 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all"
                 >
                   {props.isExporting ? "Экспорт..." : "Скачать в формате .DOCX"}
                 </button>
@@ -241,8 +244,11 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-[var(--tg-theme-secondary-bg-color)] flex flex-col rounded-t-[24px] mt-10 fixed bottom-0 left-0 right-0 z-[60] outline-none">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#D1D1D6] mt-4 mb-2" />
+          <Drawer.Content
+            className="bg-[var(--tg-theme-secondary-bg-color)] flex flex-col rounded-t-[24px] mt-10 fixed bottom-0 left-0 right-0 z-[60] outline-none"
+            style={{ paddingBottom: "var(--safe-bottom)" }}
+          >
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-hint-color)] opacity-20 mt-4 mb-2" />
             <div className="px-5 pb-3 pt-2 text-center">
               <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)]">
                 Сравнение документов
@@ -261,7 +267,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                 {!props.oldFile ? (
                   <label
                     htmlFor="old-file"
-                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl bg-[#F9FAFB] hover:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer"
+                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl bg-[var(--tg-theme-secondary-bg-color)] hover:opacity-80 transition-opacity cursor-pointer"
                   >
                     <UploadCloud
                       size={28}
@@ -287,7 +293,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     />
                   </label>
                 ) : (
-                  <div className="flex items-center justify-between p-3 bg-[#E5F1FF] rounded-xl border border-[#3390EC]/30">
+                  <div className="flex items-center justify-between p-3 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--tg-theme-button-color)_30%,transparent)]">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <FileIcon filename={props.oldFile.name} />
                       <div className="flex flex-col overflow-hidden">
@@ -320,7 +326,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                 {!props.newFile ? (
                   <label
                     htmlFor="new-file"
-                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl bg-[#F9FAFB] hover:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer"
+                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl bg-[var(--tg-theme-secondary-bg-color)] hover:opacity-80 transition-opacity cursor-pointer"
                   >
                     <UploadCloud
                       size={28}
@@ -346,7 +352,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     />
                   </label>
                 ) : (
-                  <div className="flex items-center justify-between p-3 bg-[#E5F1FF] rounded-xl border border-[#3390EC]/30">
+                  <div className="flex items-center justify-between p-3 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--tg-theme-button-color)_30%,transparent)]">
                     <div className="flex items-center gap-3 overflow-hidden">
                       <FileIcon filename={props.newFile.name} />
                       <div className="flex flex-col overflow-hidden">
@@ -377,7 +383,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   props.setIsCompareModalOpen(false);
                 }}
                 disabled={!props.oldFile || !props.newFile}
-                className="w-full bg-[var(--tg-theme-button-color)] text-white font-semibold text-[17px] py-4 rounded-xl mt-4 disabled:opacity-50 active:scale-[0.98] transition-all"
+                className="w-full bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] font-semibold text-[17px] py-4 rounded-xl mt-4 disabled:opacity-50 active:scale-[0.98] transition-all"
               >
                 Готово
               </button>
@@ -396,8 +402,11 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] mt-4 mb-2" />
+          <Drawer.Content
+            className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none"
+            style={{ paddingBottom: "var(--safe-bottom)" }}
+          >
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-hint-color)] opacity-20 mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-[#FFF4E5] rounded-full flex items-center justify-center mb-4">
@@ -418,7 +427,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                   props.setIsFileLimitModalOpen(false);
                   navigate("/chat/new", { state: { openCompareModal: true } });
                 }}
-                className="w-full py-4 bg-[var(--tg-theme-button-color)] text-white rounded-xl text-[17px] font-semibold active:scale-[0.98] transition-all"
+                className="w-full py-4 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] rounded-xl text-[17px] font-semibold active:scale-[0.98] transition-all"
               >
                 Создать новый чат
               </button>

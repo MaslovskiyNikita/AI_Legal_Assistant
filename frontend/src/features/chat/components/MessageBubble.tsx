@@ -77,26 +77,25 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     if (onExportDocx) onExportDocx();
   };
 
-  // Бейджи рисков адаптированы под светлую/темную тему (через opacity)
   const renderRiskBadge = (risk: string) => {
     switch (risk) {
       case "RED":
         return (
-          <span className="flex items-center gap-1 bg-red-500/15 text-red-500 px-2 py-0.5 rounded text-[11px] font-bold border border-red-500/20">
-            <AlertTriangle size={12} /> ВЫСОКИЙ РИСК
+          <span className="flex items-center gap-1 bg-[#FF3B30]/15 text-[#FF3B30] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#FF3B30]/20 tracking-wide">
+            <AlertTriangle size={13} strokeWidth={2.5} /> ВЫСОКИЙ РИСК
           </span>
         );
       case "YELLOW":
         return (
-          <span className="flex items-center gap-1 bg-yellow-500/15 text-yellow-600 dark:text-yellow-500 px-2 py-0.5 rounded text-[11px] font-bold border border-yellow-500/20">
-            <Info size={12} /> ВНИМАНИЕ
+          <span className="flex items-center gap-1 bg-[#FF9500]/15 text-[#FF9500] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#FF9500]/20 tracking-wide">
+            <Info size={13} strokeWidth={2.5} /> ВНИМАНИЕ
           </span>
         );
       case "GREEN":
       default:
         return (
-          <span className="flex items-center gap-1 bg-green-500/15 text-green-600 dark:text-green-500 px-2 py-0.5 rounded text-[11px] font-bold border border-green-500/20">
-            <CheckCircle size={12} /> БЕЗОПАСНО
+          <span className="flex items-center gap-1 bg-[#34C759]/15 text-[#34C759] px-2.5 py-1 rounded-md text-[11px] font-bold border border-[#34C759]/20 tracking-wide">
+            <CheckCircle size={13} strokeWidth={2.5} /> БЕЗОПАСНО
           </span>
         );
     }
@@ -230,24 +229,28 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   )}
 
                   {/* Измененные фрагменты (КРАСИВЫЕ КАРТОЧКИ С ЗАСЕЧКАМИ) */}
+                  {/* Измененные фрагменты (КРАСИВЫЕ КАРТОЧКИ С ЗАСЕЧКАМИ) */}
                   {parsedData.diff_blocks?.length > 0 && (
-                    <div className="flex flex-col gap-3 mt-2 mb-2">
+                    <div className="flex flex-col gap-3 mt-3 mb-2">
                       <span className="font-bold text-[13px] uppercase text-[var(--tg-theme-hint-color)] tracking-wider ml-1">
                         Юридические изменения:
                       </span>
                       {parsedData.diff_blocks.map((diff: any, idx: number) => (
                         <div
                           key={idx}
-                          className="bg-[var(--tg-theme-bg-color)] rounded-xl overflow-hidden shadow-sm border border-[var(--tg-theme-secondary-bg-color)] flex flex-col"
+                          className="bg-[var(--tg-theme-bg-color)] rounded-xl overflow-hidden shadow-sm border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] flex flex-col"
                         >
-                          <div className="bg-[var(--tg-theme-button-color)]/10 px-3 py-2 border-b border-[var(--tg-theme-secondary-bg-color)] flex items-center justify-between">
+                          <div className="bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] px-3 py-2 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] flex items-center justify-between">
                             <span className="text-[12px] font-semibold text-[var(--tg-theme-button-color)]">
                               Фрагмент #{idx + 1}
                             </span>
                           </div>
                           <div
                             dangerouslySetInnerHTML={{ __html: diff.diff_html }}
-                            className="p-3 text-[14px] font-serif leading-relaxed text-[var(--tg-theme-text-color)] overflow-x-auto [&>del]:bg-red-500/20 [&>del]:text-red-600 [&>del]:line-through [&>del]:px-1 [&>del]:rounded-sm [&>ins]:bg-green-500/20 [&>ins]:text-green-600 [&>ins]:no-underline [&>ins]:px-1 [&>ins]:rounded-sm"
+                            // Улучшенные стили для тегов <del> и <ins> (удалено и добавлено)
+                            className="p-3 text-[14px] font-serif leading-relaxed text-[var(--tg-theme-text-color)] overflow-x-auto 
+                                       [&>del]:bg-[#FF3B30]/15 [&>del]:text-[#FF3B30] [&>del]:line-through [&>del]:px-1 [&>del]:rounded-sm 
+                                       [&>ins]:bg-[#34C759]/15 [&>ins]:text-[#34C759] [&>ins]:no-underline [&>ins]:px-1 [&>ins]:rounded-sm"
                           />
                         </div>
                       ))}

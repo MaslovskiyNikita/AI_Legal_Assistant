@@ -13,11 +13,8 @@ import Settings from "./pages/Settings";
 // Обертка для красивых анимаций перехода между экранами
 const PageTransition = ({ children }: { children: React.ReactNode }) => (
   <motion.div
-    // Начальное состояние (при появлении)
     initial={{ opacity: 0, x: 15 }}
-    // Конечное состояние (когда страница на экране)
     animate={{ opacity: 1, x: 0 }}
-    // Состояние при уходе (когда открываем другую страницу)
     exit={{ opacity: 0, x: -15 }}
     transition={{ duration: 0.25, ease: "easeOut" }}
     className="w-full min-h-screen flex flex-col bg-[var(--tg-theme-bg-color)]"
@@ -28,7 +25,7 @@ const PageTransition = ({ children }: { children: React.ReactNode }) => (
 
 function AuthRouter() {
   const { isLoading } = useAuth();
-  const location = useLocation(); // Следим за сменой URL для анимаций
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -39,10 +36,17 @@ function AuthRouter() {
     );
   }
 
+  // 👇 РЕШЕНИЕ ПРОБЛЕМЫ 👇
+  // Если мы находимся в любом чате (/chat/new, /chat/123 и т.д.),
+  // используем один и тот же ключ "/chat".
+  // Это запретит Framer Motion уничтожать страницу при подмене ID.
+  const routeKey = location.pathname.startsWith("/chat/")
+    ? "/chat"
+    : location.pathname;
+
   return (
-    // mode="wait" гарантирует, что старая страница исчезнет ПЕРЕД появлением новой
     <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+      <Routes location={location} key={routeKey}>
         <Route
           path="/"
           element={
@@ -87,12 +91,10 @@ export default function App() {
       tg.ready();
       tg.expand();
 
-      // Отключаем закрытие приложения при случайном свайпе вниз
       if (tg.disableVerticalSwipes) {
         tg.disableVerticalSwipes();
       }
 
-      // Красим хедер Telegram в цвет фона приложения
       if (tg.setHeaderColor) {
         tg.setHeaderColor("secondary_bg_color");
       }

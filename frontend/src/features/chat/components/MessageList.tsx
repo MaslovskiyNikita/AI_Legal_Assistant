@@ -136,10 +136,21 @@ export const MessageList: React.FC<MessageListProps> = ({
                 {group.messages.map((msg, index) => (
                   <motion.div
                     key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
-                    layout // Автоматически двигает старые сообщения вверх при появлении новых
-                    initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                    layout // Плавно сдвигает старые сообщения вверх
+                    initial={{
+                      opacity: 0,
+                      y: 20,
+                      scale: 0.9,
+                      transformOrigin:
+                        msg.role === "user" ? "bottom right" : "bottom left",
+                    }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 450, // Натяжение пружины (скорость)
+                      damping: 30, // Торможение (убирает лишнюю "тряску")
+                      mass: 0.8, // Легкость элемента
+                    }}
                     className="w-full"
                   >
                     <MessageBubble
