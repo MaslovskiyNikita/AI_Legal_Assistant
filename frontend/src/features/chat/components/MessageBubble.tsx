@@ -2,7 +2,6 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { motion } from "motion/react";
 import {
   CheckCheck,
   Copy,
@@ -12,7 +11,6 @@ import {
   CheckCircle,
   ShieldAlert,
   Download,
-  Loader2,
 } from "lucide-react";
 import { StackedFiles } from "./StackedFiles";
 import { tgHapticNotification } from "../../../utils/telegram";
@@ -55,11 +53,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     } catch (e) {}
   }
 
+  // 1. ПРОВЕРКИ СОСТОЯНИЙ ЗАГРУЗКИ
+  // Если текст "{" - значит анализируем файлы
   const isStillStreamingJson =
-    !isUser &&
-    !msg.isComplete &&
-    rawText.trim().startsWith("{") &&
-    !isComplexAnalysis;
+    !isUser && !msg.isComplete && rawText.trim() === "{";
+  // Если текст "..." - значит просто печатаем текст
+  const isTypingText = !isUser && !msg.isComplete && rawText.trim() === "...";
 
   const fileMatch = rawText.match(
     /Прикреплены документы для сравнения:\s*1\.\s*(.*?)\s*2\.\s*([^\n]+)/,
@@ -108,31 +107,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     : "last:after:content-[''] last:after:inline-block last:after:w-[68px] last:after:h-[10px]";
 
   return (
-    <motion.div
-      layout // Магия Framer Motion: плавно двигает старые сообщения вверх при появлении новых
-      initial={{
-        opacity: 0,
-        scale: 0.8,
-        y: 20,
-        // Пузырь пользователя вылетает справа, а ответ ИИ - слева
-        transformOrigin: isUser ? "bottom right" : "bottom left",
-      }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ type: "spring", stiffness: 280, damping: 22 }}
-      className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"} mb-3 relative z-20`}
+    <div
+      className={`flex w-full min-w-0 ${isUser ? "justify-end" : "justify-start"} mb-3 relative z-20 animate-in fade-in slide-in-from-bottom-2 duration-300`}
     >
       <div
         className={`relative flex items-end min-w-0 ${isUser ? "ml-auto" : "mr-auto"} ${!isFileStack && !isComplexAnalysis ? "max-w-[85%] sm:max-w-[75%]" : "max-w-[95%]"}`}
       >
-        {/* Хвостик сообщения (SVG) - для ИИ */}
+        {/* ХВОСТИК ИИ (ЖЕСТКО ЗАДАЕМ fill="#F2F2F7", ЧТОБЫ НЕ БЫЛ ЧЕРНЫМ) */}
         {!isUser && !isFileStack && (
           <svg
             viewBox="0 0 8 13"
             width="8"
             height="13"
-            className="absolute -left-[7px] bottom-0 text-[var(--tg-theme-secondary-bg-color, #F2F2F7)] fill-current shrink-0"
+            className="absolute -left-[7px] bottom-0 shrink-0"
           >
-            <path d="M8 0v13H0c3.9 0 8-4.2 8-13z" />
+            <path d="M8 0v13H0c3.9 0 8-4.2 8-13z" fill="#F2F2F7" />
           </svg>
         )}
 
@@ -145,7 +134,10 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               isScanning={isScanning}
             />
             {remainingText && (
-              <div className="mt-2 relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words bg-[var(--tg-theme-button-color, #3390EC)] text-white rounded-[18px] rounded-br-none">
+              <div
+                style={{ backgroundColor: "#3390EC" }}
+                className="mt-2 relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words text-white rounded-[18px] rounded-br-none"
+              >
                 <ReactMarkdown
                   components={{
                     p: ({ node, ...props }) => (
@@ -162,66 +154,49 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <span>{timeString}</span>
                   <CheckCheck size={14} className="text-white" />
                 </div>
-                {/* Хвостик для пользователя (под текстом с файлами) */}
+                {/* ХВОСТИК ЮЗЕРА (С ФАЙЛАМИ) */}
                 <svg
                   viewBox="0 0 8 13"
                   width="8"
                   height="13"
-                  className="absolute -right-[7px] bottom-0 text-[var(--tg-theme-button-color, #3390EC)] fill-current shrink-0"
+                  className="absolute -right-[7px] bottom-0 shrink-0"
                 >
-                  <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" />
+                  <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" fill="#3390EC" />
                 </svg>
               </div>
             )}
           </div>
         ) : (
           <div
-            className={`relative px-4 pt-3 pb-3 text-[15px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words ${isUser ? "bg-[var(--tg-theme-button-color, #3390EC)] text-white rounded-[18px] rounded-br-none" : "bg-[var(--tg-theme-secondary-bg-color, #F2F2F7)] text-[var(--tg-theme-text-color, #000)] rounded-[18px] rounded-bl-none"}`}
+            // ИСПОЛЬЗУЕМ INLINE STYLE ДЛЯ ФОНА ЮЗЕРА, ЧТОБЫ 100% НЕ ПРОПАДАЛ
+            style={{ backgroundColor: isUser ? "#3390EC" : "#F2F2F7" }}
+            className={`relative px-4 pt-3 pb-3 text-[15px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words ${isUser ? "text-white rounded-[18px] rounded-br-none" : "text-black rounded-[18px] rounded-bl-none"}`}
           >
             <div className="w-full min-w-0">
-              {/* АНИМАЦИЯ АНАЛИЗА ДОКУМЕНТА (СКЕЛЕТОН) */}
+              {/* === ЛОАДЕР ДЛЯ ДОКУМЕНТОВ === */}
               {isStillStreamingJson ? (
-                <div className="flex flex-col gap-3 p-2 w-[240px]">
-                  {/* Заголовок с крутящимся лоадером */}
-                  <div className="flex items-center gap-2.5 text-[var(--tg-theme-button-color, #3390EC)] font-semibold mb-1">
-                    <Loader2 size={18} className="animate-spin" />
-                    <span className="text-[14px]">Изучаю документы...</span>
-                  </div>
-
-                  {/* Скелетон текста с переливающимся градиентом */}
-                  <div className="space-y-2.5">
-                    <motion.div
-                      animate={{ opacity: [0.3, 0.8, 0.3] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 1.5,
-                        ease: "easeInOut",
-                      }}
-                      className="h-2 bg-gradient-to-r from-[#8E8E93]/20 to-[#8E8E93]/40 rounded-full w-full"
-                    />
-                    <motion.div
-                      animate={{ opacity: [0.3, 0.8, 0.3] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 1.5,
-                        ease: "easeInOut",
-                        delay: 0.2,
-                      }}
-                      className="h-2 bg-gradient-to-r from-[#8E8E93]/20 to-[#8E8E93]/40 rounded-full w-[85%]"
-                    />
-                    <motion.div
-                      animate={{ opacity: [0.3, 0.8, 0.3] }}
-                      transition={{
-                        repeat: Infinity,
-                        duration: 1.5,
-                        ease: "easeInOut",
-                        delay: 0.4,
-                      }}
-                      className="h-2 bg-gradient-to-r from-[#8E8E93]/20 to-[#8E8E93]/40 rounded-full w-[60%]"
-                    />
-                  </div>
+                <div className="flex items-center gap-2 text-[#3390EC] font-medium animate-pulse pb-2">
+                  <ShieldAlert size={18} />
+                  Анализирую документы и выявляю риски...
                 </div>
-              ) : isComplexAnalysis && parsedData ? (
+              ) : /* === ЛОАДЕР ДЛЯ ПРОСТОГО ТЕКСТА (ПЕЧАТАЕТ...) === */
+              isTypingText ? (
+                <div className="flex items-center gap-1.5 h-5 px-1 pb-1">
+                  <span
+                    className="w-1.5 h-1.5 bg-[#8E8E93] rounded-full animate-bounce"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 bg-[#8E8E93] rounded-full animate-bounce"
+                    style={{ animationDelay: "150ms" }}
+                  />
+                  <span
+                    className="w-1.5 h-1.5 bg-[#8E8E93] rounded-full animate-bounce"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </div>
+              ) : /* === ОТВЕТ С РИСКАМИ И ТАБЛИЦАМИ === */
+              isComplexAnalysis && parsedData ? (
                 <div className="flex flex-col gap-4 pb-2">
                   <div className="bg-white rounded-xl p-3 shadow-sm border border-gray-100">
                     <div className="flex items-center justify-between mb-2">
@@ -231,7 +206,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                       {parsedData.analysis?.overall_risk &&
                         renderRiskBadge(parsedData.analysis.overall_risk)}
                     </div>
-                    <p className="text-[14px] font-medium text-black">
+                    <p className="text-[14px] font-medium">
                       {parsedData.analysis?.summary}
                     </p>
                   </div>
@@ -248,7 +223,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                             className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 flex flex-col gap-1.5"
                           >
                             <div className="flex items-start justify-between gap-2">
-                              <span className="font-bold text-[14px] leading-tight text-black">
+                              <span className="font-bold text-[14px] leading-tight">
                                 {detail.title}
                               </span>
                               <div className="shrink-0 mt-0.5">
@@ -270,7 +245,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     </div>
                   )}
 
-                  {/* КРАСИВЫЙ РЕНДЕР ИЗМЕНЕННЫХ ФРАГМЕНТОВ (DIFF) */}
                   {parsedData.diff_blocks?.length > 0 && (
                     <div className="flex flex-col gap-2 mt-2 mb-2">
                       <span className="font-bold text-[13px] uppercase text-gray-500 ml-1">
@@ -279,14 +253,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                       {parsedData.diff_blocks.map((diff: any, idx: number) => (
                         <div
                           key={idx}
-                          className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                          className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 text-[13px] font-mono leading-relaxed overflow-x-auto"
                         >
-                          <div className="bg-gray-50 px-3 py-1.5 border-b border-gray-100 flex items-center gap-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-                            Фрагмент {idx + 1}
-                          </div>
                           <div
-                            className="p-3 text-[14px] leading-relaxed text-gray-800 [&>del]:bg-red-100 [&>del]:text-red-700 [&>del]:line-through [&>del]:px-1 [&>del]:rounded-sm [&>ins]:bg-green-100 [&>ins]:text-green-800 [&>ins]:no-underline [&>ins]:px-1 [&>ins]:rounded-sm"
                             dangerouslySetInnerHTML={{ __html: diff.diff_html }}
+                            className="[&>del]:bg-red-100 [&>del]:text-red-800 [&>del]:line-through [&>ins]:bg-green-100 [&>ins]:text-green-800 [&>ins]:no-underline"
                           />
                         </div>
                       ))}
@@ -295,13 +266,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 
                   <button
                     onClick={handleExportClick}
-                    className="w-full mt-2 bg-gradient-to-r from-[var(--tg-theme-button-color,#3390EC)] to-[#5856D6] text-white font-semibold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="w-full mt-2 bg-gradient-to-r from-[#3390EC] to-[#5856D6] text-white font-semibold py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
                     <Download size={20} />
                     Сгенерировать отчет (.DOCX)
                   </button>
                 </div>
               ) : (
+                /* === ОБЫЧНЫЙ ТЕКСТОВЫЙ ОТВЕТ === */
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -313,7 +285,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     ),
                     a: ({ node, ...props }) => (
                       <a
-                        className={`${isUser ? "text-white underline" : "text-[var(--tg-theme-button-color, #3390EC)] underline"} break-all`}
+                        className={`${isUser ? "text-white underline" : "text-[#3390EC] underline"} break-all`}
                         {...props}
                       />
                     ),
@@ -327,27 +299,27 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               )}
             </div>
 
-            {/* БЛОК С ВРЕМЕНЕМ И ГАЛОЧКАМИ */}
+            {/* НИЖНЯЯ ПАНЕЛЬ С ВРЕМЕНЕМ (ТЕПЕРЬ СИНЯЯ У ИИ) */}
             {showFooter && (
               <div
-                className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none ${isUser ? "text-blue-100" : "text-[#8E8E93]"}`}
+                className={`absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium select-none ${isUser ? "text-blue-100" : "text-[#3390EC]"}`}
               >
-                {!isUser && rawText && !isStillStreamingJson && (
-                  <button
-                    type="button"
-                    onClick={() => onCopy(rawText, msg.id)}
-                    className="flex items-center hover:text-[var(--tg-theme-button-color, #3390EC)] transition-colors cursor-pointer mr-0.5"
-                  >
-                    {copiedMessageId === msg.id ? (
-                      <Check
-                        size={14}
-                        className="text-[var(--tg-theme-button-color, #3390EC)]"
-                      />
-                    ) : (
-                      <Copy size={13} />
-                    )}
-                  </button>
-                )}
+                {!isUser &&
+                  rawText &&
+                  !isStillStreamingJson &&
+                  !isTypingText && (
+                    <button
+                      type="button"
+                      onClick={() => onCopy(rawText, msg.id)}
+                      className="flex items-center hover:opacity-70 transition-colors cursor-pointer mr-0.5"
+                    >
+                      {copiedMessageId === msg.id ? (
+                        <Check size={14} className="text-[#3390EC]" />
+                      ) : (
+                        <Copy size={13} />
+                      )}
+                    </button>
+                  )}
                 <span>{timeString}</span>
                 {isUser && <CheckCheck size={14} className="text-white" />}
               </div>
@@ -355,18 +327,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
           </div>
         )}
 
-        {/* Хвостик сообщения (SVG) - для пользователя (если нет файлов) */}
+        {/* ХВОСТИК ЮЗЕРА (БЕЗ ФАЙЛОВ) - ЖЕСТКО ЗАДАН fill="#3390EC" */}
         {isUser && !isFileStack && (
           <svg
             viewBox="0 0 8 13"
             width="8"
             height="13"
-            className="absolute -right-[7px] bottom-0 text-[var(--tg-theme-button-color, #3390EC)] fill-current shrink-0"
+            className="absolute -right-[7px] bottom-0 shrink-0"
           >
-            <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" />
+            <path d="M0 0v13h8c-3.9 0-8-4.2-8-13z" fill="#3390EC" />
           </svg>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 };

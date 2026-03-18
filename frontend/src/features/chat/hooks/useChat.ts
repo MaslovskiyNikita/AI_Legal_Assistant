@@ -227,13 +227,16 @@ export const useChat = (chatId: string | undefined) => {
       ]);
 
       const assistantMsgId = `msg_${Date.now()}_ai`;
+      // УМНЫЙ ЛОАДЕР: Если прикреплены файлы, шлем "{", если обычный текст - шлем "..."
+      const loadingTextPlaceholder =
+        hasAttachedFiles && oldFile && newFile ? "{" : "...";
+
       setMessages((prev) => [
         ...prev,
         {
           id: assistantMsgId,
           role: "ai",
-          // ХИТРОСТЬ: Ставим {, чтобы UI показал лоадер "Анализирую документы..."
-          text: "{",
+          text: loadingTextPlaceholder,
           created_at: new Date().toISOString(),
           isComplete: false,
         },
