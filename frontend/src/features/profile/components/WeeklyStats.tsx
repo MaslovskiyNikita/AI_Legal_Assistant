@@ -27,7 +27,7 @@ export const WeeklyStats: React.FC = () => {
         {/* Карточка 1: Риски */}
         <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] flex items-center justify-center shrink-0">
               <AlertTriangle
                 size={16}
                 className="text-[var(--tg-theme-button-color)]"
@@ -52,7 +52,7 @@ export const WeeklyStats: React.FC = () => {
         {/* Карточка 2: Страницы */}
         <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] flex items-center justify-center shrink-0">
               <FileText
                 size={16}
                 className="text-[var(--tg-theme-button-color)]"
@@ -77,7 +77,7 @@ export const WeeklyStats: React.FC = () => {
         {/* Карточка 3: Частые правки */}
         <div className="bg-[var(--tg-theme-bg-color)] rounded-xl p-3 flex items-center justify-between shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-full bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] flex items-center justify-center shrink-0">
               <PenSquare
                 size={16}
                 className="text-[var(--tg-theme-button-color)]"

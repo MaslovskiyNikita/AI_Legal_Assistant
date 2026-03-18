@@ -1,34 +1,25 @@
 @import "tailwindcss";
 
-/* 1. ПЕРЕМЕННЫЕ TELEGRAM И SAFE AREAS */
 :root {
-  /* Фолбэки на случай открытия в браузере (Светлая тема) */
-  --tg-theme-bg-color: #ffffff;
-  --tg-theme-secondary-bg-color: #f2f2f7;
-  --tg-theme-text-color: #000000;
-  --tg-theme-hint-color: #8e8e93;
-  --tg-theme-button-color: #3390ec;
-  --tg-theme-button-text-color: #ffffff;
-
-  /* Безопасные зоны (Челка iPhone и полоска свайпа) */
+  /* Safe Areas для iOS (Челка и полоска свайпа) */
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-/* 2. ГЛОБАЛЬНЫЕ СТИЛИ (NATIVE FEEL) */
 body {
-  background-color: var(--tg-theme-secondary-bg-color);
-  color: var(--tg-theme-text-color);
-
-  /* Отключаем выделение текста и лупу (как в нативных аппках) */
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
+  background-color: var(--tg-theme-secondary-bg-color, #f4f4f5);
+  color: var(--tg-theme-text-color, #000000);
+  /* Убирает синий квадрат при тапе по экрану на iOS */
   -webkit-tap-highlight-color: transparent;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* 3. РАЗРЕШАЕМ ВЫДЕЛЕНИЕ ТОЛЬКО ДЛЯ СООБЩЕНИЙ */
-.message-group {
-  -webkit-user-select: text;
-  user-select: text;
+/* --- УБИРАЕМ СКРОЛЛБАРЫ ДЛЯ NATIVE FEEL --- */
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }

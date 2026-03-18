@@ -21,7 +21,7 @@ export const AgentGrid: React.FC<AgentGridProps> = ({
           <div
             key={agent.id}
             onClick={() => setSelectedAgent(agent.id)}
-            className={`rounded-2xl p-4 flex flex-col relative transition-all cursor-pointer border ${agent.size === "large" ? "col-span-1 row-span-2 min-h-[160px]" : "col-span-1"} ${isSelected ? "bg-[#F0F8FF] border-[#3390EC]" : "bg-[var(--tg-theme-secondary-bg-color)] border-transparent hover:bg-[#E5E5EA]"}`}
+            className={`rounded-2xl p-4 flex flex-col relative transition-all cursor-pointer border ${agent.size === "large" ? "col-span-1 row-span-2 min-h-[160px]" : "col-span-1"} ${isSelected ? "bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] border-[#3390EC]" : "bg-[var(--tg-theme-secondary-bg-color)] border-transparent hover:bg-[var(--tg-theme-secondary-bg-color)]"}`}
           >
             {isSelected && (
               <CheckCircle2

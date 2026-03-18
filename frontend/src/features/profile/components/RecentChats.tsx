@@ -48,7 +48,7 @@ export const RecentChats: React.FC<RecentChatsProps> = ({
             <div
               key={chat.id}
               onClick={() => onChatClick(chat.id)}
-              className="min-h-[96px] bg-[#F8F9FA] rounded-2xl p-2.5 border border-[#E5E5EA] flex flex-col justify-between cursor-pointer active:bg-[#E5E5EA] transition-colors overflow-hidden"
+              className="min-h-[96px] bg-[var(--tg-theme-secondary-bg-color)] rounded-2xl p-2.5 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] flex flex-col justify-between cursor-pointer active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors overflow-hidden"
             >
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-1.5">

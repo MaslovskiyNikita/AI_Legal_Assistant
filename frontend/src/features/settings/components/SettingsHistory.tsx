@@ -106,7 +106,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
       <div className="px-4 mb-4">
         <div
           ref={containerRef}
-          className="flex items-center bg-[#E5E5EA] p-1 rounded-xl relative"
+          className="flex items-center bg-[var(--tg-theme-secondary-bg-color)] p-1 rounded-xl relative"
         >
           {/* Плавающий белый фон */}
           <div
@@ -149,7 +149,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
             type="date"
             value={props.customStartDate}
             onChange={(e) => props.setCustomStartDate(e.target.value)}
-            className="flex-1 h-10 bg-[var(--tg-theme-bg-color)] border border-[#E5E5EA] rounded-xl px-3 text-[14px] text-[var(--tg-theme-text-color)] outline-none focus:border-[#3390EC] transition-colors appearance-none"
+            className="flex-1 h-10 bg-[var(--tg-theme-bg-color)] border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl px-3 text-[14px] text-[var(--tg-theme-text-color)] outline-none focus:border-[#3390EC] transition-colors appearance-none"
           />
           <span className="text-[var(--tg-theme-hint-color)] font-medium">
             —
@@ -158,19 +158,19 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
             type="date"
             value={props.customEndDate}
             onChange={(e) => props.setCustomEndDate(e.target.value)}
-            className="flex-1 h-10 bg-[var(--tg-theme-bg-color)] border border-[#E5E5EA] rounded-xl px-3 text-[14px] text-[var(--tg-theme-text-color)] outline-none focus:border-[#3390EC] transition-colors appearance-none"
+            className="flex-1 h-10 bg-[var(--tg-theme-bg-color)] border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl px-3 text-[14px] text-[var(--tg-theme-text-color)] outline-none focus:border-[#3390EC] transition-colors appearance-none"
           />
         </div>
       )}
 
       {/* КОНТЕЙНЕР СО СПИСКОМ */}
-      <div className="mx-4 bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[#E5E5EA] overflow-hidden flex flex-col min-h-[120px] shadow-sm">
+      <div className="mx-4 bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] overflow-hidden flex flex-col min-h-[120px] shadow-sm">
         {props.isLoadingStats ? (
           <div className="w-full flex flex-col">
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[#E5E5EA] last:border-0"
+                className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] last:border-0"
               >
                 <div className="flex items-center gap-3 w-full">
                   <div className="w-9 h-9 rounded-full bg-[var(--tg-theme-secondary-bg-color)] animate-pulse shrink-0"></div>
@@ -206,14 +206,14 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                     <SwipeableListItem
                       key={chat.id}
                       trailingActions={trailingActionsChat(chat.id)}
-                      className={`w-full bg-[var(--tg-theme-bg-color)] ${idx !== props.displayedChats.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
+                      className={`w-full bg-[var(--tg-theme-bg-color)] ${idx !== props.displayedChats.length - 1 ? "border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]" : ""}`}
                     >
                       <div
                         onClick={() => navigate(`/chat/${chat.id}`)}
                         className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer text-left"
                       >
                         <div className="flex items-center gap-3 overflow-hidden pr-4">
-                          <div className="w-9 h-9 rounded-full bg-[#F0F8FF] flex items-center justify-center shrink-0">
+                          <div className="w-9 h-9 rounded-full bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] flex items-center justify-center shrink-0">
                             <MessageSquare
                               size={16}
                               className="text-[var(--tg-theme-button-color)]"
@@ -242,7 +242,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                 <button
                   type="button"
                   onClick={() => props.setShowAllChats(!props.showAllChats)}
-                  className="w-full py-3.5 text-[15px] font-medium text-[var(--tg-theme-button-color)] bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer border-t border-[#E5E5EA]"
+                  className="w-full py-3.5 text-[15px] font-medium text-[var(--tg-theme-button-color)] bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer border-t border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]"
                 >
                   {props.showAllChats
                     ? "Скрыть"
@@ -279,14 +279,14 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                   <SwipeableListItem
                     key={doc.id}
                     trailingActions={trailingActionsDoc(doc.id)}
-                    className={`w-full bg-[var(--tg-theme-bg-color)] ${idx !== props.displayedDocuments.length - 1 ? "border-b border-[#E5E5EA]" : ""}`}
+                    className={`w-full bg-[var(--tg-theme-bg-color)] ${idx !== props.displayedDocuments.length - 1 ? "border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]" : ""}`}
                   >
                     <div
                       onClick={() => navigate(`/chat/${doc.chatId}`)}
                       className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer text-left"
                     >
                       <div className="flex items-center gap-3 overflow-hidden pr-2">
-                        <div className="w-10 h-10 rounded-lg bg-[#F0F8FF] border border-[#E5E5EA] flex items-center justify-center shrink-0">
+                        <div className="w-10 h-10 rounded-lg bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] flex items-center justify-center shrink-0">
                           <FileText
                             size={18}
                             className="text-[var(--tg-theme-button-color)]"
@@ -312,7 +312,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                           )
                         }
                         disabled={isDownloading}
-                        className="w-9 h-9 shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] flex items-center justify-center text-[var(--tg-theme-button-color)] hover:bg-[#E5E5EA] active:scale-95 transition-all"
+                        className="w-9 h-9 shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] flex items-center justify-center text-[var(--tg-theme-button-color)] hover:bg-[var(--tg-theme-secondary-bg-color)] active:scale-95 transition-all"
                       >
                         {isDownloading ? (
                           <Loader2 size={16} className="animate-spin" />
@@ -332,7 +332,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                 onClick={() =>
                   props.setShowAllDocuments(!props.showAllDocuments)
                 }
-                className="w-full py-3.5 text-[15px] font-medium text-[var(--tg-theme-button-color)] bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer border-t border-[#E5E5EA]"
+                className="w-full py-3.5 text-[15px] font-medium text-[var(--tg-theme-button-color)] bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer border-t border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]"
               >
                 {props.showAllDocuments
                   ? "Скрыть"

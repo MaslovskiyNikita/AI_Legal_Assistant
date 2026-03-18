@@ -59,7 +59,7 @@ export default function Profile() {
 
       {/* Кнопка только для веб-версии */}
       {isWeb && (
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-[var(--tg-theme-bg-color)]/80 backdrop-blur-md border-t border-[#E5E5EA] z-30">
+        <div className="absolute bottom-0 left-0 w-full p-4 bg-[var(--tg-theme-bg-color)]/80 backdrop-blur-md border-t border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] z-30">
           <button
             onClick={startNewChat}
             className="w-full bg-[var(--tg-theme-button-color)] text-white font-semibold text-[17px] py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all"

@@ -79,7 +79,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
           <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E5EA] mt-4 mb-2" />
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-[#FFEBEA] rounded-full flex items-center justify-center mb-4">
@@ -124,9 +124,9 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
           <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none max-h-[80vh]">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E5EA] mt-4 mb-2" />
-            <div className="px-5 pb-3 flex items-center gap-3 border-b border-[#E5E5EA]">
-              <div className="w-10 h-10 bg-[#F0F8FF] rounded-full flex items-center justify-center">
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] mt-4 mb-2" />
+            <div className="px-5 pb-3 flex items-center gap-3 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
+              <div className="w-10 h-10 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] rounded-full flex items-center justify-center">
                 <FileText
                   size={20}
                   className="text-[var(--tg-theme-button-color)]"
@@ -187,10 +187,10 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
           <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E5EA] mt-4 mb-2" />
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-16 h-16 bg-[#F0F8FF] rounded-full flex items-center justify-center mb-4">
+                <div className="w-16 h-16 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] rounded-full flex items-center justify-center mb-4">
                   <Share2
                     size={28}
                     className="text-[var(--tg-theme-button-color)]"
@@ -261,7 +261,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                 {!props.oldFile ? (
                   <label
                     htmlFor="old-file"
-                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[#E5E5EA] rounded-xl bg-[#F9FAFB] hover:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer"
+                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl bg-[#F9FAFB] hover:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer"
                   >
                     <UploadCloud
                       size={28}
@@ -320,7 +320,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                 {!props.newFile ? (
                   <label
                     htmlFor="new-file"
-                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[#E5E5EA] rounded-xl bg-[#F9FAFB] hover:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer"
+                    className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-xl bg-[#F9FAFB] hover:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer"
                   >
                     <UploadCloud
                       size={28}
@@ -397,7 +397,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
           <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
-            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[#E5E5EA] mt-4 mb-2" />
+            <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-secondary-bg-color)] mt-4 mb-2" />
             <div className="p-5 pb-10">
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-16 h-16 bg-[#FFF4E5] rounded-full flex items-center justify-center mb-4">

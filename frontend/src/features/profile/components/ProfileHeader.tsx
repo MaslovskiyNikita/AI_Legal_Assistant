@@ -62,8 +62,8 @@ const TokenCircleMenu = ({ percent }: { percent: number }) => {
 
       {/* Выпадающее меню (Pop-over) */}
       {isOpen && (
-        <div className="absolute top-12 right-0 w-56 bg-[var(--tg-theme-bg-color)]/90 backdrop-blur-xl border border-[#E5E5EA] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
-          <div className="p-4 border-b border-[#E5E5EA]">
+        <div className="absolute top-12 right-0 w-56 bg-[var(--tg-theme-bg-color)]/90 backdrop-blur-xl border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+          <div className="p-4 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
             <div className="flex items-center gap-2 mb-1">
               <Zap size={16} className="text-[#FFCC00] fill-current" />
               <span className="text-[14px] font-semibold text-[var(--tg-theme-text-color)]">
