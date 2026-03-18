@@ -1,3 +1,4 @@
+import re
 import difflib
 from typing import List, Set, Dict, Optional
 from rapidfuzz import fuzz  # Уже есть в вашем pyproject.toml
@@ -128,15 +129,29 @@ class DiffService:
         if not old_text: return f"<ins>{new_text}</ins>"
         if not new_text: return f"<del>{old_text}</del>"
 
+        # Регулярка, которая разбивает текст на слова, пробелы и знаки препинания
+        # Это позволяет сравнивать ТОКЕНЫ, а не буквы
+        tokenizer = re.compile(r'(\s+|[^\w\s]|\w+)', re.UNICODE)
+
+        old_tokens = tokenizer.findall(old_text)
+        new_tokens = tokenizer.findall(new_text)
+
         result = []
-        s = difflib.SequenceMatcher(None, old_text, new_text)
-        for tag, i1, i2, j1, j2 in s.get_opcodes():
+        matcher = difflib.SequenceMatcher(None, old_tokens, new_tokens)
+
+        for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+            old_part = "".join(old_tokens[i1:i2])
+            new_part = "".join(new_tokens[j1:j2])
+
             if tag == 'equal':
-                result.append(old_text[i1:i2])
+                result.append(old_part)
             elif tag == 'delete':
-                result.append(f"<del>{old_text[i1:i2]}</del>")
+                result.append(f"<del>{old_part}</del>")
             elif tag == 'insert':
-                result.append(f"<ins>{new_text[j1:j2]}</ins>")
+                result.append(f"<ins>{new_part}</ins>")
             elif tag == 'replace':
-                result.append(f"<del>{old_text[i1:i2]}</del><ins>{new_text[j1:j2]}</ins>")
+                # Вместо того чтобы мешать буквы внутри слов,
+                # мы просто зачеркиваем старое слово/фразу и вставляем новое
+                result.append(f"<del>{old_part}</del><ins>{new_part}</ins>")
+
         return "".join(result)
