@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, func, Text
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from sqlalchemy.dialects.postgresql import JSONB
 
 class Chat(Base):
     __tablename__ = "chats"
@@ -20,6 +21,8 @@ class Message(Base):
     chat_id = Column(Integer, ForeignKey("chats.id", ondelete="CASCADE"), nullable=False)
     role = Column(String, nullable=False) 
     text = Column(Text, nullable=False)
+    ai_data = Column(JSONB, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     chat = relationship("Chat", back_populates="messages")
     documents = relationship("Document", back_populates="message", cascade="all, delete-orphan")
+    

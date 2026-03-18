@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Any, List, Optional
 from datetime import datetime
 from pydantic import BaseModel, computed_field
 
@@ -18,6 +18,7 @@ class MessageResponse(MessageBase):
     id: int
     created_at: datetime
     documents: List[DocumentResponse] = []
+    ai_data: Optional[dict] = None
 
     class Config:
         from_attributes = True
@@ -60,3 +61,4 @@ class DocumentResponse(BaseModel):
 
     class Config:
         from_attributes = True
+        

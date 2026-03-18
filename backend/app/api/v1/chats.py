@@ -59,7 +59,6 @@ async def stream_chat_message(
     preview = (request.text[:50] + '...') if len(request.text) > 50 else request.text
     logger.info(f"💬 Сообщение в чат ID={chat_id}: '{preview}'")
 
-    # 👇 ЗАЩИТА: Если есть comparison_id, сообщение УЖЕ в базе. Дубликат не нужен.
     if not request.comparison_id:
         await chat_service.add_message_to_chat(request, chat_id, db)
 
@@ -72,7 +71,8 @@ async def stream_chat_message(
     )
     
     logger.success(f"✨ AI ответ сформирован для чата ID={chat_id}")
-    return response_data  
+    return response_data
+  
 @router.get("/{chat_id}/documents", response_model=List[DocumentResponse])
 async def get_chat_documents(chat_id: int, db: AsyncSession = Depends(get_db)):  
     logger.info(f"📎 Запрос документов для чата ID={chat_id}")

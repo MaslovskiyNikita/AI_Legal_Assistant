@@ -81,7 +81,7 @@ async def generate_ai_response(
             full_ai_response = "Ошибка: не удалось загрузить историю диалога."
 
     logger.info(f"💾 Сохранение ответа AI в базу данных...")
-    ai_message = Message(chat_id=chat_id, role="ai", text=full_ai_response.strip())
+    ai_message = Message(chat_id=chat_id, role="ai", text=full_ai_response.strip(), ai_data={"diff_blocks": diff_blocks_out} if diff_blocks_out else None)
     db.add(ai_message)
     
     try:
