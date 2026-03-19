@@ -1,4 +1,5 @@
 import React from "react";
+import { useLocation } from "react-router"; // <-- ДОБАВЛЕН ИМПОРТ
 import { useProfile } from "../features/profile/hooks/useProfile";
 import { ProfileHeader } from "../features/profile/components/ProfileHeader";
 import { AgentGrid } from "../features/profile/components/AgentGrid";
@@ -7,6 +8,9 @@ import { RecentChats } from "../features/profile/components/RecentChats";
 import { isTelegramWebApp } from "../utils/telegram";
 
 export default function Profile() {
+  const location = useLocation(); // <-- ДОБАВЛЕНО
+  const shouldOpenTokenModal = location.state?.openTokenModal || false; // <-- ДОБАВЛЕНО
+
   const {
     internalUserId, // <-- ПОЛУЧАЕМ ID
     documentsAnalyzed, // <-- ПОЛУЧАЕМ ДОКИ
@@ -33,6 +37,7 @@ export default function Profile() {
         photoUrl={photoUrl}
         greeting={greeting}
         onSettingsClick={() => navigate("/settings")}
+        openTokenModal={shouldOpenTokenModal} // <-- ПЕРЕДАЕМ ФЛАГ
       />
 
       <div className="px-4 flex-1 flex flex-col">

@@ -1,7 +1,9 @@
+// frontend/src/features/chat/hooks/useChat.ts
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
 import { getTg, tgAlert, tgHapticNotification } from "../../../utils/telegram";
+import { useToast } from "../../../hooks/useToast"; // <-- ДОБАВЛЕН ИМПОРТ
 
 import { useChatModals } from "./useChatModals";
 import { useChatFiles } from "./useChatFiles";
@@ -10,6 +12,8 @@ import { useChatMessages } from "./useChatMessages";
 export const useChat = (initialChatId: string | undefined) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast(); // <-- ДОБАВЛЕН ХУК TOAST
+
   const userStr = localStorage.getItem("user");
   const internalUserId = userStr ? JSON.parse(userStr).id : null;
 
@@ -160,6 +164,9 @@ export const useChat = (initialChatId: string | undefined) => {
     const finalPrompt = textToSend.trim();
     let activeChatId = currentChatId;
 
+    // 👇 ВЫНОСИМ ID ВНЕ БЛОКА TRY, ЧТОБЫ УДАЛИТЬ ЕГО В CATCH
+    const assistantMsgId = `msg_${Date.now()}_ai`;
+
     try {
       if (activeChatId === "new" || !activeChatId) {
         if (!internalUserId) throw new Error("User ID not found");
@@ -198,7 +205,6 @@ export const useChat = (initialChatId: string | undefined) => {
         },
       ]);
 
-      const assistantMsgId = `msg_${Date.now()}_ai`;
       const loadingTextPlaceholder = hasFiles ? "{" : "...";
 
       chatMessages.setMessages((prev) => [
@@ -268,7 +274,6 @@ export const useChat = (initialChatId: string | undefined) => {
         ),
       );
 
-      // 👇 ТА САМАЯ ВСТАВКА: Фоновое обновление профиля (актуализация токенов)
       if (internalUserId) {
         apiClient
           .getUser(internalUserId)
@@ -283,15 +288,35 @@ export const useChat = (initialChatId: string | undefined) => {
             console.error("Ошибка фонового обновления профиля:", e),
           );
       }
-      // 👆 КОНЕЦ ВСТАВКИ
-    } catch (error) {
+    } catch (error: any) {
       tgHapticNotification("error");
+
+      // СНАЧАЛА УДАЛЯЕМ СООБЩЕНИЕ-ЗАГЛУШКУ ИЗ ЧАТА
+      chatMessages.setMessages((prev) =>
+        prev.filter((m) => m.id !== assistantMsgId),
+      );
+
+      // ПРОВЕРЯЕМ, ЯВЛЯЕТСЯ ЛИ ЭТО ОШИБКОЙ ТОКЕНОВ (403)
+      if (
+        error.status === 403 ||
+        (error.message && error.message.includes("токенов"))
+      ) {
+        showToast("Недостаточно токенов для этого действия", "error");
+        // Перенаправляем на профиль и передаем флаг для открытия шторки!
+        navigate("/profile", {
+          replace: true,
+          state: { openTokenModal: true },
+        });
+        return;
+      }
+
+      // ЕСЛИ ДРУГАЯ ОШИБКА — ПИШЕМ В ЧАТ
       chatMessages.setMessages((prev) => [
         ...prev,
         {
           id: `msg_err_${Date.now()}`,
           role: "ai",
-          text: "❌ Произошла ошибка при обработке запроса.",
+          text: `❌ ${error.message || "Произошла ошибка при обработке запроса."}`,
           created_at: new Date().toISOString(),
           isComplete: true,
         },

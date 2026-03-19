@@ -23,7 +23,14 @@ export const apiClient = {
     });
 
     if (!response.ok) {
-      throw new Error(`compareDocuments failed: ${response.status}`);
+      let detail = `compareDocuments failed: ${response.status}`;
+      try {
+        const errData = await response.json();
+        if (errData.detail) detail = errData.detail;
+      } catch (e) {}
+      const error = new Error(detail);
+      (error as any).status = response.status;
+      throw error;
     }
 
     const contentType = response.headers.get("content-type");
@@ -208,11 +215,13 @@ export const apiClient = {
     if (!r.ok) throw new Error("Failed to create invoice");
     return r.json();
   },
+
   async getLawStatistics(user_id: number) {
     const r = await fetch(`${BASE_URL}/analytics/laws?user_id=${user_id}`);
     if (!r.ok) throw new Error(`getLawStatistics failed: ${r.status}`);
     return r.json();
   },
+
   async sendMessage(
     chat_id: number,
     payload: { text: string; comparison_id?: number },
@@ -224,7 +233,15 @@ export const apiClient = {
     });
 
     if (!r.ok) {
-      throw new Error(`sendMessage failed: ${r.status}`);
+      let detail = `sendMessage failed: ${r.status}`;
+      try {
+        const errData = await r.json();
+        if (errData.detail) detail = errData.detail;
+      } catch (e) {}
+
+      const error = new Error(detail);
+      (error as any).status = r.status;
+      throw error;
     }
 
     return r.json();

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router"; // <-- ДОБАВЛЕН ИМПОРТ
 import { Zap, ChevronLeft, Star, Loader2, Clock, Info } from "lucide-react";
 import { Drawer } from "vaul";
 import {
@@ -21,14 +22,27 @@ const MAX_FREE_TOKENS = 50;
 const TokenCircleMenu = ({
   balance,
   onPaymentSuccess,
+  forceOpen, // <-- ДОБАВЛЕНО
 }: {
   balance: number;
   onPaymentSuccess: () => Promise<void>;
+  forceOpen?: boolean; // <-- ДОБАВЛЕНО
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"info" | "store">("info");
   const [loadingPack, setLoadingPack] = useState<string | null>(null);
   const { showToast } = useToast();
+  const navigate = useNavigate(); // <-- ДОБАВЛЕНО
+
+  // 👇 ДОБАВЛЕНО: Эффект для автоматического открытия шторки
+  useEffect(() => {
+    if (forceOpen) {
+      setIsOpen(true);
+      setView("info");
+      // Очищаем state роутера, чтобы при ре-рендерах шторка не открывалась снова
+      navigate("/profile", { replace: true, state: {} });
+    }
+  }, [forceOpen, navigate]);
 
   const percent = Math.min(Math.max((balance / MAX_FREE_TOKENS) * 100, 0), 100);
   const radius = 16;
@@ -245,7 +259,9 @@ export const ProfileHeader: React.FC<{
   photoUrl?: string | null;
   greeting: string;
   onSettingsClick: () => void;
-}> = ({ firstName, photoUrl, greeting, onSettingsClick }) => {
+  openTokenModal?: boolean; // <-- ДОБАВЛЕНО
+}> = ({ firstName, photoUrl, greeting, onSettingsClick, openTokenModal }) => {
+  // <-- ДОБАВЛЕНО
   const [balance, setBalance] = useState(() => {
     const userStr = localStorage.getItem("user");
     return userStr ? (JSON.parse(userStr).token_balance ?? 50) : 50;
@@ -266,7 +282,6 @@ export const ProfileHeader: React.FC<{
     }
   };
 
-  // 👇 ДОБАВЛЕНО: Автоматически запрашиваем баланс при каждом показе профиля
   useEffect(() => {
     fetchFreshBalance();
   }, []);
@@ -297,7 +312,11 @@ export const ProfileHeader: React.FC<{
           </span>
         </div>
       </div>
-      <TokenCircleMenu balance={balance} onPaymentSuccess={fetchFreshBalance} />
+      <TokenCircleMenu
+        balance={balance}
+        onPaymentSuccess={fetchFreshBalance}
+        forceOpen={openTokenModal} // <-- ПЕРЕДАЕМ ФЛАГ ДАЛЬШЕ
+      />
     </div>
   );
 };
