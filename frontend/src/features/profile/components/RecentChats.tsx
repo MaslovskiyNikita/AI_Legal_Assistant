@@ -1,6 +1,6 @@
 // src/features/profile/components/RecentChats.tsx
 import React from "react";
-import { Clock, Files, MessageSquare } from "lucide-react";
+import { Clock } from "lucide-react";
 import { formatRecentDateShort } from "../../../utils/dateUtils";
 
 interface RecentChatsProps {
@@ -61,21 +61,6 @@ export const RecentChats: React.FC<RecentChatsProps> = ({
                       chat.created_at || chat.createdAt || chat.updated_at,
                     )}
                   </span>
-                </div>
-
-                {/* Умная иконка типа чата */}
-                <div className="w-5 h-5 rounded-full bg-[#E5F1FF] flex items-center justify-center shrink-0">
-                  {isFileComparison ? (
-                    <Files
-                      size={10}
-                      className="text-[var(--tg-theme-button-color)]"
-                    />
-                  ) : (
-                    <MessageSquare
-                      size={10}
-                      className="text-[var(--tg-theme-button-color)]"
-                    />
-                  )}
                 </div>
               </div>
 

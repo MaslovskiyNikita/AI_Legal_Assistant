@@ -19,7 +19,13 @@ const PACKAGES = [
 
 const MAX_FREE_TOKENS = 100;
 
-const TokenCircleMenu = ({ balance }: { balance: number }) => {
+const TokenCircleMenu = ({
+  balance,
+  onPaymentSuccess,
+}: {
+  balance: number;
+  onPaymentSuccess: () => Promise<void>;
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"info" | "store">("info");
   const [loadingPack, setLoadingPack] = useState<string | null>(null);
@@ -56,10 +62,13 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
         if (status === "paid") {
           tgHapticNotification("success");
           setIsOpen(false);
-          showToast(
-            "Оплата прошла успешно! Токены скоро поступят на баланс.",
-            "success",
-          );
+          showToast("Оплата прошла успешно! Проверяем баланс...", "info");
+
+          // Даем бэкенду 2 секунды на обработку вебхука от Telegram
+          setTimeout(async () => {
+            await onPaymentSuccess();
+            showToast("Баланс успешно обновлен!", "success");
+          }, 2000);
         } else if (status === "cancelled") {
           showToast("Оплата отменена", "info");
         } else {
@@ -239,8 +248,31 @@ export const ProfileHeader: React.FC<{
   greeting: string;
   onSettingsClick: () => void;
 }> = ({ firstName, photoUrl, greeting, onSettingsClick }) => {
-  const userStr = localStorage.getItem("user");
-  const balance = userStr ? (JSON.parse(userStr).token_balance ?? 50) : 50;
+  // Инициализируем состояние баланса
+  const [balance, setBalance] = useState(() => {
+    const userStr = localStorage.getItem("user");
+    return userStr ? (JSON.parse(userStr).token_balance ?? 50) : 50;
+  });
+
+  // Функция для запроса новых данных с бэкенда
+  const fetchFreshBalance = async () => {
+    if (!TELEGRAM_USER?.id) return;
+    try {
+      const freshProfile = await apiClient.getUser(TELEGRAM_USER.id);
+
+      // Обновляем LocalStorage
+      const oldUser = JSON.parse(localStorage.getItem("user") || "{}");
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ ...oldUser, ...freshProfile }),
+      );
+
+      // Обновляем стейт компонента (чтобы перерисовался интерфейс)
+      setBalance(freshProfile.token_balance ?? balance);
+    } catch (e) {
+      console.error("Не удалось обновить баланс:", e);
+    }
+  };
 
   return (
     <div className="flex items-center justify-between px-4 pt-4 pb-3 relative z-20">
@@ -268,8 +300,7 @@ export const ProfileHeader: React.FC<{
           </span>
         </div>
       </div>
-
-      <TokenCircleMenu balance={balance} />
+      <TokenCircleMenu balance={balance} onPaymentSuccess={fetchFreshBalance} />
     </div>
   );
 };

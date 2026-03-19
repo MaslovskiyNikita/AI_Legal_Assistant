@@ -101,7 +101,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <ToastProvider>
-        <div className="min-h-screen bg-[var(--tg-theme-secondary-bg-color)] flex justify-center font-sans">
+        <div className="min-h-screen bg-[var(--tg-theme-secondary-bg-color)] flex justify-center font-sans select-none touch-manipulation">
           <div className="w-full max-w-md bg-[var(--tg-theme-bg-color)] relative shadow-2xl overflow-hidden">
             <AuthRouter />
           </div>

@@ -195,7 +195,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 isScanning={isScanning}
               />
               {remainingText && (
-                <div className="mt-2 relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] rounded-[18px] rounded-br-none">
+                <div className="mt-2 relative px-3 pt-2 pb-2 text-[16px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] rounded-[18px] rounded-br-none select-text">
                   <ReactMarkdown>{remainingText}</ReactMarkdown>
                   <div className="absolute bottom-[6px] right-[10px] flex items-center gap-[3px] text-[11px] font-medium text-[var(--tg-theme-button-text-color)]/80">
                     <span>{timeString}</span>
@@ -220,7 +220,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             </div>
           ) : (
             <div
-              className={`relative px-3 pt-3 pb-3 text-[15px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words ${isUser ? "bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] rounded-[18px] rounded-br-none" : "bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-text-color)] rounded-[18px] rounded-bl-none"}`}
+              className={`relative px-3 pt-3 pb-3 text-[15px] leading-snug shadow-sm flex flex-col z-10 w-full min-w-0 break-words select-text ${isUser ? "bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color)] rounded-[18px] rounded-br-none" : "bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-text-color)] rounded-[18px] rounded-bl-none"}`}
             >
               <div className="w-full min-w-0">
                 {isStillStreamingJson ? (

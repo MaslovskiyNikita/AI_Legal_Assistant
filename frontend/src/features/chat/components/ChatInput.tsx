@@ -176,7 +176,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 : "Напишите сообщение..."
             }
             rows={1}
-            className="flex-1 max-h-[100px] bg-transparent border-none outline-none text-[var(--tg-theme-text-color)] text-[16px] placeholder:text-[var(--tg-theme-hint-color)] resize-none py-1.5"
+            className="flex-1 max-h-[100px] bg-transparent border-none outline-none text-[var(--tg-theme-text-color)] text-[16px] placeholder:text-[var(--tg-theme-hint-color)] resize-none py-1.5 select-text"
           />
         </div>
 
