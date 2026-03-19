@@ -121,6 +121,55 @@ class AiRiskAnalyzer:
         
         return FullDocumentAnalysis(overall_risk=overall_risk, summary=summary, details=all_details)
 
+    def format_chat_history(chat_messages):
+        formatted_messages = []
+
+        # Берем последние 6 сообщений, как было в твоем коде
+        for m in chat_messages[-6:]:
+            role = "Пользователь" if m.get("role") == "user" else "Ассистент"
+            message_text = m.get("text", "")
+
+            # 1. Прикрепляем информацию о документах пользователя
+            documents = m.get("documents", [])
+            if documents:
+                doc_names = [doc.get("filename") for doc in documents]
+                message_text += f"\n[Прикрепленные документы: {', '.join(doc_names)}]"
+
+            # 2. Распаковываем аналитику от ИИ (если она есть)
+            ai_data = m.get("ai_data")
+            if ai_data:
+                analysis_details = ai_data.get("analysis", {}).get("details", [])
+                diff_blocks = ai_data.get("diff_blocks", [])
+
+                if analysis_details or diff_blocks:
+                    message_text += "\n\n*** ДЕТАЛИ АНАЛИЗА ДОКУМЕНТОВ ***"
+
+                    # Добавляем список рисков
+                    message_text += "\n\nВЫЯВЛЕННЫЕ РИСКИ:"
+                    for detail in analysis_details:
+                        risk_level = detail.get("risk", "UNKNOWN")
+                        title = detail.get("title", "")
+                        explanation = detail.get("explanation", "")
+                        message_text += f"\n- [{risk_level}] {title}: {explanation}"
+
+                    # Добавляем конкретные изменения (diffs)
+                    # Берем текст из old_block и new_block для экономии токенов (вместо HTML)
+                    message_text += "\n\nИЗМЕНЕННЫЕ БЛОКИ ТЕКСТА:"
+                    for diff in diff_blocks:
+                        change_type = diff.get("change_type", "UNKNOWN")
+                        comment = diff.get("comment", "")
+
+                        old_text = diff.get("old_block", {}).get("text", "Нет") if diff.get("old_block") else "Нет"
+                        new_text = diff.get("new_block", {}).get("text", "Нет") if diff.get("new_block") else "Нет"
+
+                        message_text += f"\n* Тип: {change_type} | Комментарий ИИ: {comment}"
+                        message_text += f"\n  Было: {old_text}"
+                        message_text += f"\n  Стало: {new_text}"
+
+            formatted_messages.append(f"{role}: {message_text}")
+
+        return "\n\n---\n\n".join(formatted_messages)
+
     @staticmethod
     async def answer_question(
             question: str,
@@ -142,7 +191,8 @@ class AiRiskAnalyzer:
         except Exception as e:
             print(f"RAG Chat Error: {e}")
 
-        history_text = "\n".join([f"{'Пользователь' if m['role']=='user' else 'Ассистент'}: {m['text']}" for m in chat_history[-6:]])
+        chat_messages = chat_history.get("messages", [])
+        history_text = format_chat_history(chat_messages)
 
         system_prompt = LegalPrompts.get_chat_prompt(
             question=question,
