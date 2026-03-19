@@ -23,7 +23,7 @@ async def create_invoice(request: InvoiceRequest, db: AsyncSession = Depends(get
 async def confirm_payment_endpoint(request: str, db: AsyncSession = Depends(get_db)):
     logger.info("🔔 Получен запрос на подтверждение оплаты")
     data = await request.json()
-    success = await confirm_payment(db, request)
+    success = await confirm_payment(db, data)
     
     if success:
         logger.success("✅ Оплата подтверждена и баланс обновлен")
