@@ -56,7 +56,7 @@ export const WeeklyStats: React.FC = () => {
           });
           setRiskStats(newRisks);
 
-          // Данные активности готовы как есть: [{date: "15.03", message_count: 12}]
+          // Данные активности: [{date: "15.03", message_count: 12}]
           setActivityStats(activityResponse);
         }
       } catch (error) {
@@ -244,6 +244,7 @@ export const WeeklyStats: React.FC = () => {
                             borderRadius: "12px",
                             color: "var(--tg-theme-text-color)",
                             fontWeight: 600,
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
                           }}
                           itemStyle={{ color: "var(--tg-theme-text-color)" }}
                         />
@@ -262,36 +263,36 @@ export const WeeklyStats: React.FC = () => {
                   <div className="w-full bg-[var(--tg-theme-bg-color)] rounded-2xl p-4 shadow-sm border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] space-y-3">
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-[#FF3B30]" />
-                        <span className="text-sm font-medium text-[var(--tg-theme-text-color)]">
+                        <div className="w-3.5 h-3.5 rounded-full bg-[#FF3B30] shadow-[0_0_8px_rgba(255,59,48,0.5)]" />
+                        <span className="text-[15px] font-medium text-[var(--tg-theme-text-color)]">
                           Критичные
                         </span>
                       </div>
-                      <span className="font-bold text-[var(--tg-theme-text-color)]">
+                      <span className="font-bold text-[16px] text-[var(--tg-theme-text-color)]">
                         {riskStats.RED}
                       </span>
                     </div>
                     <div className="h-[1px] bg-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]" />
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-[#FF9500]" />
-                        <span className="text-sm font-medium text-[var(--tg-theme-text-color)]">
+                        <div className="w-3.5 h-3.5 rounded-full bg-[#FF9500] shadow-[0_0_8px_rgba(255,149,0,0.5)]" />
+                        <span className="text-[15px] font-medium text-[var(--tg-theme-text-color)]">
                           Средние
                         </span>
                       </div>
-                      <span className="font-bold text-[var(--tg-theme-text-color)]">
+                      <span className="font-bold text-[16px] text-[var(--tg-theme-text-color)]">
                         {riskStats.YELLOW}
                       </span>
                     </div>
                     <div className="h-[1px] bg-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]" />
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full bg-[#34C759]" />
-                        <span className="text-sm font-medium text-[var(--tg-theme-text-color)]">
+                        <div className="w-3.5 h-3.5 rounded-full bg-[#34C759] shadow-[0_0_8px_rgba(52,199,89,0.5)]" />
+                        <span className="text-[15px] font-medium text-[var(--tg-theme-text-color)]">
                           Низкие
                         </span>
                       </div>
-                      <span className="font-bold text-[var(--tg-theme-text-color)]">
+                      <span className="font-bold text-[16px] text-[var(--tg-theme-text-color)]">
                         {riskStats.GREEN}
                       </span>
                     </div>
@@ -355,7 +356,6 @@ export const WeeklyStats: React.FC = () => {
                 </div>
               ) : (
                 <>
-                  {/* ГРАФИК АКТИВНОСТИ */}
                   <div className="w-full h-[250px] bg-[var(--tg-theme-bg-color)] rounded-2xl p-4 pt-6 pb-2 shadow-sm border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart
