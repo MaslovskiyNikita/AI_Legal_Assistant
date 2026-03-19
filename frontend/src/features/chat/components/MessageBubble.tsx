@@ -396,8 +396,11 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
                 const detail = parsedData.analysis?.details?.[idx] || null;
+
+                // 👇 Исправлено: теперь берем риск и из detail, ИЛИ из самого diff, как в таблице
                 const riskLevel =
                   detail?.risk ||
+                  diff?.risk ||
                   (diff.change_type === "ADDED" ? "YELLOW" : "GREEN");
 
                 let borderColor = "border-l-[#34C759]";
@@ -465,12 +468,19 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <tbody className="text-[13px] text-[var(--tg-theme-text-color)] align-top">
                   {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
                     const detail = parsedData.analysis?.details?.[idx] || null;
-                    
+
                     // 👇 Надежно собираем данные из detail ИЛИ из самого diff
-                    const riskLevel = detail?.risk || diff?.risk || (diff.change_type === "ADDED" ? "YELLOW" : "GREEN");
-                    const explanation = detail?.explanation || diff?.comment || "Изменение носит технический характер. Дополнительные правки не требуются.";
-                    let violatedLaw = detail?.violated_law || diff?.violated_law;
-                    
+                    const riskLevel =
+                      detail?.risk ||
+                      diff?.risk ||
+                      (diff.change_type === "ADDED" ? "YELLOW" : "GREEN");
+                    const explanation =
+                      detail?.explanation ||
+                      diff?.comment ||
+                      "Изменение носит технический характер. Дополнительные правки не требуются.";
+                    let violatedLaw =
+                      detail?.violated_law || diff?.violated_law;
+
                     // Защита от строки "null"
                     if (violatedLaw === "null") violatedLaw = null;
 
