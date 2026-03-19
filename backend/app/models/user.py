@@ -16,3 +16,5 @@ class User(Base):
     
     theme = Column(String, default="light", nullable=False) # 'light', 'dark' или 'system'
     notifications_enabled = Column(Boolean, default=True, nullable=False)
+    
+    token_balance = Column(Integer, default=50)  
