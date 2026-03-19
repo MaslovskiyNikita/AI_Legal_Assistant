@@ -13,7 +13,7 @@ router = APIRouter(prefix="/api/v1/documents", tags=["Documents"])
 async def upload_documents_for_comparison(
     chat_id: int = Form(...),
     user_id: int = Form(...),
-    text: str = Form(""), # <--- 👇 ПРИНИМАЕМ ТЕКСТ
+    text: str = Form(""),
     old_file: UploadFile = File(...), 
     new_file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db)
