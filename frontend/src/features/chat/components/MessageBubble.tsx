@@ -46,7 +46,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
 
   const rawText = msg.text || msg.content || "";
-  const aiData = msg.ai_data || null; // Читаем новое поле от бэкенда
+  let aiData = msg.ai_data || null;
+  if (typeof aiData === "string") {
+    try {
+      aiData = JSON.parse(aiData);
+    } catch (e) {}
+  }
   const showFooter = isUser || msg.isComplete;
 
   let parsedData: any = null;
@@ -460,9 +465,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 <tbody className="text-[13px] text-[var(--tg-theme-text-color)] align-top">
                   {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
                     const detail = parsedData.analysis?.details?.[idx] || null;
-                    const riskLevel =
-                      detail?.risk ||
-                      (diff.change_type === "ADDED" ? "YELLOW" : "GREEN");
+                    
+                    // 👇 Надежно собираем данные из detail ИЛИ из самого diff
+                    const riskLevel = detail?.risk || diff?.risk || (diff.change_type === "ADDED" ? "YELLOW" : "GREEN");
+                    const explanation = detail?.explanation || diff?.comment || "Изменение носит технический характер. Дополнительные правки не требуются.";
+                    let violatedLaw = detail?.violated_law || diff?.violated_law;
+                    
+                    // Защита от строки "null"
+                    if (violatedLaw === "null") violatedLaw = null;
 
                     return (
                       <tr
@@ -476,17 +486,14 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           {diff.new_block?.text || "—"}
                         </td>
                         <td className="p-3 text-[#3390EC] font-medium cursor-pointer hover:underline border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
-                          {detail?.violated_law &&
-                          detail.violated_law !== "null"
-                            ? detail.violated_law
-                            : "—"}
+                          {violatedLaw ? violatedLaw : "—"}
                         </td>
                         <td className="p-3 border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                           {renderRiskBadge(riskLevel)}
                         </td>
                         <td className="p-3 text-[12px] font-medium opacity-90">
-                          {detail?.explanation ||
-                            "Изменение носит технический характер. Дополнительные правки не требуются."}
+                          {/* Выводим найденное объяснение */}
+                          {explanation}
                         </td>
                       </tr>
                     );
