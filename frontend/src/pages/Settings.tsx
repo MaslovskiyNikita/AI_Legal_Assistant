@@ -86,8 +86,8 @@ export default function Settings() {
         <SettingsOptions
           theme={settings.theme}
           toggleTheme={settings.toggleTheme}
-          notifications={settings.notifications}
-          toggleNotifications={settings.toggleNotifications}
+          vibration={settings.vibration} // ИСПРАВЛЕНИЕ: vibration
+          toggleVibration={settings.toggleVibration} // ИСПРАВЛЕНИЕ: toggleVibration
           onOpenPrivacy={() => settings.setIsPrivacyModalOpen(true)}
           onOpenClearHistory={() => settings.setIsClearHistoryModalOpen(true)}
           onLogout={settings.handleLogout}

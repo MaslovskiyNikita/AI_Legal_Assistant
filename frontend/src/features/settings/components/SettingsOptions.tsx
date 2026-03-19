@@ -2,7 +2,7 @@
 import React from "react";
 import {
   Moon,
-  Bell,
+  Smartphone, // Изменили иконку
   ShieldCheck,
   ChevronRight,
   Trash2,
@@ -12,8 +12,8 @@ import {
 interface SettingsOptionsProps {
   theme: string;
   toggleTheme: () => void;
-  notifications: boolean;
-  toggleNotifications: () => void;
+  vibration: boolean; // ИСПРАВЛЕНИЕ: пропсы
+  toggleVibration: () => void;
   onOpenPrivacy: () => void;
   onOpenClearHistory: () => void;
   onLogout: () => void;
@@ -47,18 +47,18 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
         <div className="flex items-center justify-between px-4 py-3.5">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#FF9500] flex items-center justify-center">
-              <Bell size={16} className="text-white" />
+              <Smartphone size={16} className="text-white" /> {/* Иконка */}
             </div>
             <span className="font-medium text-[16px] text-[var(--tg-theme-text-color)]">
-              Уведомления
+              Вибрация {/* Текст */}
             </span>
           </div>
           <div
-            onClick={props.toggleNotifications}
-            className={`w-[50px] h-[30px] rounded-full relative cursor-pointer transition-colors duration-300 ${props.notifications ? "bg-[#34C759]" : "bg-[var(--tg-theme-secondary-bg-color)]"}`}
+            onClick={props.toggleVibration}
+            className={`w-[50px] h-[30px] rounded-full relative cursor-pointer transition-colors duration-300 ${props.vibration ? "bg-[#34C759]" : "bg-[var(--tg-theme-secondary-bg-color)]"}`}
           >
             <div
-              className={`absolute top-[2px] w-[26px] h-[26px] bg-[var(--tg-theme-bg-color)] rounded-full shadow-md transition-all duration-300 ${props.notifications ? "left-[22px]" : "left-[2px]"}`}
+              className={`absolute top-[2px] w-[26px] h-[26px] bg-[var(--tg-theme-bg-color)] rounded-full shadow-md transition-all duration-300 ${props.vibration ? "left-[22px]" : "left-[2px]"}`}
             />
           </div>
         </div>

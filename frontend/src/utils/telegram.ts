@@ -44,6 +44,11 @@ export const tgAlert = (message: string) => {
 export const tgHaptic = (
   style: "light" | "medium" | "heavy" | "rigid" | "soft" = "light",
 ) => {
+  // Читаем глобальную настройку
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  if (user && user.notifications_enabled === false) return; // Если выключено - отменяем вибрацию
+
   if (tg && tg.HapticFeedback) {
     tg.HapticFeedback.impactOccurred(style);
   }
@@ -51,6 +56,11 @@ export const tgHaptic = (
 
 // Отклик-уведомление (вибрация при успешном ответе или предупреждении)
 export const tgHapticNotification = (type: "error" | "success" | "warning") => {
+  // Читаем глобальную настройку
+  const userStr = localStorage.getItem("user");
+  const user = userStr ? JSON.parse(userStr) : null;
+  if (user && user.notifications_enabled === false) return; // Если выключено - отменяем вибрацию
+
   if (tg && tg.HapticFeedback) {
     tg.HapticFeedback.notificationOccurred(type);
   }
