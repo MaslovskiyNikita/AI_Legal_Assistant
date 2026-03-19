@@ -13,7 +13,7 @@ class ExportService:
         """Парсит жирный и курсив и добавляет их как run в параграф Word"""
         pattern = r'(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*)'
         parts = re.split(pattern, text)
-        
+
         for part in parts:
             if not part:
                 continue
@@ -113,8 +113,8 @@ class ExportService:
                     row_cells[0].text = b.get('change_type', '')
                     old_b = b.get('old_block')
                     new_b = b.get('new_block')
-                    row_cells[1].text = old_b.get('text', '') if old_b else '-'
-                    row_cells[2].text = new_b.get('text', '') if new_b else '-'
+                    row_cells[1].text = re.sub(r'\*{1,3}', '', old_b.get('text', '')) if old_b else '-'
+                    row_cells[2].text = re.sub(r'\*{1,3}', '', new_b.get('text', '')) if new_b else '-'
             else:
                 doc.add_paragraph("Значимых изменений не найдено.")
         except Exception as e:
@@ -125,13 +125,18 @@ class ExportService:
         out.seek(0)
         return out
 
-
     @staticmethod
     def _md_to_html(text: str) -> str:
         """Преобразует Markdown в простой HTML для fpdf2"""
-        text = text.replace('***', '<b><i>').replace('***', '</i></b>')
+        if not text:
+            return ""
+        # 1. Жирный курсив (***текст***)
+        text = re.sub(r'\*\*\*(.*?)\*\*\*', r'<b><i>\1</i></b>', text)
+        # 2. Жирный (**текст**)
         text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
+        # 3. Курсив (*текст*)
         text = re.sub(r'\*(.*?)\*', r'<i>\1</i>', text)
+        # 4. Переносы строк
         text = text.replace('\n', '<br>')
         return text
 
@@ -200,7 +205,10 @@ class ExportService:
                 for b in changed:
                     old_txt = b.get('old_block', {}).get('text', '-') if b.get('old_block') else '-'
                     new_txt = b.get('new_block', {}).get('text', '-') if b.get('new_block') else '-'
-                    
+
+                    old_txt = re.sub(r'\*{1,3}', '', old_txt)
+                    new_txt = re.sub(r'\*{1,3}', '', new_txt)
+
                     max_lines = max(pdf.get_nb_lines(col_width, old_txt), pdf.get_nb_lines(col_width, new_txt))
                     line_height = 6
                     row_h = max_lines * line_height
