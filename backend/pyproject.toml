@@ -28,6 +28,7 @@ langchain-classic = "^1.0.3"
 loguru = "^0.7.3"
 fpdf2 = "^2.8.7"
 rapidfuzz = "^3.14.3"
+pypdf = "^6.9.1"
 
 
 [build-system]
