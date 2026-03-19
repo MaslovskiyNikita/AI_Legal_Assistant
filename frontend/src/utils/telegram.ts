@@ -85,11 +85,10 @@ export const tgOpenInvoice = (
     setTimeout(() => callback("paid"), 2000);
   }
 };
-
 export const applyThemeToApp = (theme: "light" | "dark") => {
   document.documentElement.setAttribute("data-theme", theme);
 
-  // Применяем стили и к :root, и к <body>, чтобы скрипт Telegram не смог их перебить
+  // Применяем стили и к :root, и к <body>
   const elementsToUpdate = [document.documentElement, document.body];
 
   elementsToUpdate.forEach((el) => {
@@ -113,6 +112,9 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
         "#38383a",
         "important",
       );
+
+      // ПРИНУДИТЕЛЬНО задаем фон самого body, чтобы убрать белую полосу при скролле (overscroll)
+      el.style.backgroundColor = "#1c1c1d";
     } else {
       el.style.setProperty("--tg-theme-bg-color", "#ffffff", "important");
       el.style.setProperty(
@@ -133,6 +135,9 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
         "#e5e5ea",
         "important",
       );
+
+      // ПРИНУДИТЕЛЬНО задаем фон самого body
+      el.style.backgroundColor = "#ffffff";
     }
   });
 
@@ -142,8 +147,16 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
     const secBgColor = theme === "dark" ? "#000000" : "#f2f2f7";
 
     try {
+      // Красим фон самого WebApp
       if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
+      // Красим верхнюю панель
       if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
+
+      // 👇 САМОЕ ВАЖНОЕ: Красим нижнюю системную панель (Bottom Bar) Telegram
+      if (tg.setBottomBarColor) {
+        // Зависит от дизайна, обычно нижняя панель сливается с основным фоном
+        tg.setBottomBarColor(bgColor);
+      }
     } catch (e) {
       console.warn("Telegram API не поддерживает смену цветов в этой версии");
     }
