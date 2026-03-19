@@ -17,7 +17,7 @@ const PACKAGES = [
   { id: "pack_1000", tokens: 1000, stars: 100 },
 ];
 
-const MAX_FREE_TOKENS = 100; // Для расчета заполненности кольца
+const MAX_FREE_TOKENS = 100;
 
 const TokenCircleMenu = ({ balance }: { balance: number }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,17 +25,14 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
   const [loadingPack, setLoadingPack] = useState<string | null>(null);
   const { showToast } = useToast();
 
-  // --- ЛОГИКА КОЛЬЦА ---
-  // Ограничиваем процент от 0 до 100
   const percent = Math.min(Math.max((balance / MAX_FREE_TOKENS) * 100, 0), 100);
   const radius = 16;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (percent / 100) * circumference;
 
-  // Цвет кольца меняется в зависимости от остатка токенов
-  let strokeColor = "#34C759"; // Зеленый (>50%)
-  if (percent <= 50 && percent > 20) strokeColor = "#FF9500"; // Желтый (20-50%)
-  if (percent <= 20) strokeColor = "#FF3B30"; // Красный (<20%)
+  let strokeColor = "#34C759";
+  if (percent <= 50 && percent > 20) strokeColor = "#FF9500";
+  if (percent <= 20) strokeColor = "#FF3B30";
 
   const handleOpen = () => {
     tgHaptic("light");
@@ -78,13 +75,11 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
 
   return (
     <>
-      {/* --- ИНДИКАТОР В ШАПКЕ ПРОФИЛЯ --- */}
       <div
         onClick={handleOpen}
         className="relative flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
       >
         <svg className="-rotate-90 transform w-11 h-11">
-          {/* Фоновое кольцо */}
           <circle
             cx="22"
             cy="22"
@@ -94,7 +89,6 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
             fill="transparent"
             className="text-[var(--tg-theme-secondary-bg-color)]"
           />
-          {/* Кольцо прогресса */}
           <circle
             cx="22"
             cy="22"
@@ -108,21 +102,18 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
             className="transition-all duration-700 ease-in-out"
           />
         </svg>
-        {/* Иконка внутри кольца */}
         <div className="absolute inset-0 flex items-center justify-center">
           <Zap size={14} fill={strokeColor} className="text-transparent" />
         </div>
       </div>
 
-      {/* --- ШТОРКА (ИНФО + МАГАЗИН) --- */}
       <Drawer.Root open={isOpen} onOpenChange={setIsOpen}>
         <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50" />
-          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[60] outline-none">
+          <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[100]" />
+          <Drawer.Content className="bg-[var(--tg-theme-bg-color)] flex flex-col rounded-t-[24px] mt-24 fixed bottom-0 left-0 right-0 z-[110] outline-none">
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-hint-color)] opacity-20 mt-4 mb-2" />
 
             <div className="p-5 pb-10">
-              {/* === ЭКРАН 1: ИНФОРМАЦИЯ О БАЛАНСЕ === */}
               {view === "info" && (
                 <div className="flex flex-col animate-in fade-in slide-in-from-left-4 duration-300">
                   <div className="flex flex-col items-center text-center mb-6">
@@ -134,7 +125,6 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
                     </span>
                   </div>
 
-                  {/* Блок с пояснением */}
                   <div className="bg-[var(--tg-theme-secondary-bg-color)] rounded-2xl p-4 mb-6 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                     <div className="flex gap-3 mb-2">
                       <Clock
@@ -169,7 +159,6 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
                 </div>
               )}
 
-              {/* === ЭКРАН 2: МАГАЗИН ПАКЕТОВ === */}
               {view === "store" && (
                 <div className="flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
                   <div className="flex items-center gap-3 mb-6">
@@ -250,7 +239,6 @@ export const ProfileHeader: React.FC<{
   greeting: string;
   onSettingsClick: () => void;
 }> = ({ firstName, photoUrl, greeting, onSettingsClick }) => {
-  // Получаем баланс из локального хранилища (в будущем заменить на контекст/Redux)
   const userStr = localStorage.getItem("user");
   const balance = userStr ? (JSON.parse(userStr).token_balance ?? 50) : 50;
 
@@ -281,7 +269,6 @@ export const ProfileHeader: React.FC<{
         </div>
       </div>
 
-      {/* Виджет токенов (кольцо прогресса) */}
       <TokenCircleMenu balance={balance} />
     </div>
   );

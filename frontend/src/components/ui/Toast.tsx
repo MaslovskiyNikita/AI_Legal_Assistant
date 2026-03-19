@@ -25,15 +25,17 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
     ),
   };
 
+  // Используем фон темы Telegram, чтобы текст всегда контрастировал
+  // Цветом выделяем только рамки, чтобы сохранить стилистику (успех/ошибка/инфо)
   const bgColors = {
-    success: "bg-[#E5F8EB] border-[#34C759]/30",
-    error: "bg-[#FFEBEA] border-[#FF3B30]/30",
-    info: "bg-[#E5F1FF] border-[#3390EC]/30",
+    success: "bg-[var(--tg-theme-bg-color)] border-[#34C759]/50",
+    error: "bg-[var(--tg-theme-bg-color)] border-[#FF3B30]/50",
+    info: "bg-[var(--tg-theme-bg-color)] border-[var(--tg-theme-button-color)]/50",
   };
 
   return (
     <div
-      className={`flex items-center gap-3 p-4 rounded-2xl border shadow-lg backdrop-blur-md animate-in slide-in-from-top-5 fade-in duration-300 ${bgColors[type]}`}
+      className={`flex items-center gap-3 p-4 rounded-2xl border shadow-xl animate-in slide-in-from-top-5 fade-in duration-300 ${bgColors[type]}`}
     >
       {icons[type]}
       <span className="text-[14px] font-medium text-[var(--tg-theme-text-color)] flex-1">
