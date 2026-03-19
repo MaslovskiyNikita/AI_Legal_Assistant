@@ -28,14 +28,19 @@ export const useProfile = () => {
     else setGreeting("Доброй ночи");
   }, []);
 
-  // НАСТРОЙКА NATIVE MAIN BUTTON ДЛЯ TELEGRAM
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.MainButton) {
+      // 1. Читаем текущую тему из атрибута, который мы меняем в настройках
+      const currentTheme =
+        document.documentElement.getAttribute("data-theme") || "light";
+
+      const buttonBgColor = currentTheme === "dark" ? "#1c1c1d" : "#3390EC";
+
       // Стилизуем под дизайн приложения
       tg.MainButton.setParams({
         text: "НАЧАТЬ НОВЫЙ ЧАТ",
-        color: "#3390EC",
+        color: buttonBgColor,
         text_color: "#ffffff",
         is_visible: true,
       });
