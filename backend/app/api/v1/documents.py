@@ -21,7 +21,6 @@ async def upload_documents_for_comparison(
     logger.info(f"📤 Загрузка файлов для сравнения (Chat ID: {chat_id}, User ID: {user_id})")
 
     try:
-        # Передаем text в сервис
         response = await save_uploaded_documents(db, user_id, chat_id, old_file, new_file, text)
         return response
     except Exception as e:

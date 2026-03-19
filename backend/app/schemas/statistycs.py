@@ -11,3 +11,7 @@ class RiskStatisticResponse(BaseModel):
 class ActivityStatisticResponse(BaseModel):
     date: str
     message_count: int
+    
+class LawStatisticResponse(BaseModel):
+    law_name: str
+    count: int
