@@ -251,3 +251,48 @@ class AiRiskAnalyzer:
                 return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
         except Exception as e:
             return f"Ошибка AI: {str(e)}"
+
+    @staticmethod
+    async def generate_chat_title(text: str) -> str:
+        """
+        Генерирует короткое название для чата на основе первого сообщения.
+        """
+        api_key = settings.GEMINI_API_KEY
+        if not api_key or api_key == "ВАШ_КЛЮЧ":
+            return "Новый диалог"
+
+        # Берем промпт из нашего хранилища промптов
+        system_prompt = LegalPrompts.get_title_generation_prompt()
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=settings.GEMINI_TIMEOUT) as client:
+                response = await client.post(
+                    f"{settings.GEMINI_BASE_URL}/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}",
+                    headers=headers,
+                    json={
+                        "systemInstruction": {"parts": [{"text": system_prompt}]},
+                        "contents": [{"role": "user", "parts": [{"text": text}]}],
+                        "generationConfig": {
+                            "temperature": 0.2
+                        }
+                    },
+                )
+                response.raise_for_status()
+                title = response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+
+                # Очищаем от случайных знаков препинания по краям
+                title = title.strip('\'"*.')
+
+                # Защита от слишком длинных ответов
+                if len(title) > 50:
+                    title = title[:47] + "..."
+
+                return title
+        except Exception as e:
+            print(f"Ошибка генерации названия чата: {e}")
+            return "Новый диалог"

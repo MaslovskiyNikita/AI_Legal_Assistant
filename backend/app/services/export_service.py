@@ -1,4 +1,5 @@
 import io
+import json
 import asyncio
 import re
 import os
@@ -10,6 +11,8 @@ from fpdf import FPDF
 from loguru import logger
 
 
+# --- УТИЛИТЫ ---
+
 def clean_xml_string(text: str) -> str:
     if not text:
         return ""
@@ -20,13 +23,9 @@ def _md_to_html(text: str) -> str:
     """Преобразует Markdown в простой HTML для FPDF."""
     if not text:
         return ""
-    # Жирный курсив
     text = re.sub(r'\*\*\*(.*?)\*\*\*', r'<b><i>\1</i></b>', text)
-    # Жирный
     text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
-    # Курсив
     text = re.sub(r'\*(.*?)\*', r'<i>\1</i>', text)
-    # Переносы строк
     text = text.replace('\n', '<br>')
     return text
 
@@ -36,7 +35,7 @@ def _parse_markdown_to_docx(paragraph, text: str):
     lines = text.split('\n')
     for i, line in enumerate(lines):
         if i > 0:
-            paragraph.add_run('\n')  # Добавляем перенос строки внутри параграфа
+            paragraph.add_run('\n')
 
         pattern = r'(\*\*\*.*?\*\*\*|\*\*.*?\*\*|\*.*?\*)'
         parts = re.split(pattern, line)
@@ -60,6 +59,41 @@ def _parse_markdown_to_docx(paragraph, text: str):
             run.font.size = Pt(11)
 
 
+def _render_content_docx(doc, text: str):
+    """Обрабатывает блоки текста (заголовки, списки) для DOCX анализа."""
+    if not text:
+        return
+
+    lines = text.split('\n')
+    for line in lines:
+        clean_line = line.strip()
+        if not clean_line:
+            doc.add_paragraph()
+            continue
+
+        if clean_line.startswith('### '):
+            doc.add_heading(clean_line.replace('### ', ''), level=3)
+        elif clean_line.startswith('## '):
+            doc.add_heading(clean_line.replace('## ', ''), level=2)
+        elif clean_line.startswith('# '):
+            doc.add_heading(clean_line.replace('# ', ''), level=1)
+
+        elif clean_line.startswith('* ') or clean_line.startswith('- '):
+            p = doc.add_paragraph(style='List Bullet')
+            _parse_markdown_to_docx(p, clean_line[2:])
+
+        elif re.match(r'^\d+\.\s', clean_line):
+            p = doc.add_paragraph(style='List Number')
+            content = re.sub(r'^\d+\.\s', '', clean_line)
+            _parse_markdown_to_docx(p, content)
+
+        else:
+            p = doc.add_paragraph()
+            _parse_markdown_to_docx(p, clean_line)
+
+
+# --- PDF КЛАСС ---
+
 class ChatPDF(FPDF):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -72,6 +106,7 @@ class ChatPDF(FPDF):
             if os.path.exists(reg_path) and os.path.exists(med_path):
                 self.add_font("Roboto", "", reg_path)
                 self.add_font("Roboto", "B", med_path)
+                self.add_font("Roboto", "I", reg_path)  # Fallback for italic
                 self.roboto_loaded = True
                 logger.info("✅ PDF: Шрифты Roboto успешно подключены")
             else:
@@ -98,6 +133,8 @@ class ChatPDF(FPDF):
         self.ln(10)
 
 
+# --- ЭКСПОРТ ИСТОРИИ ЧАТА ---
+
 def _build_pdf_sync(messages: list) -> io.BytesIO:
     pdf = ChatPDF()
     pdf.add_page()
@@ -106,7 +143,7 @@ def _build_pdf_sync(messages: list) -> io.BytesIO:
     pdf.set_font(font_name, "B", 14)
     pdf.set_text_color(0, 0, 0)
 
-    title_text = "Отчет о сравнении документов" if pdf.roboto_loaded else "Chat History Report"
+    title_text = "Отчет о переписке" if pdf.roboto_loaded else "Chat History Report"
     pdf.cell(0, 10, title_text, align="C", ln=True)
     pdf.ln(10)
 
@@ -127,7 +164,6 @@ def _build_pdf_sync(messages: list) -> io.BytesIO:
         pdf.set_font(font_name, "", 10)
         pdf.set_text_color(0, 0, 0)
 
-        # Конвертируем Markdown в HTML и рендерим
         html_text = _md_to_html(text)
         pdf.write_html(html_text)
         pdf.ln(5)
@@ -149,7 +185,7 @@ def _build_docx_sync(messages: list) -> io.BytesIO:
     run.font.color.rgb = RGBColor(142, 142, 147)
     run.font.size = Pt(10)
 
-    title = doc.add_heading('Отчет о сравнении документов', level=1)
+    title = doc.add_heading('Отчет о переписке', level=1)
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     for msg in messages:
@@ -163,7 +199,6 @@ def _build_docx_sync(messages: list) -> io.BytesIO:
         if role == "ai":
             name_run.font.color.rgb = RGBColor(51, 144, 236)
 
-        # Пропускаем текст через наш парсер
         _parse_markdown_to_docx(p, text)
 
     footer = section.footer
@@ -179,11 +214,187 @@ def _build_docx_sync(messages: list) -> io.BytesIO:
     return stream
 
 
+# --- ЭКСПОРТ АНАЛИЗА РИСКОВ ---
+
+def _build_analysis_docx_sync(analysis_data: dict, diff_blocks: list) -> io.BytesIO:
+    doc = Document()
+    date_str = datetime.now().strftime("%d.%m.%Y")
+
+    section = doc.sections[0]
+    header = section.header
+    header_para = header.paragraphs[0]
+    header_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    run = header_para.add_run(f"AI Legal Expert | Сгенерировано: {date_str}")
+    run.font.color.rgb = RGBColor(142, 142, 147)
+    run.font.size = Pt(10)
+
+    title = doc.add_heading("ОТЧЕТ ОБ АНАЛИЗЕ ИЗМЕНЕНИЙ", level=1)
+    title.alignment = WD_ALIGN_PARAGRAPH.CENTER
+
+    doc.add_heading("Анализ рисков", level=2)
+    risk_val = analysis_data.get("overall_risk", "UNKNOWN")
+
+    risk_para = doc.add_paragraph()
+    run_risk = risk_para.add_run(f"Общий уровень риска: {risk_val}")
+    run_risk.bold = True
+    if risk_val == "RED":
+        run_risk.font.color.rgb = RGBColor(255, 0, 0)
+    elif risk_val == "YELLOW":
+        run_risk.font.color.rgb = RGBColor(204, 153, 0)
+
+    _render_content_docx(doc, analysis_data.get("summary", ""))
+
+    details = analysis_data.get("details", [])
+    if details:
+        doc.add_heading("Детальный анализ", level=3)
+        for detail in details:
+            p = doc.add_paragraph()
+            r_val = detail.get("risk", "UNKNOWN")
+            r = p.add_run(f"• {detail.get('title', 'Без названия')}: [{r_val}]")
+            r.bold = True
+            if r_val == "RED":
+                r.font.color.rgb = RGBColor(255, 0, 0)
+            elif r_val == "YELLOW":
+                r.font.color.rgb = RGBColor(204, 153, 0)
+
+            _render_content_docx(doc, detail.get("explanation", ""))
+            violated_law = detail.get("violated_law")
+            if violated_law:
+                doc.add_paragraph(f"Законодательство: {violated_law}").italic = True
+
+    doc.add_heading("Таблица изменений", level=2)
+    try:
+        changed_blocks = [b for b in diff_blocks if b.get('change_type') != 'UNCHANGED']
+        if changed_blocks:
+            table = doc.add_table(rows=1, cols=3)
+            table.style = 'Table Grid'
+            hdr_cells = table.rows[0].cells
+            hdr_cells[0].text = 'Тип'
+            hdr_cells[1].text = 'Было'
+            hdr_cells[2].text = 'Стало'
+            for b in changed_blocks:
+                row_cells = table.add_row().cells
+                row_cells[0].text = b.get('change_type', '')
+                old_b = b.get('old_block') or {}
+                new_b = b.get('new_block') or {}
+                row_cells[1].text = re.sub(r'\*{1,3}', '', old_b.get('text', '-')) if old_b else '-'
+                row_cells[2].text = re.sub(r'\*{1,3}', '', new_b.get('text', '-')) if new_b else '-'
+        else:
+            doc.add_paragraph("Значимых изменений не найдено.")
+    except Exception as e:
+        doc.add_paragraph(f"Ошибка формирования таблицы: {str(e)}")
+
+    stream = io.BytesIO()
+    doc.save(stream)
+    stream.seek(0)
+    return stream
+
+
+def _build_analysis_pdf_sync(analysis_data: dict, diff_blocks: list) -> io.BytesIO:
+    pdf = ChatPDF()
+    pdf.add_page()
+
+    font_name = pdf.font_family
+
+    pdf.set_font(font_name, 'B', 16)
+    pdf.cell(0, 10, "ОТЧЕТ ОБ АНАЛИЗЕ ИЗМЕНЕНИЙ", ln=True, align='C')
+    pdf.ln(5)
+
+    pdf.set_font(font_name, 'B', 14)
+    pdf.cell(0, 10, "Анализ рисков", ln=True)
+
+    risk_val = analysis_data.get("overall_risk", "UNKNOWN")
+    if risk_val == "RED":
+        pdf.set_text_color(255, 0, 0)
+    pdf.set_font(font_name, 'B', 12)
+    pdf.cell(0, 10, f"Общий уровень риска: {risk_val}", ln=True)
+    pdf.set_text_color(0, 0, 0)
+
+    pdf.set_font(font_name, '', 11)
+    pdf.write_html(_md_to_html(analysis_data.get("summary", "")))
+    pdf.ln(10)
+
+    details = analysis_data.get("details", [])
+    if details:
+        pdf.set_font(font_name, 'B', 13)
+        pdf.cell(0, 10, "Детальный анализ", ln=True)
+        for detail in details:
+            r_val = detail.get("risk", "UNKNOWN")
+            title = detail.get("title", "Без названия")
+            header_html = f"<b>• {title} [{r_val}]</b>"
+            pdf.write_html(header_html)
+            pdf.ln(5)
+
+            pdf.write_html(_md_to_html(detail.get("explanation", "")))
+
+            violated_law = detail.get("violated_law")
+            if violated_law:
+                pdf.ln(2)
+                pdf.write_html(f"<i>Связано с: {violated_law}</i>")
+            pdf.ln(8)
+
+    pdf.ln(5)
+    pdf.set_font(font_name, 'B', 13)
+    pdf.multi_cell(0, 10, "Таблица изменений")
+
+    try:
+        changed = [b for b in diff_blocks if b.get('change_type') != 'UNCHANGED']
+        if changed:
+            pdf.set_font(font_name, 'B', 10)
+            col_width = pdf.epw / 3
+
+            pdf.cell(col_width, 10, "Тип", border=1)
+            pdf.cell(col_width, 10, "Было", border=1)
+            pdf.cell(col_width, 10, "Стало", border=1)
+            pdf.ln()
+
+            pdf.set_font(font_name, '', 9)
+            for b in changed:
+                old_b = b.get('old_block') or {}
+                new_b = b.get('new_block') or {}
+                old_txt = re.sub(r'\*{1,3}', '', old_b.get('text', '-')) if old_b else '-'
+                new_txt = re.sub(r'\*{1,3}', '', new_b.get('text', '-')) if new_b else '-'
+
+                max_lines = max(pdf.get_nb_lines(col_width, old_txt), pdf.get_nb_lines(col_width, new_txt))
+                line_height = 6
+                row_h = max_lines * line_height
+
+                if pdf.get_y() + row_h > 270:
+                    pdf.add_page()
+
+                x = pdf.get_x()
+                y = pdf.get_y()
+
+                pdf.multi_cell(col_width, row_h / max(1, pdf.get_nb_lines(col_width, b.get('change_type', ''))),
+                               b.get('change_type', ''), border=1)
+                pdf.set_xy(x + col_width, y)
+                pdf.multi_cell(col_width, line_height, old_txt, border=1)
+                pdf.set_xy(x + col_width * 2, y)
+                pdf.multi_cell(col_width, line_height, new_txt, border=1)
+                pdf.set_y(y + row_h)
+        else:
+            pdf.cell(0, 10, "Изменений не найдено", ln=True)
+    except Exception as e:
+        pdf.cell(0, 10, f"Ошибка формирования таблицы: {str(e)}", ln=True)
+
+    stream = io.BytesIO(pdf.output())
+    stream.seek(0)
+    return stream
+
+
+# --- ASYNC ОБЕРТКИ ДЛЯ ФАСТАПИ ---
+
 async def generate_docx_stream(messages: list) -> io.BytesIO:
-    """Запускает генерацию DOCX в отдельном потоке, не блокируя FastAPI"""
     return await asyncio.to_thread(_build_docx_sync, messages)
 
 
 async def generate_pdf_stream(messages: list) -> io.BytesIO:
-    """Запускает генерацию PDF в отдельном потоке, не блокируя FastAPI"""
     return await asyncio.to_thread(_build_pdf_sync, messages)
+
+
+async def generate_analysis_docx_stream(analysis_data: dict, diff_blocks: list) -> io.BytesIO:
+    return await asyncio.to_thread(_build_analysis_docx_sync, analysis_data, diff_blocks)
+
+
+async def generate_analysis_pdf_stream(analysis_data: dict, diff_blocks: list) -> io.BytesIO:
+    return await asyncio.to_thread(_build_analysis_pdf_sync, analysis_data, diff_blocks)
