@@ -37,6 +37,13 @@ class DocumentComparisonManager:
         # 4. AI Анализ
         analysis = await AiRiskAnalyzer.analyze_changes(meaningful_diffs)
 
+        # 5. МАППИНГ: Привязываем ответы AI обратно к блокам, чтобы они не были None
+        for i, detail in enumerate(analysis.details):
+            if i < len(meaningful_diffs):
+                meaningful_diffs[i].risk = detail.risk.value
+                meaningful_diffs[i].comment = detail.explanation
+                meaningful_diffs[i].violated_law = detail.violated_law
+
         def prepare_response():
             return {
                 "diff_blocks": [b.model_dump() for b in meaningful_diffs],

@@ -57,7 +57,12 @@ class AiRiskAnalyzer:
             print(f"RAG Error: {e}")
             rag_context = ""
 
-        prompt = LegalPrompts.get_system_prompt("\n\n".join(batch_text_for_prompt), rag_context, tone)
+        prompt = LegalPrompts.get_system_prompt(
+            diff_text="\n\n".join(batch_text_for_prompt),
+            rag_context=rag_context,
+            tone=tone,
+            blocks_count=len(batch)  # Передаем количество блоков в батче!
+        )
 
         headers = {
             "Content-Type": "application/json",
