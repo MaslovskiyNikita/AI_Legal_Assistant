@@ -85,7 +85,7 @@ class AiRiskAnalyzer:
             return [ChangeAnalysis.model_validate(item) for item in parsed.get("details", [])]
 
     @staticmethod
-    async def analyze_changes(diff_blocks: List[BlockDiff], tone: AssistantTone = AssistantTone.STRICT) -> FullDocumentAnalysis:
+    async def analyze_changes(diff_blocks: List[BlockDiff], tone: AssistantTone = AssistantTone.FRIENDLY) -> FullDocumentAnalysis:
         api_key = settings.GEMINI_API_KEY
         meaningful_diffs = [b for b in diff_blocks if b.change_type != ChangeType.UNCHANGED]
         
