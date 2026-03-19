@@ -20,7 +20,7 @@ export const useSettings = () => {
   const [isClearHistoryModalOpen, setIsClearHistoryModalOpen] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
-
+  const [isKnowledgeBaseOpen, setIsKnowledgeBaseOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"chats" | "documents">("chats");
   const [chats, setChats] = useState<any[]>([]);
   const [allDocuments, setAllDocuments] = useState<any[]>([]);
@@ -270,10 +270,12 @@ export const useSettings = () => {
     displayedDocuments,
     theme,
     toggleTheme,
-    vibration, // Возвращаем vibration
-    toggleVibration, // Возвращаем toggleVibration
+    vibration,
+    toggleVibration,
     isClearHistoryModalOpen,
     setIsClearHistoryModalOpen,
+    isKnowledgeBaseOpen,
+    setIsKnowledgeBaseOpen,
     isClearing,
     executeClearHistory,
     isPrivacyModalOpen,

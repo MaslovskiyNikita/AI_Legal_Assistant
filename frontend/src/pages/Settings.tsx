@@ -86,9 +86,10 @@ export default function Settings() {
         <SettingsOptions
           theme={settings.theme}
           toggleTheme={settings.toggleTheme}
-          vibration={settings.vibration} // ИСПРАВЛЕНИЕ: vibration
-          toggleVibration={settings.toggleVibration} // ИСПРАВЛЕНИЕ: toggleVibration
+          vibration={settings.vibration}
+          toggleVibration={settings.toggleVibration}
           onOpenPrivacy={() => settings.setIsPrivacyModalOpen(true)}
+          onOpenKnowledgeBase={() => settings.setIsKnowledgeBaseOpen(true)}
           onOpenClearHistory={() => settings.setIsClearHistoryModalOpen(true)}
           onLogout={settings.handleLogout}
         />
@@ -101,6 +102,8 @@ export default function Settings() {
         isClearing={settings.isClearing}
         isPrivacyModalOpen={settings.isPrivacyModalOpen}
         setIsPrivacyModalOpen={settings.setIsPrivacyModalOpen}
+        isKnowledgeBaseOpen={settings.isKnowledgeBaseOpen}
+        setIsKnowledgeBaseOpen={settings.setIsKnowledgeBaseOpen}
       />
     </div>
   );

@@ -1,20 +1,21 @@
-// src/features/settings/components/SettingsOptions.tsx
 import React from "react";
 import {
   Moon,
-  Smartphone, // Изменили иконку
+  Smartphone,
   ShieldCheck,
   ChevronRight,
   Trash2,
   LogOut,
+  BookOpen,
 } from "lucide-react";
 
 interface SettingsOptionsProps {
   theme: string;
   toggleTheme: () => void;
-  vibration: boolean; // ИСПРАВЛЕНИЕ: пропсы
+  vibration: boolean;
   toggleVibration: () => void;
   onOpenPrivacy: () => void;
+  onOpenKnowledgeBase: () => void; // <-- ДОБАВИЛИ В ИНТЕРФЕЙС
   onOpenClearHistory: () => void;
   onLogout: () => void;
 }
@@ -47,10 +48,10 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
         <div className="flex items-center justify-between px-4 py-3.5">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#FF9500] flex items-center justify-center">
-              <Smartphone size={16} className="text-white" /> {/* Иконка */}
+              <Smartphone size={16} className="text-white" />
             </div>
             <span className="font-medium text-[16px] text-[var(--tg-theme-text-color)]">
-              Вибрация {/* Текст */}
+              Вибрация
             </span>
           </div>
           <div
@@ -69,7 +70,24 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
       <h3 className="text-[var(--tg-theme-hint-color)] text-[13px] font-medium uppercase tracking-wider ml-1 mb-2">
         Информация
       </h3>
-      <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] overflow-hidden shadow-sm">
+      <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] overflow-hidden shadow-sm flex flex-col">
+        <button
+          type="button"
+          onClick={props.onOpenKnowledgeBase}
+          className="w-full flex items-center justify-between px-4 py-3.5 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
+        >
+          <div className="flex items-center gap-3 text-[var(--tg-theme-text-color)]">
+            <div className="w-8 h-8 rounded-lg bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] flex items-center justify-center">
+              <BookOpen
+                size={16}
+                className="text-[var(--tg-theme-button-color)]"
+              />
+            </div>
+            <span className="font-medium text-[16px]">База знаний (НПА)</span>
+          </div>
+          <ChevronRight size={18} className="text-[#C7C7CC]" />
+        </button>
+
         <button
           type="button"
           onClick={props.onOpenPrivacy}

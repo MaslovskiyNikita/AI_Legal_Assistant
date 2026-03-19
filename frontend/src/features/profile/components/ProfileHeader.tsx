@@ -17,7 +17,7 @@ const PACKAGES = [
   { id: "pack_1000", tokens: 1000, stars: 100 },
 ];
 
-const MAX_FREE_TOKENS = 100;
+const MAX_FREE_TOKENS = 50;
 
 const TokenCircleMenu = ({
   balance,
