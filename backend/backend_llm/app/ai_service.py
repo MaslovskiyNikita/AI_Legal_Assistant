@@ -122,59 +122,87 @@ class AiRiskAnalyzer:
         return FullDocumentAnalysis(overall_risk=overall_risk, summary=summary, details=all_details)
 
     @staticmethod
-    def format_chat_history(chat_messages):
+    def format_chat_history(chat_data) -> str:
+        """
+        Обрабатывает историю чата. Поддерживает как список сообщений,
+        так и полный словарь чата (с ключом 'messages').
+        """
+        # 1. Извлекаем список сообщений, если передан весь объект чата
+        if isinstance(chat_data, dict) and "messages" in chat_data:
+            messages_list = chat_data["messages"]
+        elif isinstance(chat_data, list):
+            messages_list = chat_data
+        else:
+            messages_list = []
+
         formatted_messages = []
 
-        # Берем последние 6 сообщений, как было в твоем коде
-        for m in chat_messages[-6:]:
+        # Берем последние 6 сообщений для экономии контекста
+        for m in messages_list[-6:]:
             role = "Пользователь" if m.get("role") == "user" else "Ассистент"
             message_text = m.get("text", "")
 
-            # 1. Прикрепляем информацию о документах пользователя
+            # 2. Прикрепляем информацию о документах пользователя
             documents = m.get("documents", [])
             if documents:
-                doc_names = [doc.get("filename") for doc in documents]
-                message_text += f"\n[Прикрепленные документы: {', '.join(doc_names)}]"
+                doc_names = [doc.get("filename") for doc in documents if doc.get("filename")]
+                if doc_names:
+                    message_text += f"\n\n[Прикрепленные документы: {', '.join(doc_names)}]"
 
-            # 2. Распаковываем аналитику от ИИ (если она есть)
+            # 3. Распаковываем аналитику от ИИ
             ai_data = m.get("ai_data")
             if ai_data:
-                analysis_details = ai_data.get("analysis", {}).get("details", [])
+                analysis = ai_data.get("analysis", {})
                 diff_blocks = ai_data.get("diff_blocks", [])
 
-                if analysis_details or diff_blocks:
+                if analysis or diff_blocks:
                     message_text += "\n\n*** ДЕТАЛИ АНАЛИЗА ДОКУМЕНТОВ ***"
 
-                    # Добавляем список рисков
-                    message_text += "\n\nВЫЯВЛЕННЫЕ РИСКИ:"
-                    for detail in analysis_details:
-                        risk_level = detail.get("risk", "UNKNOWN")
-                        title = detail.get("title", "")
-                        explanation = detail.get("explanation", "")
-                        message_text += f"\n- [{risk_level}] {title}: {explanation}"
+                # Блок 3.1: Общее резюме анализа
+                if analysis:
+                    overall_risk = analysis.get("overall_risk", "UNKNOWN")
+                    summary = analysis.get("summary", "")
+                    message_text += f"\nОбщий уровень риска: {overall_risk}"
+                    message_text += f"\nРезюме: {summary}"
 
-                    # Добавляем конкретные изменения (diffs)
-                    # Берем текст из old_block и new_block для экономии токенов (вместо HTML)
+                    details = analysis.get("details", [])
+                    if details:
+                        message_text += "\n\nВЫЯВЛЕННЫЕ РИСКИ:"
+                        for detail in details:
+                            risk_level = detail.get("risk", "UNKNOWN")
+                            title = detail.get("title", "Без названия")
+                            explanation = detail.get("explanation", "")
+                            violated_law = detail.get("violated_law")
+
+                            law_info = f" (Связанный закон/статья: {violated_law})" if violated_law else ""
+                            message_text += f"\n- [{risk_level}] {title}: {explanation}{law_info}"
+
+                # Блок 3.2: Конкретные изменения текста
+                if diff_blocks:
                     message_text += "\n\nИЗМЕНЕННЫЕ БЛОКИ ТЕКСТА:"
                     for diff in diff_blocks:
                         change_type = diff.get("change_type", "UNKNOWN")
+                        risk = diff.get("risk", "UNKNOWN")
                         comment = diff.get("comment", "")
 
-                        old_text = diff.get("old_block", {}).get("text", "Нет") if diff.get("old_block") else "Нет"
-                        new_text = diff.get("new_block", {}).get("text", "Нет") if diff.get("new_block") else "Нет"
+                        old_block = diff.get("old_block") or {}
+                        new_block = diff.get("new_block") or {}
 
-                        message_text += f"\n* Тип: {change_type} | Комментарий ИИ: {comment}"
+                        old_text = old_block.get("text", "---")
+                        new_text = new_block.get("text", "---")
+
+                        message_text += f"\n* Тип: {change_type} | Риск: {risk} | Комментарий AI: {comment}"
                         message_text += f"\n  Было: {old_text}"
                         message_text += f"\n  Стало: {new_text}"
 
-            formatted_messages.append(f"{role}: {message_text}")
+            formatted_messages.append(f"{role}:\n{message_text}")
 
         return "\n\n---\n\n".join(formatted_messages)
 
     @staticmethod
     async def answer_question(
             question: str,
-            chat_history: List[Dict[str, str]],
+            chat_history: dict | list,
             tone: AssistantTone = AssistantTone.FRIENDLY
     ) -> str:
         api_key = settings.GEMINI_API_KEY
@@ -185,11 +213,13 @@ class AiRiskAnalyzer:
         try:
             rag_docs = await rag_service.asearch(question)
             if rag_docs:
-                rag_parts = [f"- {d.metadata.get('source')}, ст. {d.metadata.get('article')}: {d.page_content}" for d in rag_docs]
+                rag_parts = [f"- {d.metadata.get('source')}, ст. {d.metadata.get('article')}: {d.page_content}" for d in
+                             rag_docs]
                 rag_context = "\n\n".join(rag_parts)
         except Exception as e:
             print(f"RAG Chat Error: {e}")
 
+        # Теперь форматтер правильно съест словарь с ключом 'messages'
         history_text = AiRiskAnalyzer.format_chat_history(chat_history)
 
         system_prompt = LegalPrompts.get_chat_prompt(
