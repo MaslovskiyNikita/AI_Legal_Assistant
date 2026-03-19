@@ -31,7 +31,6 @@ export const useProfile = () => {
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.MainButton) {
-      // ИЗМЕНЕНО: Жестко задаем синий цвет, чтобы он не зависел от темы ТГ
       tg.MainButton.setParams({
         text: "НАЧАТЬ НОВЫЙ ЧАТ",
         color: "#3390EC",
