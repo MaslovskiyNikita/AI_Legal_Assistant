@@ -31,15 +31,11 @@ export const useProfile = () => {
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.MainButton) {
-      // БЕРЕМ ЦВЕТ КНОПКИ ИЗ ТЕМЫ САМОГО ТГ ИЛИ СТАВИМ СИНИЙ (#3390EC)
-      // Мы больше не привязываем её к фону (#1c1c1d)
-      const buttonBgColor = tg.themeParams?.button_color || "#3390EC";
-      const buttonTextColor = tg.themeParams?.button_text_color || "#ffffff";
-
+      // ИЗМЕНЕНО: Жестко задаем синий цвет, чтобы он не зависел от темы ТГ
       tg.MainButton.setParams({
         text: "НАЧАТЬ НОВЫЙ ЧАТ",
-        color: buttonBgColor,
-        text_color: buttonTextColor,
+        color: "#3390EC",
+        text_color: "#ffffff",
         is_visible: true,
       });
 
@@ -58,7 +54,6 @@ export const useProfile = () => {
       };
     }
   }, [selectedAgent, navigate]);
-
   useEffect(() => {
     if (internalUserId) {
       setIsLoadingRecent(true);

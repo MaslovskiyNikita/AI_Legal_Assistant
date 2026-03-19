@@ -89,6 +89,26 @@ export const tgOpenInvoice = (
 export const applyThemeToApp = (theme: "light" | "dark") => {
   document.documentElement.setAttribute("data-theme", theme);
 
+  // ЖЕСТКО переопределяем переменные, чтобы Telegram не навязывал свои цвета
+  const root = document.documentElement;
+  if (theme === "dark") {
+    root.style.setProperty("--tg-theme-bg-color", "#1c1c1d");
+    root.style.setProperty("--tg-theme-secondary-bg-color", "#000000");
+    root.style.setProperty("--tg-theme-text-color", "#ffffff");
+    root.style.setProperty("--tg-theme-hint-color", "#8e8e93");
+    root.style.setProperty("--tg-theme-button-color", "#3390ec");
+    root.style.setProperty("--tg-theme-button-text-color", "#ffffff");
+    root.style.setProperty("--tg-theme-section-separator-color", "#38383a");
+  } else {
+    root.style.setProperty("--tg-theme-bg-color", "#ffffff");
+    root.style.setProperty("--tg-theme-secondary-bg-color", "#f2f2f7");
+    root.style.setProperty("--tg-theme-text-color", "#000000");
+    root.style.setProperty("--tg-theme-hint-color", "#8e8e93");
+    root.style.setProperty("--tg-theme-button-color", "#3390ec");
+    root.style.setProperty("--tg-theme-button-text-color", "#ffffff");
+    root.style.setProperty("--tg-theme-section-separator-color", "#e5e5ea");
+  }
+
   const tg = getTg();
   if (tg) {
     const bgColor = theme === "dark" ? "#1c1c1d" : "#ffffff";

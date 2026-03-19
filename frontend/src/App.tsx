@@ -84,7 +84,9 @@ export default function App() {
 
     const userStr = localStorage.getItem("user");
     const userTheme = userStr ? JSON.parse(userStr).theme : null;
-    const finalTheme = userTheme || tg?.colorScheme || "dark";
+
+    // ИЗМЕНЕНО: Больше не смотрим на tg?.colorScheme
+    const finalTheme = userTheme || "dark";
     applyThemeToApp(finalTheme);
 
     if (tg) {

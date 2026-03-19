@@ -39,10 +39,9 @@ export const useAuth = () => {
           photo_url: TELEGRAM_USER.photo_url,
         });
 
-        // Если юзер новый, сразу сохраняем его нативную тему ТГ на бэкенд
+        // 👇 ИЗМЕНЕНО: Если юзер новый, жестко сохраняем светлую тему по умолчанию
         if (authResponse.is_new_user) {
-          const nativeTheme = tg?.colorScheme || "dark";
-          await apiClient.updateSettings(tgId, { theme: nativeTheme });
+          await apiClient.updateSettings(tgId, { theme: "light" });
         }
 
         const profile = await apiClient.getUser(tgId);
@@ -56,9 +55,12 @@ export const useAuth = () => {
 
         localStorage.setItem("user", JSON.stringify(safeProfile));
 
-        // 👇 ИСПРАВЛЕНИЕ: Применяем тему пользователя единой функцией (она сама поменяет цвета ТГ)
+        // Применяем тему пользователя единой функцией
+        // Если вдруг темы с бэка нет, форсируем светлую
         if (safeProfile.theme) {
           applyThemeToApp(safeProfile.theme);
+        } else {
+          applyThemeToApp("light");
         }
 
         // Редиректы только если мы на корневой странице
