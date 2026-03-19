@@ -23,8 +23,14 @@ export const useSettings = () => {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
-  // Инициализируем тему из локалстораджа, дефолт - темная
-  const [theme, setTheme] = useState(user?.theme || "dark");
+  // 👇 ИСПРАВЛЕНО: Теперь мы всегда в первую очередь смотрим на реальный цвет экрана (DOM),
+  // чтобы положение тумблера на 100% совпадало с визуалом при первом входе.
+  const [theme, setTheme] = useState(
+    document.documentElement.getAttribute("data-theme") ||
+      user?.theme ||
+      "dark",
+  );
+
   const [notifications, setNotifications] = useState(
     user?.notifications_enabled ?? true,
   );
@@ -95,7 +101,6 @@ export const useSettings = () => {
   const handleDeleteChat = async (chatId: number) => {
     try {
       await apiClient.deleteChat(chatId);
-      // Обновляем стейт, чтобы чат мгновенно исчез из списка
       setChats((prev) => prev.filter((c) => c.id !== chatId));
       setAllDocuments((prev) => prev.filter((d) => d.chatId !== chatId));
     } catch (error) {
@@ -108,9 +113,9 @@ export const useSettings = () => {
     localStorage.removeItem("user");
     const tg = getTg();
     if (tg && tg.initDataUnsafe?.user) {
-      tgClose(); // Закрываем Mini App в Telegram
+      tgClose();
     } else {
-      navigate("/", { replace: true }); // Фолбэк для браузера
+      navigate("/", { replace: true });
     }
   };
 
@@ -147,12 +152,11 @@ export const useSettings = () => {
     }
   };
 
-  // --- ОБНОВЛЕННАЯ ЛОГИКА СМЕНЫ ТЕМЫ ---
   const toggleTheme = async () => {
     if (!internalUserId) return;
     const newTheme = theme === "dark" ? "light" : "dark";
 
-    // 1. Оптимистичное обновление UI (меняем моментально)
+    // 1. Меняем стейт тумблера и атрибут в DOM
     setTheme(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
 

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../api/client";
-import { TELEGRAM_USER } from "../utils/telegram";
+import { TELEGRAM_USER, getTg } from "../utils/telegram"; // <-- Добавили getTg
 
 // ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ: переживет любые перерисовки компонентов
 let isAuthCheckedGlobally = false;
@@ -24,6 +24,7 @@ export const useAuth = () => {
     const checkAuthAndLoadProfile = async () => {
       try {
         const tgId = TELEGRAM_USER?.id;
+        const tg = getTg(); // Получаем объект Telegram
 
         if (!tgId) {
           console.error("Telegram ID не найден!");
@@ -38,6 +39,12 @@ export const useAuth = () => {
           photo_url: TELEGRAM_USER.photo_url,
         });
 
+        // 👇 ИСПРАВЛЕНИЕ: Если юзер новый, сразу сохраняем его нативную тему ТГ на бэкенд
+        if (authResponse.is_new_user) {
+          const nativeTheme = tg?.colorScheme || "dark";
+          await apiClient.updateSettings(tgId, { theme: nativeTheme });
+        }
+
         const profile = await apiClient.getUser(tgId);
 
         const safeProfile = {
@@ -48,6 +55,22 @@ export const useAuth = () => {
         };
 
         localStorage.setItem("user", JSON.stringify(safeProfile));
+
+        // 👇 ИСПРАВЛЕНИЕ: Синхронизируем DOM и системные цвета ТГ с профилем юзера
+        if (safeProfile.theme) {
+          document.documentElement.setAttribute(
+            "data-theme",
+            safeProfile.theme,
+          );
+          if (tg) {
+            const bgColor =
+              safeProfile.theme === "dark" ? "#1c1c1d" : "#ffffff";
+            const secBgColor =
+              safeProfile.theme === "dark" ? "#000000" : "#f2f2f7";
+            if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
+            if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
+          }
+        }
 
         // Редиректы только если мы на корневой странице
         if (authResponse.is_new_user) {

@@ -187,6 +187,16 @@ export const apiClient = {
     return r.json();
   },
 
+  async createStarsInvoice(telegram_id: number, package_id: string) {
+    const r = await fetch(`${BASE_URL}/payments/invoice`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ telegram_id, package_id }),
+    });
+    if (!r.ok) throw new Error("Failed to create invoice");
+    return r.json();
+  },
+
   async sendMessage(
     chat_id: number,
     payload: { text: string; comparison_id?: number },
