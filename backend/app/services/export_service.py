@@ -1,14 +1,19 @@
 import io
-import json
 import asyncio
 import re
 import os
+import docx
 from datetime import datetime
 from docx import Document
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.oxml.shared import OxmlElement
+from docx.oxml.ns import qn
 from fpdf import FPDF
 from loguru import logger
+
+# Импортируем наш вынесенный словарь
+from backend_llm.app.core.law_sources import LAW_SOURCES
 
 
 # --- УТИЛИТЫ ---
@@ -92,6 +97,46 @@ def _render_content_docx(doc, text: str):
             _parse_markdown_to_docx(p, clean_line)
 
 
+def _get_source_url(law_text: str) -> str:
+    """Ищет ссылку в словаре по ключевым словам."""
+    if not law_text:
+        return ""
+    law_text_lower = law_text.lower()
+
+    for key, url in LAW_SOURCES.items():
+        if key in law_text_lower:
+            return url
+    return ""
+
+
+def _add_hyperlink(paragraph, text: str, url: str):
+    """Добавляет кликабельную ссылку в параграф DOCX."""
+    part = paragraph.part
+    r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
+
+    hyperlink = OxmlElement('w:hyperlink')
+    hyperlink.set(qn('r:id'), r_id)
+
+    new_run = OxmlElement('w:r')
+    rPr = OxmlElement('w:rPr')
+
+    # Делаем ссылку синей и подчеркнутой
+    c = OxmlElement('w:color')
+    c.set(qn('w:val'), '0000FF')
+    rPr.append(c)
+    u = OxmlElement('w:u')
+    u.set(qn('w:val'), 'single')
+    rPr.append(u)
+    new_run.append(rPr)
+
+    text_elem = OxmlElement('w:t')
+    text_elem.text = text
+    new_run.append(text_elem)
+
+    hyperlink.append(new_run)
+    paragraph._p.append(hyperlink)
+
+
 # --- PDF КЛАСС ---
 
 class ChatPDF(FPDF):
@@ -106,7 +151,7 @@ class ChatPDF(FPDF):
             if os.path.exists(reg_path) and os.path.exists(med_path):
                 self.add_font("Roboto", "", reg_path)
                 self.add_font("Roboto", "B", med_path)
-                self.add_font("Roboto", "I", reg_path)  # Fallback for italic
+                self.add_font("Roboto", "I", reg_path)
                 self.roboto_loaded = True
                 logger.info("✅ PDF: Шрифты Roboto успешно подключены")
             else:
@@ -258,9 +303,18 @@ def _build_analysis_docx_sync(analysis_data: dict, diff_blocks: list) -> io.Byte
                 r.font.color.rgb = RGBColor(204, 153, 0)
 
             _render_content_docx(doc, detail.get("explanation", ""))
+
             violated_law = detail.get("violated_law")
             if violated_law:
-                doc.add_paragraph(f"Законодательство: {violated_law}").italic = True
+                # Добавляем законодательство и кликабельную ссылку (если есть в словаре)
+                p_law = doc.add_paragraph("Законодательство: ")
+                p_law.add_run(violated_law).italic = True
+
+                url = _get_source_url(violated_law)
+                if url:
+                    p_law.add_run(" (")
+                    _add_hyperlink(p_law, "открыть источник", url)
+                    p_law.add_run(")")
 
     doc.add_heading("Таблица изменений", level=2)
     try:
@@ -330,7 +384,11 @@ def _build_analysis_pdf_sync(analysis_data: dict, diff_blocks: list) -> io.Bytes
             violated_law = detail.get("violated_law")
             if violated_law:
                 pdf.ln(2)
-                pdf.write_html(f"<i>Связано с: {violated_law}</i>")
+                url = _get_source_url(violated_law)
+                if url:
+                    pdf.write_html(f"<i>Связано с: {violated_law} (<a href='{url}'>открыть источник</a>)</i>")
+                else:
+                    pdf.write_html(f"<i>Связано с: {violated_law}</i>")
             pdf.ln(8)
 
     pdf.ln(5)
