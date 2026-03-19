@@ -55,7 +55,13 @@ class RagService:
             return {}
 
         cache = {}
+
+        ignored_files = {"index_state.json", "parsing_state.json"}
+
         for file_path in settings.DATA_DIR.glob("*.json"):
+            if file_path.name in ignored_files:
+                continue
+
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     articles_data = json.load(f)

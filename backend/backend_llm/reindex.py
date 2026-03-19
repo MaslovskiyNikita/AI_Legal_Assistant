@@ -75,7 +75,8 @@ def build_index():
         return
 
     # Берем все JSON, кроме служебного файла с хешами
-    json_files = [f for f in settings.DATA_DIR.glob("*.json") if f.name != "index_state.json"]
+    forbidden = {"index_state.json", "parsing_state.json"}
+    json_files = [f for f in settings.DATA_DIR.glob("*.json") if f.name not in forbidden]
 
     if not json_files:
         print(f"В папке {settings.DATA_DIR} нет JSON файлов.")
