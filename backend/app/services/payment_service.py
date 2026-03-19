@@ -57,7 +57,7 @@ async def confirm_payment(db: AsyncSession, request: str) -> bool:
             await db.execute(
                 update(User)
                 .where(User.telegram_id == telegram_id)
-                .values(tokens_balance=User.token_balance + tokens_to_add)
+                .values(token_balance=User.token_balance + tokens_to_add)
             )
             await db.commit()
             logger.success(f"✅ Начислено {tokens_to_add} токенов пользователю {telegram_id}")
