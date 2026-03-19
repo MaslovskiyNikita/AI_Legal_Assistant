@@ -1,4 +1,3 @@
-import fitz
 import re
 from io import BytesIO
 from pypdf import PdfReader  # Используем чистый Python-парсер
@@ -109,37 +108,81 @@ class DocumentParser:
 
     @staticmethod
     def _parse_pdf(file_stream: BytesIO) -> list[DocumentBlock]:
-        # Открываем PDF из байтов
-        doc = fitz.open(stream=file_stream.read(), filetype="pdf")
+        reader = PdfReader(file_stream)
         blocks = []
         current_index = 0
 
-        for page in doc:
-            # Получаем текст сразу блоками (абзацами)
-            # block_info: (x0, y0, x1, y1, "text", block_no, block_type)
-            text_blocks = page.get_text("blocks")
+        # Шаг 1. Собираем весь сырой текст
+        full_text = []
+        for page in reader.pages:
+            text = page.extract_text()
+            if text:
+                full_text.append(text)
 
-            for b in text_blocks:
-                # block_type == 0 означает, что это текст (а не картинка)
-                if b[6] == 0:
-                    raw_text = b[4].strip()
-                    if not raw_text:
-                        continue
+        raw_text = "\n".join(full_text)
 
-                    # Очистка от переносов строк внутри одного абзаца
-                    clean_text = raw_text.replace('\n', ' ')
-                    clean_text = re.sub(r'\s+', ' ', clean_text)
+        # ДОБАВЛЕНО: Очистка артефактов PDF
+        # 1. Убираем переносы слов (тире на конце строки)
+        raw_text = re.sub(r'-\n\s*', '', raw_text)
+        # 2. Нормализуем случайные длинные пробелы внутри строк (но сохраняем \n)
+        raw_text = re.sub(r'[ \t]+', ' ', raw_text)
 
-                    # Извлечение структуры (Статья, Глава и т.д.)
-                    match = DocumentParser.STRUCTURAL_REGEX.match(clean_text)
-                    block_id = match.group(0).strip() if match else None
+        # 3. ПРИНУДИТЕЛЬНЫЙ РАЗРЫВ: Если pypdf склеил пункты (напр: "...текст. 2. Новый текст"),
+        # принудительно вставляем \n перед структурой, чтобы сработал STRUCTURAL_REGEX
+        structural_pattern = r'([\.!?]\s+|<br>)(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.)(\s)'
+        raw_text = re.sub(structural_pattern, r'\n\2\4', raw_text, flags=re.IGNORECASE)
 
-                    blocks.append(DocumentBlock(
-                        index=current_index,
-                        id=block_id,
-                        text=clean_text,
-                        hash=DocumentBlock.generate_hash(clean_text)
-                    ))
-                    current_index += 1
+        lines = raw_text.splitlines()
+
+        paragraphs = []
+        current_para = []
+
+        # Шаг 2. Разбираем строки
+        for line in lines:
+            line = line.strip()
+            if not line:
+                if current_para:
+                    paragraphs.append(" ".join(current_para))
+                    current_para = []
+                continue
+
+            if current_para:
+                prev_line = current_para[-1]
+
+                is_structural = bool(DocumentParser.STRUCTURAL_REGEX.match(line))
+                ends_with_terminal = prev_line.endswith(('.', ';', ':', '!', '?'))
+                starts_with_upper_or_digit = line[0].isupper() or line[0].isdigit() or line.startswith(('"', '«'))
+
+                # ДОБАВЛЕНО: Защита от огромных абзацев. Если накопили больше 800 символов и есть конец предложения - рубим!
+                current_length = sum(len(l) for l in current_para)
+                is_too_long = current_length > 800 and ends_with_terminal
+
+                if is_structural or (ends_with_terminal and starts_with_upper_or_digit) or is_too_long:
+                    paragraphs.append(" ".join(current_para))
+                    current_para = [line]
+                else:
+                    current_para.append(line)
+            else:
+                current_para.append(line)
+
+        if current_para:
+            paragraphs.append(" ".join(current_para))
+
+        # Шаг 3. Формируем DocumentBlock
+        for raw_para in paragraphs:
+            raw_para = raw_para.strip()
+            if not raw_para:
+                continue
+
+            match = DocumentParser.STRUCTURAL_REGEX.match(raw_para)
+            block_id = match.group(0).strip() if match else None
+
+            blocks.append(DocumentBlock(
+                index=current_index,
+                id=block_id,
+                text=raw_para,
+                hash=DocumentBlock.generate_hash(raw_para)
+            ))
+            current_index += 1
 
         return blocks
