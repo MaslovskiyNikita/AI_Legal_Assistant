@@ -153,6 +153,8 @@ class AiRiskAnalyzer:
             tone=tone
         )
 
+        print(f"System Prompt:\n{system_prompt}")
+
         headers = {
             "Content-Type": "application/json",
             "x-goog-api-key": api_key
