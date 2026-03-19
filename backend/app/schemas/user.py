@@ -26,6 +26,7 @@ class UserProfileResponse(BaseModel):
     
     theme: str
     notifications_enabled: bool
+    token_balance: int
 
     class Config:
         from_attributes = True  
