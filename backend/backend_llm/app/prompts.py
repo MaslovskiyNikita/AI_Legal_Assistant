@@ -73,9 +73,7 @@ class LegalPrompts:
     def get_chat_prompt(
         question: str,
         history: str,
-        doc_text: Optional[str],
         rag_context: str,
-        analysis_summary: Optional[str],
         tone: AssistantTone
     ) -> str:
         persona = LegalPrompts._PERSONAS.get(tone, LegalPrompts._PERSONAS[AssistantTone.STRICT])
@@ -91,8 +89,6 @@ class LegalPrompts:
 Контекст: Законодательство Республики Беларусь.
 
 ### БАЗА ЗНАНИЙ: {rag_context}
-### ТЕКСТ ДОКУМЕНТА: {doc_text or "Не предоставлен"}
-### АНАЛИЗ РИСКОВ: {analysis_summary or "Не проводился"}
 ### ИСТОРИЯ ДИАЛОГА:
 {history}
 
@@ -101,5 +97,5 @@ class LegalPrompts:
 ИНСТРУКЦИЯ:
 {behavior}
 - Ссылайся на реальные статьи из БАЗЫ ЗНАНИЙ. Не выдумывай законы.
-- Если вопрос по документу — ищи в ТЕКСТЕ ДОКУМЕНТА.
+- Если вопрос по документу — ищи в ИСТОРИИ ДИАЛОГА.
 """

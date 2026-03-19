@@ -175,8 +175,6 @@ class AiRiskAnalyzer:
     async def answer_question(
             question: str,
             chat_history: List[Dict[str, str]],
-            document_text: Optional[str] = None,
-            analysis_summary: Optional[str] = None,
             tone: AssistantTone = AssistantTone.FRIENDLY
     ) -> str:
         api_key = settings.GEMINI_API_KEY
@@ -197,9 +195,7 @@ class AiRiskAnalyzer:
         system_prompt = LegalPrompts.get_chat_prompt(
             question=question,
             history=history_text or "Начало диалога",
-            doc_text=document_text,
             rag_context=rag_context,
-            analysis_summary=analysis_summary,
             tone=tone
         )
 
