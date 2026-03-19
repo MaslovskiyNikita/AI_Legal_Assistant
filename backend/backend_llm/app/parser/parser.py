@@ -112,32 +112,67 @@ class DocumentParser:
         blocks = []
         current_index = 0
 
+        # Шаг 1. Собираем весь сырой текст со всех страниц
+        full_text = []
         for page in reader.pages:
             text = page.extract_text()
-            if not text:
+            if text:
+                full_text.append(text)
+
+        raw_text = "\n".join(full_text)
+        lines = raw_text.splitlines()
+
+        paragraphs = []
+        current_para = []
+
+        # Шаг 2. Разбираем строки и умным образом формируем абзацы
+        for line in lines:
+            line = line.strip()
+            if not line:
+                if current_para:
+                    paragraphs.append(" ".join(current_para))
+                    current_para = []
                 continue
 
-            # Разделяем текст на параграфы (обычно разделены двойным переносом строки)
-            raw_paragraphs = re.split(r'\n\s*\n', text)
+            if current_para:
+                prev_line = current_para[-1]
 
-            for raw_text in raw_paragraphs:
-                raw_text = raw_text.strip()
-                if not raw_text:
-                    continue
+                # Эвристика 1: Строка начинается с номера (напр. "141.", "25.") или "Статья"
+                is_structural = bool(DocumentParser.STRUCTURAL_REGEX.match(line))
 
-                # Убираем одинарные переносы строк внутри одного абзаца
-                # чтобы не рвать предложения на куски для хэширования
-                raw_text = " ".join(raw_text.splitlines())
+                # Эвристика 2: Прошлая строка закончилась точкой/точкой с запятой/двоеточием,
+                # а новая начинается с большой буквы или цифры
+                ends_with_terminal = prev_line.endswith(('.', ';', ':', '!', '?'))
+                starts_with_upper_or_digit = line[0].isupper() or line[0].isdigit() or line.startswith(('"', '«'))
 
-                match = DocumentParser.STRUCTURAL_REGEX.match(raw_text)
-                block_id = match.group(0).strip() if match else None
+                if is_structural or (ends_with_terminal and starts_with_upper_or_digit):
+                    # Разрываем абзац, если сработала эвристика нового пункта/абзаца
+                    paragraphs.append(" ".join(current_para))
+                    current_para = [line]
+                else:
+                    # Это просто перенос строки внутри одного предложения - склеиваем
+                    current_para.append(line)
+            else:
+                current_para.append(line)
 
-                blocks.append(DocumentBlock(
-                    index=current_index,
-                    id=block_id,
-                    text=raw_text,
-                    hash=DocumentBlock.generate_hash(raw_text)
-                ))
-                current_index += 1
+        if current_para:
+            paragraphs.append(" ".join(current_para))
+
+        # Шаг 3. Превращаем логические абзацы в DocumentBlock для точного сравнения
+        for raw_para in paragraphs:
+            raw_para = raw_para.strip()
+            if not raw_para:
+                continue
+
+            match = DocumentParser.STRUCTURAL_REGEX.match(raw_para)
+            block_id = match.group(0).strip() if match else None
+
+            blocks.append(DocumentBlock(
+                index=current_index,
+                id=block_id,
+                text=raw_para,
+                hash=DocumentBlock.generate_hash(raw_para)
+            ))
+            current_index += 1
 
         return blocks
