@@ -1,3 +1,3 @@
 """Parser utilities for backend-llm."""
 
-from .parser import DocxParser
+from .parser import DocumentParser
