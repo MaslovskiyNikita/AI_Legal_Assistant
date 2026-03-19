@@ -82,7 +82,7 @@ async def generate_ai_response(
                 
     ai_data_to_save = {
                         "diff_blocks": diff_blocks_out,
-                        "analisis": ai_analysis
+                        "analysis": ai_analysis
                     } if diff_blocks_out else None
 
     logger.info(f"💾 Сохранение ответа AI в базу данных...")
