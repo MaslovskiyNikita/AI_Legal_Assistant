@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useParams } from "react-router";
 import { useChat } from "../features/chat/hooks/useChat";
@@ -15,7 +14,6 @@ export default function Chat() {
   return (
     <div className="h-[100dvh] w-full relative flex flex-col bg-[var(--tg-theme-bg-color)] overflow-hidden font-sans">
       <ChatHeader
-        
         chatId={chat.chatId}
         onOpenDownload={() => chat.setIsDownloadModalOpen(true)}
         onOpenExport={() => chat.setIsExportModalOpen(true)}
@@ -30,7 +28,7 @@ export default function Chat() {
         copiedMessageId={chat.copiedMessageId}
         onCopy={chat.handleCopy}
         onOpenDownload={() => chat.setIsDownloadModalOpen(true)}
-        onExportDocx={() => chat.handleExport("docx")}
+        onExportDocx={() => chat.handleExportAnalysis("docx")}
         isTyping={chat.isTyping}
       />
 

@@ -1,9 +1,8 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
 import { getTg, tgAlert, tgHapticNotification } from "../../../utils/telegram";
-import { useToast } from "../../../hooks/useToast"; 
+import { useToast } from "../../../hooks/useToast";
 
 import { useChatModals } from "./useChatModals";
 import { useChatFiles } from "./useChatFiles";
@@ -12,7 +11,7 @@ import { useChatMessages } from "./useChatMessages";
 export const useChat = (initialChatId: string | undefined) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { showToast } = useToast(); 
+  const { showToast } = useToast();
 
   const userStr = localStorage.getItem("user");
   const internalUserId = userStr ? JSON.parse(userStr).id : null;
@@ -164,7 +163,6 @@ export const useChat = (initialChatId: string | undefined) => {
     const finalPrompt = textToSend.trim();
     let activeChatId = currentChatId;
 
-    
     const assistantMsgId = `msg_${Date.now()}_ai`;
 
     try {
@@ -291,18 +289,16 @@ export const useChat = (initialChatId: string | undefined) => {
     } catch (error: any) {
       tgHapticNotification("error");
 
-      
       chatMessages.setMessages((prev) =>
         prev.filter((m) => m.id !== assistantMsgId),
       );
 
-      
       if (
         error.status === 403 ||
         (error.message && error.message.includes("токенов"))
       ) {
         showToast("Недостаточно токенов для этого действия", "error");
-        
+
         navigate("/profile", {
           replace: true,
           state: { openTokenModal: true },
@@ -310,7 +306,6 @@ export const useChat = (initialChatId: string | undefined) => {
         return;
       }
 
-      
       chatMessages.setMessages((prev) => [
         ...prev,
         {
@@ -327,6 +322,20 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   };
 
+  const handleExportAnalysis = async (format: "docx" | "pdf") => {
+    if (!currentChatId || currentChatId === "new") return;
+    try {
+      const dateStr = new Date().toISOString().split("T")[0];
+      const filename = `Анализ_документа_${dateStr}.${format}`;
+
+      await apiClient.exportAnalysis(Number(currentChatId), format, filename);
+      tgHapticNotification("success");
+    } catch (error) {
+      console.error("Export analysis error", error);
+      tgAlert("Не удалось экспортировать отчет.");
+    }
+  };
+
   return {
     ...chatMessages,
     ...files,
@@ -337,6 +346,7 @@ export const useChat = (initialChatId: string | undefined) => {
     isTyping,
     executeDeleteChat,
     handleExport,
+    handleExportAnalysis,
     handleSend,
   };
 };

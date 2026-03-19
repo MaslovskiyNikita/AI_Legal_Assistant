@@ -86,6 +86,33 @@ export const apiClient = {
     document.body.removeChild(a);
   },
 
+  async exportAnalysis(
+    chatId: number,
+    format: "docx" | "pdf",
+    filename: string,
+  ) {
+    const downloadUrl = `${BASE_URL}/chats/${chatId}/export/analysis/${format}`;
+    // @ts-ignore
+    if (window.Telegram?.WebApp?.initData) {
+      // @ts-ignore
+      window.Telegram.WebApp.openLink(downloadUrl);
+      return;
+    }
+
+    const response = await fetch(downloadUrl);
+    if (!response.ok) throw new Error("Export analysis failed");
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  },
+
   async auth(payload: any) {
     const r = await fetch(`${BASE_URL}/auth`, {
       method: "POST",
