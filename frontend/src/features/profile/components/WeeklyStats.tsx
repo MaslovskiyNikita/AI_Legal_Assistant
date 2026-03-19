@@ -191,17 +191,21 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
         </div>
       </section>
 
-      {/* 2. АКТИВНОСТЬ ПО ДНЯМ */}
       <section>
         <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
-          <Activity size={14} /> Активность общения
+          {/* ДОБАВИЛИ className ДЛЯ СИНЕГО ЦВЕТА ИКОНКИ */}
+          <Activity
+            size={14}
+            className="text-[var(--tg-theme-button-color)]"
+          />{" "}
+          Активность общения
         </h4>
         <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl pt-6 pb-4 px-4 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] shadow-sm">
           <div className="h-[180px] w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={filledActivityData}
-                margin={{ top: 0, right: 0, left: -25, bottom: 0 }}
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
               >
                 <CartesianGrid
                   strokeDasharray="4 4"
@@ -252,7 +256,8 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
       {topLaws.length > 0 && (
         <section>
           <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
-            <Scale size={14} /> Частые нарушения законов
+            <Scale size={14} className="text-[var(--tg-theme-button-color)]" />{" "}
+            Частые нарушения законов
           </h4>
           <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl p-4 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] shadow-sm space-y-4">
             {topLaws.map((item: any, idx: number) => {
