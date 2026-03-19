@@ -1,4 +1,4 @@
-// src/features/profile/data/agents.ts
+
 import { Scale, Briefcase, FileSearch } from "lucide-react";
 
 export const agents = [

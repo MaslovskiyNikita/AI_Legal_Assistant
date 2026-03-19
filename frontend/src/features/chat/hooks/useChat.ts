@@ -1,9 +1,9 @@
-// frontend/src/features/chat/hooks/useChat.ts
+
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
 import { getTg, tgAlert, tgHapticNotification } from "../../../utils/telegram";
-import { useToast } from "../../../hooks/useToast"; // <-- ДОБАВЛЕН ИМПОРТ
+import { useToast } from "../../../hooks/useToast"; 
 
 import { useChatModals } from "./useChatModals";
 import { useChatFiles } from "./useChatFiles";
@@ -12,7 +12,7 @@ import { useChatMessages } from "./useChatMessages";
 export const useChat = (initialChatId: string | undefined) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { showToast } = useToast(); // <-- ДОБАВЛЕН ХУК TOAST
+  const { showToast } = useToast(); 
 
   const userStr = localStorage.getItem("user");
   const internalUserId = userStr ? JSON.parse(userStr).id : null;
@@ -164,7 +164,7 @@ export const useChat = (initialChatId: string | undefined) => {
     const finalPrompt = textToSend.trim();
     let activeChatId = currentChatId;
 
-    // 👇 ВЫНОСИМ ID ВНЕ БЛОКА TRY, ЧТОБЫ УДАЛИТЬ ЕГО В CATCH
+    
     const assistantMsgId = `msg_${Date.now()}_ai`;
 
     try {
@@ -291,18 +291,18 @@ export const useChat = (initialChatId: string | undefined) => {
     } catch (error: any) {
       tgHapticNotification("error");
 
-      // СНАЧАЛА УДАЛЯЕМ СООБЩЕНИЕ-ЗАГЛУШКУ ИЗ ЧАТА
+      
       chatMessages.setMessages((prev) =>
         prev.filter((m) => m.id !== assistantMsgId),
       );
 
-      // ПРОВЕРЯЕМ, ЯВЛЯЕТСЯ ЛИ ЭТО ОШИБКОЙ ТОКЕНОВ (403)
+      
       if (
         error.status === 403 ||
         (error.message && error.message.includes("токенов"))
       ) {
         showToast("Недостаточно токенов для этого действия", "error");
-        // Перенаправляем на профиль и передаем флаг для открытия шторки!
+        
         navigate("/profile", {
           replace: true,
           state: { openTokenModal: true },
@@ -310,7 +310,7 @@ export const useChat = (initialChatId: string | undefined) => {
         return;
       }
 
-      // ЕСЛИ ДРУГАЯ ОШИБКА — ПИШЕМ В ЧАТ
+      
       chatMessages.setMessages((prev) => [
         ...prev,
         {

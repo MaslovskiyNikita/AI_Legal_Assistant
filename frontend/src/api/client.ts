@@ -1,5 +1,3 @@
-// src/api/client.ts
-
 const BASE_URL = "https://legal-assistant-api.kawun.su/api/v1";
 
 export const apiClient = {
@@ -64,20 +62,16 @@ export const apiClient = {
     document.body.removeChild(a);
   },
 
-  // 👇 ИСПРАВЛЕННЫЙ МЕТОД ЭКСПОРТА (Работает в Telegram)
   async exportChat(chatId: number, format: "docx" | "pdf", filename: string) {
     const downloadUrl = `${BASE_URL}/chats/${chatId}/export/${format}`;
 
-    // Проверяем, открыто ли приложение внутри Telegram
     // @ts-ignore
     if (window.Telegram?.WebApp?.initData) {
-      // Внутри телеграма скачивание работает только через внешний линк (openLink)
       // @ts-ignore
       window.Telegram.WebApp.openLink(downloadUrl);
       return;
     }
 
-    // Фолбэк для браузера Chrome/Safari на компьютере
     const response = await fetch(downloadUrl);
     if (!response.ok) throw new Error("Export failed");
 

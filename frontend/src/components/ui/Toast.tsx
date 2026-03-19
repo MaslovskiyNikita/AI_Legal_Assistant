@@ -1,4 +1,4 @@
-// src/components/ui/Toast.tsx
+
 import React, { useEffect } from "react";
 import { AlertCircle, CheckCircle2, X } from "lucide-react";
 
@@ -13,7 +13,7 @@ export interface ToastProps {
 
 export const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
   useEffect(() => {
-    const timer = setTimeout(() => onClose(id), 4000); // Автозакрытие через 4 сек
+    const timer = setTimeout(() => onClose(id), 4000); 
     return () => clearTimeout(timer);
   }, [id, onClose]);
 
@@ -25,8 +25,8 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, onClose }) => {
     ),
   };
 
-  // Используем фон темы Telegram, чтобы текст всегда контрастировал
-  // Цветом выделяем только рамки, чтобы сохранить стилистику (успех/ошибка/инфо)
+  
+  
   const bgColors = {
     success: "bg-[var(--tg-theme-bg-color)] border-[#34C759]/50",
     error: "bg-[var(--tg-theme-bg-color)] border-[#FF3B30]/50",

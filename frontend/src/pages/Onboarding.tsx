@@ -1,8 +1,8 @@
-// src/pages/Onboarding.tsx
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../api/client";
-import { TELEGRAM_USER, tgAlert } from "../utils/telegram"; // <-- Добавили tgAlert
+import { TELEGRAM_USER, tgAlert } from "../utils/telegram"; 
 import { Scale, Shield, FileText, Loader2 } from "lucide-react";
 
 export default function Onboarding() {
@@ -38,9 +38,9 @@ export default function Onboarding() {
 
   return (
     <div className="min-h-screen w-full bg-[var(--tg-theme-bg-color)] text-[var(--tg-theme-text-color)] flex flex-col justify-between p-6 font-sans">
-      {/* Верхняя часть (Контент) */}
+      {}
       <div className="flex flex-col items-center text-center mt-16">
-        {/* Иконка в стиле iOS/Telegram */}
+        {}
         <div className="w-24 h-24 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] rounded-full flex items-center justify-center mb-6 shadow-sm">
           <Scale size={48} className="text-[var(--tg-theme-button-color)]" />
         </div>
@@ -52,9 +52,9 @@ export default function Onboarding() {
           Анализируйте документы, проверяйте договоры и получайте консультации.
         </p>
 
-        {/* Список фичей в виде карточки (как в настройках) */}
+        {}
         <div className="w-full bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] overflow-hidden shadow-sm">
-          {/* 1. Анализ документов */}
+          {}
           <div className="flex items-center gap-4 p-4 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
             <div className="w-10 h-10 flex-shrink-0 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] rounded-lg flex items-center justify-center">
               <FileText
@@ -72,7 +72,7 @@ export default function Onboarding() {
             </div>
           </div>
 
-          {/* 2. Безопасность */}
+          {}
           <div className="flex items-center gap-4 p-4">
             <div className="w-10 h-10 flex-shrink-0 bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] text-[var(--tg-theme-button-color)] rounded-lg flex items-center justify-center">
               <Shield
@@ -92,7 +92,7 @@ export default function Onboarding() {
         </div>
       </div>
 
-      {/* Нижняя часть (Кнопка) */}
+      {}
       <button
         onClick={handleStart}
         disabled={loading}

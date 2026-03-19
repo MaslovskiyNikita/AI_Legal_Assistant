@@ -1,4 +1,4 @@
-// src/features/profile/components/AgentGrid.tsx
+
 import React from "react";
 import { CheckCircle2 } from "lucide-react";
 import { agents } from "../data/agents";

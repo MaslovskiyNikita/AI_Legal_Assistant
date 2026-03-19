@@ -1,4 +1,4 @@
-// src/features/profile/components/RecentChats.tsx
+
 import React from "react";
 import { Clock } from "lucide-react";
 import { formatRecentDateShort } from "../../../utils/dateUtils";
@@ -37,9 +37,9 @@ export const RecentChats: React.FC<RecentChatsProps> = ({
       </h4>
       <div className="grid grid-cols-3 gap-2 w-full">
         {chats.map((chat) => {
-          // Определяем, было ли это сравнение файлов или просто текстовый чат.
-          // Если в названии есть слово "Сравнение" или "документ", считаем это файловым чатом.
-          // В идеале бэкенд должен отдавать флаг типа `has_files: true`.
+          
+          
+          
           const isFileComparison =
             chat.title?.toLowerCase().includes("сравнение") ||
             chat.title?.toLowerCase().includes("документ");

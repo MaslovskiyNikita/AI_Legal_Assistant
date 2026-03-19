@@ -1,4 +1,4 @@
-// src/hooks/useToast.tsx
+
 import React, { createContext, useContext, useState, useCallback } from "react";
 import { Toast, ToastType } from "../components/ui/Toast";
 

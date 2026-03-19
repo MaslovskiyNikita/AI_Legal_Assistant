@@ -1,4 +1,4 @@
-// src/features/chat/components/ChatInput.tsx
+
 import React from "react";
 import { motion } from "motion/react";
 import {
@@ -9,7 +9,7 @@ import {
   Loader2,
   ArrowUp,
   Sparkles,
-  AlertTriangle, // Заменили Table на AlertTriangle
+  AlertTriangle, 
   ShieldAlert,
 } from "lucide-react";
 import { tgHaptic } from "../../../utils/telegram";
@@ -37,7 +37,7 @@ const QUICK_ACTIONS = [
     prompt: "Сделай краткую выжимку главных изменений в документах.",
   },
   {
-    id: "errors", // <-- Заменили Таблицу на Ошибки
+    id: "errors", 
     label: "Ошибки",
     icon: AlertTriangle,
     prompt:
@@ -107,7 +107,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </div>
       )}
 
-      {/* АНИМИРОВАННЫЕ ЧИПСЫ */}
+      {}
       <div className="flex items-center justify-between gap-1.5 mb-3 w-full">
         {QUICK_ACTIONS.map((action, index) => {
           const Icon = action.icon;

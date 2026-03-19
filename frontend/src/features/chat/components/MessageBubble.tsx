@@ -1,4 +1,4 @@
-// src/features/chat/components/MessageBubble.tsx
+
 import React, { useState } from "react";
 import { AILoader, TypingLoader } from "./AILoader";
 import ReactMarkdown from "react-markdown";
@@ -57,7 +57,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   let parsedData: any = null;
   let isComplexAnalysis = false;
 
-  // 👇 НОВАЯ ЛОГИКА ПАРСИНГА AI DATA
+  
   if (
     !isUser &&
     aiData &&
@@ -66,8 +66,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   ) {
     isComplexAnalysis = true;
 
-    // Бэкенд склеивает risk и summary прямо в текст ответа: "**Уровень риска: RED**\n\nТекст..."
-    // Вытаскиваем их оттуда регулярками, чтобы нарисовать нашу красивую карточку
+    
+    
     let extractedRisk = "GREEN";
     const riskMatch = rawText.match(
       /\*\*Уровень риска:\s*(RED|YELLOW|GREEN|UNKNOWN)\*\*/i,
@@ -89,7 +89,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
       },
     };
   }
-  // Фолбэк для старых чатов в БД (где JSON лежал строкой в поле text)
+  
   else if (!isUser && rawText.trim().startsWith("{")) {
     try {
       const fallbackData = JSON.parse(rawText);
@@ -397,7 +397,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
                 const detail = parsedData.analysis?.details?.[idx] || null;
 
-                // 👇 Исправлено: теперь берем риск и из detail, ИЛИ из самого diff, как в таблице
+                
                 const riskLevel =
                   detail?.risk ||
                   diff?.risk ||
@@ -469,7 +469,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
                     const detail = parsedData.analysis?.details?.[idx] || null;
 
-                    // 👇 Надежно собираем данные из detail ИЛИ из самого diff
+                    
                     const riskLevel =
                       detail?.risk ||
                       diff?.risk ||
@@ -481,7 +481,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     let violatedLaw =
                       detail?.violated_law || diff?.violated_law;
 
-                    // Защита от строки "null"
+                    
                     if (violatedLaw === "null") violatedLaw = null;
 
                     return (
@@ -502,7 +502,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           {renderRiskBadge(riskLevel)}
                         </td>
                         <td className="p-3 text-[12px] font-medium opacity-90">
-                          {/* Выводим найденное объяснение */}
+                          {}
                           {explanation}
                         </td>
                       </tr>

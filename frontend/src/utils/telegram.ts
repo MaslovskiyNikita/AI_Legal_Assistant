@@ -1,12 +1,12 @@
-// src/utils/telegram.ts
 
-// Получаем объект Telegram, игнорируя ошибки TypeScript
+
+
 const tg = (window as any).Telegram?.WebApp;
 
-// Экспортируем сам объект для доступа к кнопкам
+
 export const getTg = () => tg;
 
-// Функция для получения пользователя
+
 const getUser = () => {
   if (tg?.initDataUnsafe?.user) {
     return {
@@ -27,7 +27,7 @@ const getUser = () => {
 
 export const TELEGRAM_USER = getUser();
 
-// --- НАТИВНЫЕ ФУНКЦИИ TELEGRAM ---
+
 export const isTelegramWebApp = () => {
   return tg && tg.platform && tg.platform !== "unknown";
 };
@@ -40,26 +40,26 @@ export const tgAlert = (message: string) => {
   }
 };
 
-// Обычный отклик (щелчок при нажатии на кнопки)
+
 export const tgHaptic = (
   style: "light" | "medium" | "heavy" | "rigid" | "soft" = "light",
 ) => {
-  // Читаем глобальную настройку
+  
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
-  if (user && user.notifications_enabled === false) return; // Если выключено - отменяем вибрацию
+  if (user && user.notifications_enabled === false) return; 
 
   if (tg && tg.HapticFeedback) {
     tg.HapticFeedback.impactOccurred(style);
   }
 };
 
-// Отклик-уведомление (вибрация при успешном ответе или предупреждении)
+
 export const tgHapticNotification = (type: "error" | "success" | "warning") => {
-  // Читаем глобальную настройку
+  
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
-  if (user && user.notifications_enabled === false) return; // Если выключено - отменяем вибрацию
+  if (user && user.notifications_enabled === false) return; 
 
   if (tg && tg.HapticFeedback) {
     tg.HapticFeedback.notificationOccurred(type);
@@ -88,7 +88,7 @@ export const tgOpenInvoice = (
 export const applyThemeToApp = (theme: "light" | "dark") => {
   document.documentElement.setAttribute("data-theme", theme);
 
-  // Применяем стили и к :root, и к <body>
+  
   const elementsToUpdate = [document.documentElement, document.body];
 
   elementsToUpdate.forEach((el) => {
@@ -113,7 +113,7 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
         "important",
       );
 
-      // ПРИНУДИТЕЛЬНО задаем фон самого body, чтобы убрать белую полосу при скролле (overscroll)
+      
       el.style.backgroundColor = "#1c1c1d";
     } else {
       el.style.setProperty("--tg-theme-bg-color", "#ffffff", "important");
@@ -136,7 +136,7 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
         "important",
       );
 
-      // ПРИНУДИТЕЛЬНО задаем фон самого body
+      
       el.style.backgroundColor = "#ffffff";
     }
   });
@@ -147,14 +147,14 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
     const secBgColor = theme === "dark" ? "#000000" : "#f2f2f7";
 
     try {
-      // Красим фон самого WebApp
+      
       if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
-      // Красим верхнюю панель
+      
       if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
 
-      // 👇 САМОЕ ВАЖНОЕ: Красим нижнюю системную панель (Bottom Bar) Telegram
+      
       if (tg.setBottomBarColor) {
-        // Зависит от дизайна, обычно нижняя панель сливается с основным фоном
+        
         tg.setBottomBarColor(bgColor);
       }
     } catch (e) {

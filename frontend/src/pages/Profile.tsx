@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation } from "react-router"; // <-- ДОБАВЛЕН ИМПОРТ
+import { useLocation } from "react-router"; 
 import { useProfile } from "../features/profile/hooks/useProfile";
 import { ProfileHeader } from "../features/profile/components/ProfileHeader";
 import { AgentGrid } from "../features/profile/components/AgentGrid";
@@ -8,13 +8,13 @@ import { RecentChats } from "../features/profile/components/RecentChats";
 import { isTelegramWebApp } from "../utils/telegram";
 
 export default function Profile() {
-  const location = useLocation(); // <-- ДОБАВЛЕНО
-  const shouldOpenTokenModal = location.state?.openTokenModal || false; // <-- ДОБАВЛЕНО
+  const location = useLocation(); 
+  const shouldOpenTokenModal = location.state?.openTokenModal || false; 
 
   const {
-    internalUserId, // <-- ПОЛУЧАЕМ ID
-    documentsAnalyzed, // <-- ПОЛУЧАЕМ ДОКИ
-    consultationsCount, // <-- ПОЛУЧАЕМ КОНСУЛЬТАЦИИ
+    internalUserId, 
+    documentsAnalyzed, 
+    consultationsCount, 
     firstName,
     photoUrl,
     greeting,
@@ -37,7 +37,7 @@ export default function Profile() {
         photoUrl={photoUrl}
         greeting={greeting}
         onSettingsClick={() => navigate("/settings")}
-        openTokenModal={shouldOpenTokenModal} // <-- ПЕРЕДАЕМ ФЛАГ
+        openTokenModal={shouldOpenTokenModal} 
       />
 
       <div className="px-4 flex-1 flex flex-col">
@@ -58,7 +58,7 @@ export default function Profile() {
           onChatClick={(id) => navigate(`/chat/${id}`)}
         />
 
-        {/* 👇 ПЕРЕДАЕМ ПРОПСЫ В КОМПОНЕНТ ГРАФИКОВ */}
+        {}
         <WeeklyStats
           userId={internalUserId}
           documentsAnalyzed={documentsAnalyzed}

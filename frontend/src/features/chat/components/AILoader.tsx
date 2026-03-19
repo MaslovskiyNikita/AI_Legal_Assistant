@@ -1,9 +1,9 @@
-// src/features/chat/components/AILoader.tsx
+
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { FileSearch } from "lucide-react";
 
-// Массив стадий анализа
+
 const DEFAULT_STAGES = [
   "Изучаю текст документов...",
   "Сопоставляю редакции...",
@@ -25,13 +25,13 @@ export const AILoader: React.FC<AILoaderProps> = ({
   const [stageIndex, setStageIndex] = useState(0);
 
   useEffect(() => {
-    // Если передан жесткий текст, не запускаем таймер
+    
     if (text) return;
 
-    // Меняем стадию каждые 3.5 секунды
+    
     const interval = setInterval(() => {
       setStageIndex((prev) => {
-        // Останавливаемся на последней стадии, если ответ все еще генерируется
+        
         if (prev < stages.length - 1) {
           return prev + 1;
         }
@@ -54,7 +54,7 @@ export const AILoader: React.FC<AILoaderProps> = ({
         <FileSearch size={18} />
       </motion.div>
       <div className="flex-1 overflow-hidden relative">
-        {/* AnimatePresence позволяет анимировать удаление старого текста и появление нового */}
+        {}
         <AnimatePresence mode="wait">
           <motion.span
             key={displayText}

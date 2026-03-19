@@ -1,4 +1,4 @@
-// src/components/ui/FileIcon.tsx
+
 import React from "react";
 
 interface FileIconProps {

@@ -31,7 +31,7 @@ const COLORS = {
   GREEN: "#34C759",
 };
 
-// Генерация массива 7 дат с подстановкой данных от бэка
+
 const getFilledActivityData = (backendData: any[]) => {
   const dates = [];
   const today = new Date();
@@ -88,7 +88,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
     );
   }
 
-  // === 1. РИСКИ ===
+  
   const totalRisks = risks.RED + risks.YELLOW + risks.GREEN;
   const riskData = [
     { name: "Критичные", value: risks.RED, color: COLORS.RED },
@@ -96,14 +96,14 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
     { name: "В норме", value: risks.GREEN, color: COLORS.GREEN },
   ];
 
-  // === 2. АКТИВНОСТЬ ===
+  
   const filledActivityData = getFilledActivityData(activityRaw);
   const totalActivityCount = filledActivityData.reduce(
     (acc, curr) => acc + curr.count,
     0,
   );
 
-  // Тултип для столбцов активности
+  
   const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -120,7 +120,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
 
   return (
     <div className="mb-8 mt-6 space-y-6">
-      {/* 1. АНАЛИТИКА РИСКОВ (Кольцевая диаграмма) */}
+      {}
       <section>
         <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
           <PieChartIcon
@@ -193,7 +193,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
 
       <section>
         <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
-          {/* ДОБАВИЛИ className ДЛЯ СИНЕГО ЦВЕТА ИКОНКИ */}
+          {}
           <Activity
             size={14}
             className="text-[var(--tg-theme-button-color)]"
@@ -252,7 +252,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
         </div>
       </section>
 
-      {/* 3. ТОП НАРУШЕНИЙ (Прогресс-бары) */}
+      {}
       {topLaws.length > 0 && (
         <section>
           <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">

@@ -1,10 +1,10 @@
-// src/hooks/useAuth.ts
+
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../api/client";
 import { TELEGRAM_USER, getTg, applyThemeToApp } from "../utils/telegram";
 
-// ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ: переживет любые перерисовки компонентов
+
 let isAuthCheckedGlobally = false;
 
 export const useAuth = () => {
@@ -13,7 +13,7 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(!isAuthCheckedGlobally);
 
   useEffect(() => {
-    // Если уже проверяли авторизацию - просто выключаем лоадер и выходим
+    
     if (isAuthCheckedGlobally) {
       setIsLoading(false);
       return;
@@ -24,7 +24,7 @@ export const useAuth = () => {
     const checkAuthAndLoadProfile = async () => {
       try {
         const tgId = TELEGRAM_USER?.id;
-        const tg = getTg(); // Получаем объект Telegram
+        const tg = getTg(); 
 
         if (!tgId) {
           console.error("Telegram ID не найден!");
@@ -39,7 +39,7 @@ export const useAuth = () => {
           photo_url: TELEGRAM_USER.photo_url,
         });
 
-        // 👇 ИЗМЕНЕНО: Если юзер новый, жестко сохраняем светлую тему по умолчанию
+        
         if (authResponse.is_new_user) {
           await apiClient.updateSettings(tgId, { theme: "light" });
         }
@@ -55,15 +55,15 @@ export const useAuth = () => {
 
         localStorage.setItem("user", JSON.stringify(safeProfile));
 
-        // Применяем тему пользователя единой функцией
-        // Если вдруг темы с бэка нет, форсируем светлую
+        
+        
         if (safeProfile.theme) {
           applyThemeToApp(safeProfile.theme);
         } else {
           applyThemeToApp("light");
         }
 
-        // Редиректы только если мы на корневой странице
+        
         if (authResponse.is_new_user) {
           if (location.pathname !== "/") {
             navigate("/", { replace: true });

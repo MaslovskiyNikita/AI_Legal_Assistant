@@ -1,4 +1,4 @@
-// src/features/settings/hooks/useSettings.ts
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../../../api/client";
@@ -33,7 +33,7 @@ export const useSettings = () => {
       "dark",
   );
 
-  // ИСПРАВЛЕНИЕ: Переименовали переменную в vibration
+  
   const [vibration, setVibration] = useState(
     user?.notifications_enabled ?? true,
   );
@@ -160,7 +160,7 @@ export const useSettings = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
 
     setTheme(newTheme);
-    applyThemeToApp(newTheme); // <-- МГНОВЕННО МЕНЯЕМ ВСЕ ЦВЕТА
+    applyThemeToApp(newTheme); 
 
     try {
       await apiClient.updateSettings(internalUserId, { theme: newTheme });
@@ -170,19 +170,19 @@ export const useSettings = () => {
       );
     } catch (error) {
       console.error("Ошибка при смене темы:", error);
-      // Если бэкенд упал, откатываем обратно
+      
       setTheme(theme);
       applyThemeToApp(theme);
     }
   };
 
-  // ИСПРАВЛЕНИЕ: Функция toggleVibration
+  
   const toggleVibration = async () => {
     if (!internalUserId) return;
     const newVibration = !vibration;
     setVibration(newVibration);
     try {
-      // Отправляем как notifications_enabled на бэкенд, чтобы не менять БД
+      
       await apiClient.updateSettings(internalUserId, {
         notifications_enabled: newVibration,
       });

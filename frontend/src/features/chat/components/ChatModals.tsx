@@ -1,4 +1,4 @@
-// src/features/chat/components/ChatModals.tsx
+
 import React, { useState } from "react";
 import { Drawer } from "vaul";
 import {
@@ -38,7 +38,7 @@ interface ChatModalsProps {
   setIsFileLimitModalOpen: (val: boolean) => void;
 }
 
-// === НОВЫЙ КОМПОНЕНТ ДЛЯ DRAG & DROP ===
+
 const DropzoneArea = ({
   id,
   onFileSelect,
@@ -134,13 +134,13 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       return;
     }
 
-    tgHaptic("light"); // Даем виброотклик при успешном выборе/дропе
+    tgHaptic("light"); 
     setFile(file);
   };
 
   return (
     <>
-      {/* 1. Удалить чат */}
+      {}
       <Drawer.Root
         open={props.isDeleteModalOpen}
         onOpenChange={(open) => {
@@ -188,7 +188,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {/* 2. Документы чата (Скачивание) */}
+      {}
       <Drawer.Root
         open={props.isDownloadModalOpen}
         onOpenChange={(open) => {
@@ -251,7 +251,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {/* 3. Экспорт переписки */}
+      {}
       <Drawer.Root
         open={props.isExportModalOpen}
         onOpenChange={(open) => {
@@ -306,7 +306,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {/* 4. Прикрепить файлы (Compare) */}
+      {}
       <Drawer.Root
         open={props.isCompareModalOpen}
         onOpenChange={(open) => {
@@ -331,7 +331,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
             </div>
 
             <div className="p-5 pb-10 space-y-4">
-              {/* Старая версия */}
+              {}
               <div className="bg-[var(--tg-theme-bg-color)] p-4 rounded-2xl shadow-sm">
                 <label className="text-[13px] font-bold text-[var(--tg-theme-hint-color)] uppercase tracking-wider block mb-3">
                   Старая редакция
@@ -369,7 +369,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                 )}
               </div>
 
-              {/* Новая версия */}
+              {}
               <div className="bg-[var(--tg-theme-bg-color)] p-4 rounded-2xl shadow-sm">
                 <label className="text-[13px] font-bold text-[var(--tg-theme-hint-color)] uppercase tracking-wider block mb-3">
                   Новая редакция
@@ -422,7 +422,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {/* 5. Лимит файлов */}
+      {}
       <Drawer.Root
         open={props.isFileLimitModalOpen}
         onOpenChange={(open) => {

@@ -1,4 +1,4 @@
-// src/pages/Settings.tsx
+
 import React, { useEffect } from "react";
 import { useSettings } from "../features/settings/hooks/useSettings";
 import { getTg } from "../utils/telegram";
@@ -13,7 +13,7 @@ import { isTelegramWebApp } from "../utils/telegram";
 export default function Settings() {
   const settings = useSettings();
 
-  // Включаем нативную кнопку Назад в Telegram
+  
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.BackButton) {
@@ -30,7 +30,7 @@ export default function Settings() {
 
   return (
     <div className="min-h-screen w-full bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-text-color)] flex flex-col pb-10 relative font-sans overflow-x-hidden">
-      {/* Header */}
+      {}
       <div className="h-14 px-4 flex items-center justify-between sticky top-0 bg-[var(--tg-theme-bg-color)]/80 backdrop-blur-xl z-20 border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
         {!isTelegramWebApp() ? (
           <button
@@ -40,7 +40,7 @@ export default function Settings() {
             <ChevronLeft size={28} />
           </button>
         ) : (
-          <div className="w-8"></div> // Пустой блок для баланса
+          <div className="w-8"></div> 
         )}
 
         <h2 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-[var(--tg-theme-text-color)]">

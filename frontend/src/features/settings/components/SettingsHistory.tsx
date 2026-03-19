@@ -1,4 +1,4 @@
-// src/features/settings/components/SettingsHistory.tsx
+
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -42,7 +42,7 @@ interface SettingsHistoryProps {
     filename: string,
   ) => void;
   onDeleteChat?: (chatId: number) => void;
-  onDeleteDocument?: (docId: number) => void; // <-- Добавили проп
+  onDeleteDocument?: (docId: number) => void; 
 }
 
 const filters = [
@@ -55,7 +55,7 @@ const filters = [
 export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
   const navigate = useNavigate();
 
-  // Стейт для анимации плавающего фона
+  
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +64,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
     setActiveIndex(index !== -1 ? index : 0);
   }, [props.filterPeriod]);
 
-  // Функция для красной кнопки свайпа (Чаты)
+  
   const trailingActionsChat = (chatId: number) => (
     <TrailingActions>
       <SwipeAction
@@ -78,7 +78,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
     </TrailingActions>
   );
 
-  // Функция для красной кнопки свайпа (Документы)
+  
   const trailingActionsDoc = (docId: number) => (
     <TrailingActions>
       <SwipeAction
@@ -102,13 +102,13 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </h3>
       </div>
 
-      {/* 1. ПЛАВНЫЙ SEGMENTED CONTROL */}
+      {}
       <div className="px-4 mb-4">
         <div
           ref={containerRef}
           className="flex items-center bg-[color-mix(in_srgb,var(--tg-theme-text-color)_8%,transparent)] p-1 rounded-xl relative"
         >
-          {/* Плавающий белый фон */}
+          {}
           <div
             className="absolute top-1 bottom-1 bg-[var(--tg-theme-bg-color)] rounded-lg shadow-sm transition-transform duration-300 ease-out"
             style={{
@@ -117,7 +117,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
             }}
           />
 
-          {/* Сами кнопки */}
+          {}
           {filters.map((filter) => {
             const isSelected = props.filterPeriod === filter.id;
             return (
@@ -142,7 +142,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </div>
       </div>
 
-      {/* ИНПУТЫ ДЛЯ КАСТОМНОГО ПЕРИОДА */}
+      {}
       {props.filterPeriod === "custom" && (
         <div className="mx-4 mb-4 flex items-center gap-2 animate-in slide-in-from-top-2 fade-in duration-200">
           <input
@@ -163,7 +163,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </div>
       )}
 
-      {/* КОНТЕЙНЕР СО СПИСКОМ */}
+      {}
       <div className="mx-4 bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] overflow-hidden flex flex-col min-h-[120px] shadow-sm">
         {props.isLoadingStats ? (
           <div className="w-full flex flex-col">
@@ -251,7 +251,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
               )}
             </>
           )
-        ) : // 2. НОВОЕ: Свайп для документов
+        ) : 
         props.allFilteredDocsCount === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
             <FileText size={32} className="text-[#C7C7CC] mb-3" />
@@ -301,7 +301,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                           </span>
                         </div>
                       </div>
-                      {/* Кнопка скачивания (останавливаем всплытие клика, чтобы не переходить в чат) */}
+                      {}
                       <button
                         type="button"
                         onClick={(e) =>

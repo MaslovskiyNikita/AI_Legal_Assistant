@@ -15,7 +15,7 @@ interface SettingsOptionsProps {
   vibration: boolean;
   toggleVibration: () => void;
   onOpenPrivacy: () => void;
-  onOpenKnowledgeBase: () => void; // <-- ДОБАВИЛИ В ИНТЕРФЕЙС
+  onOpenKnowledgeBase: () => void; 
   onOpenClearHistory: () => void;
   onLogout: () => void;
 }

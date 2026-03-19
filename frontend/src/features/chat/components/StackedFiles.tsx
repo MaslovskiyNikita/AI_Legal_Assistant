@@ -1,4 +1,4 @@
-// src/features/chat/components/StackedFiles.tsx
+
 import React from "react";
 import { motion } from "motion/react";
 import { FileIcon } from "../../../components/ui/FileIcon";
@@ -34,7 +34,7 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
         tap: { scale: 0.96 },
       }}
     >
-      {/* Файл 1 (Старая версия - сзади) */}
+      {}
       <motion.div
         variants={{
           hidden: { rotate: 0, y: 0, x: 0, opacity: 0 },
@@ -59,7 +59,7 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
         </div>
       </motion.div>
 
-      {/* Файл 2 (Новая версия - спереди) */}
+      {}
       <motion.div
         variants={{
           hidden: { rotate: 0, y: 20, opacity: 0 },
@@ -72,7 +72,7 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
         }}
         className="relative min-w-[200px] max-w-[280px] z-10"
       >
-        {/* Карточка документа */}
+        {}
         <div className="relative bg-[var(--tg-theme-button-color)] rounded-[20px] p-2.5 pr-5 flex items-center shadow-xl border border-white/20 overflow-hidden">
           <FileIcon filename={file2} />
           <div className="ml-3 flex flex-col flex-1 min-w-0 z-10 relative">
@@ -84,7 +84,7 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
             </span>
           </div>
 
-          {/* AI: Бегающий блик (Shimmer) внутри карточки */}
+          {}
           {isScanning && (
             <motion.div
               className="absolute inset-0 w-[200%] bg-gradient-to-r from-transparent via-white to-transparent pointer-events-none z-20"
@@ -99,7 +99,7 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
           )}
         </div>
 
-        {/* AI: Дышащая неоновая обводка вокруг карточки */}
+        {}
         {isScanning && (
           <motion.div
             className="absolute inset-0 rounded-[20px] pointer-events-none border-[2px] border-[var(--tg-theme-button-color)] z-0"
@@ -108,7 +108,7 @@ export const StackedFiles: React.FC<StackedFilesProps> = ({
           />
         )}
 
-        {/* AI: Парящая искорка в углу */}
+        {}
         {isScanning && (
           <motion.div
             className="absolute -top-3 -right-3 w-8 h-8 bg-[var(--tg-theme-bg-color)] rounded-full flex items-center justify-center shadow-lg border border-[color-mix(in_srgb,var(--tg-theme-text-color)_10%,transparent)] z-50 text-[var(--tg-theme-button-color)]"

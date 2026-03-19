@@ -1,4 +1,4 @@
-// src/features/chat/hooks/useChatModals.ts
+
 import { useState } from "react";
 
 export const useChatModals = () => {

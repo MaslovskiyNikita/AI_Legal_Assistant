@@ -19,7 +19,7 @@ export const useProfile = () => {
     user?.first_name || user?.name || TELEGRAM_USER?.first_name || "User";
   const photoUrl = user?.photo_url || TELEGRAM_USER?.photo_url;
 
-  // 👇 ДОСТАЛИ ДАННЫЕ ДЛЯ АНАЛИТИКИ ИЗ ЛОКАЛ СТОРЕДЖА
+  
   const documentsAnalyzed = user?.documents_analyzed || 0;
   const consultationsCount = user?.consultations_count || 0;
 
@@ -98,9 +98,9 @@ export const useProfile = () => {
   };
 
   return {
-    internalUserId, // <-- ПЕРЕДАЕМ НА СТРАНИЦУ
-    documentsAnalyzed, // <-- ПЕРЕДАЕМ НА СТРАНИЦУ
-    consultationsCount, // <-- ПЕРЕДАЕМ НА СТРАНИЦУ
+    internalUserId, 
+    documentsAnalyzed, 
+    consultationsCount, 
     firstName,
     photoUrl,
     greeting,

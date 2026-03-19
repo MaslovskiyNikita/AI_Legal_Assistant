@@ -42,7 +42,7 @@ const KNOWLEDGE_BASE_LINKS = [
 
 export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
   <>
-    {/* 1. Шторка: Очистка истории */}
+    {}
     <Drawer.Root
       open={props.isClearHistoryModalOpen}
       onOpenChange={(open) => {
@@ -101,7 +101,7 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
       </Drawer.Portal>
     </Drawer.Root>
 
-    {/* 2. Шторка: Политика конфиденциальности */}
+    {}
     <Drawer.Root
       open={props.isPrivacyModalOpen}
       onOpenChange={(open) => {
@@ -129,7 +129,7 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
             </Drawer.Description>
           </div>
 
-          {/* ТЕКСТ ПОЛИТИКИ */}
+          {}
           <div className="flex-1 overflow-y-auto p-5 text-[14px] leading-relaxed text-[var(--tg-theme-text-color)] space-y-5">
             <p className="text-[12px] text-[var(--tg-theme-hint-color)] font-semibold uppercase tracking-wider">
               Редакция от: {new Date().toLocaleDateString("ru-RU")}
@@ -273,7 +273,7 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
       </Drawer.Portal>
     </Drawer.Root>
 
-    {/* 3. Шторка: БАЗА ЗНАНИЙ */}
+    {}
     <Drawer.Root
       open={props.isKnowledgeBaseOpen}
       onOpenChange={(open) => {

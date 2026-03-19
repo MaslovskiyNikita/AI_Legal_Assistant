@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router"; // <-- ДОБАВЛЕН ИМПОРТ
+import { useNavigate } from "react-router"; 
 import { Zap, ChevronLeft, Star, Loader2, Clock, Info } from "lucide-react";
 import { Drawer } from "vaul";
 import {
@@ -22,24 +22,24 @@ const MAX_FREE_TOKENS = 50;
 const TokenCircleMenu = ({
   balance,
   onPaymentSuccess,
-  forceOpen, // <-- ДОБАВЛЕНО
+  forceOpen, 
 }: {
   balance: number;
   onPaymentSuccess: () => Promise<void>;
-  forceOpen?: boolean; // <-- ДОБАВЛЕНО
+  forceOpen?: boolean; 
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<"info" | "store">("info");
   const [loadingPack, setLoadingPack] = useState<string | null>(null);
   const { showToast } = useToast();
-  const navigate = useNavigate(); // <-- ДОБАВЛЕНО
+  const navigate = useNavigate(); 
 
-  // 👇 ДОБАВЛЕНО: Эффект для автоматического открытия шторки
+  
   useEffect(() => {
     if (forceOpen) {
       setIsOpen(true);
       setView("info");
-      // Очищаем state роутера, чтобы при ре-рендерах шторка не открывалась снова
+      
       navigate("/profile", { replace: true, state: {} });
     }
   }, [forceOpen, navigate]);
@@ -259,9 +259,9 @@ export const ProfileHeader: React.FC<{
   photoUrl?: string | null;
   greeting: string;
   onSettingsClick: () => void;
-  openTokenModal?: boolean; // <-- ДОБАВЛЕНО
+  openTokenModal?: boolean; 
 }> = ({ firstName, photoUrl, greeting, onSettingsClick, openTokenModal }) => {
-  // <-- ДОБАВЛЕНО
+  
   const [balance, setBalance] = useState(() => {
     const userStr = localStorage.getItem("user");
     return userStr ? (JSON.parse(userStr).token_balance ?? 50) : 50;
@@ -315,7 +315,7 @@ export const ProfileHeader: React.FC<{
       <TokenCircleMenu
         balance={balance}
         onPaymentSuccess={fetchFreshBalance}
-        forceOpen={openTokenModal} // <-- ПЕРЕДАЕМ ФЛАГ ДАЛЬШЕ
+        forceOpen={openTokenModal} 
       />
     </div>
   );

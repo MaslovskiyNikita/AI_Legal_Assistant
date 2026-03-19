@@ -1,4 +1,4 @@
-// src/features/chat/components/MessageList.tsx
+
 import React, { useState, useEffect, useRef } from "react";
 import { Scale } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
@@ -12,7 +12,7 @@ interface MessageListProps {
   copiedMessageId: string | number | null;
   onCopy: (text: string, id: string | number) => void;
   onOpenDownload: () => void;
-  onExportDocx: () => void; // <-- ДОБАВИЛИ
+  onExportDocx: () => void; 
   isTyping: boolean;
 }
 
@@ -24,7 +24,7 @@ export const MessageList: React.FC<MessageListProps> = ({
   copiedMessageId,
   onCopy,
   onOpenDownload,
-  onExportDocx, // <-- ДОСТАЛИ ИЗ ПРОПСОВ
+  onExportDocx, 
   isTyping,
 }) => {
   const [isScrolling, setIsScrolling] = useState(false);
@@ -131,12 +131,12 @@ export const MessageList: React.FC<MessageListProps> = ({
                   </span>
                 </div>
               )}
-              {/* Оборачиваем список в AnimatePresence для поддержки появления */}
+              {}
               <AnimatePresence initial={false}>
                 {group.messages.map((msg, index) => (
                   <motion.div
                     key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
-                    layout // Плавно сдвигает старые сообщения вверх
+                    layout 
                     initial={{
                       opacity: 0,
                       y: 20,
@@ -147,9 +147,9 @@ export const MessageList: React.FC<MessageListProps> = ({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{
                       type: "spring",
-                      stiffness: 450, // Натяжение пружины (скорость)
-                      damping: 30, // Торможение (убирает лишнюю "тряску")
-                      mass: 0.8, // Легкость элемента
+                      stiffness: 450, 
+                      damping: 30, 
+                      mass: 0.8, 
                     }}
                     className="w-full"
                   >

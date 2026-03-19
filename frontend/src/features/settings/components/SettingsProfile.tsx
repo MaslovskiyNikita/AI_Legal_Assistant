@@ -1,4 +1,4 @@
-// src/features/settings/components/SettingsProfile.tsx
+
 import React from "react";
 import { MessageSquare, FileText, CheckCircle2 } from "lucide-react";
 
@@ -60,7 +60,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
           <MessageSquare size={20} />
         </div>
 
-        {/* Скелетная загрузка вместо Loader2 */}
+        {}
         {isLoadingStats ? (
           <div className="h-8 w-12 bg-[var(--tg-theme-secondary-bg-color)] animate-pulse rounded-md mb-0.5" />
         ) : (
@@ -93,7 +93,7 @@ export const SettingsProfile: React.FC<SettingsProfileProps> = ({
           <FileText size={20} />
         </div>
 
-        {/* Скелетная загрузка вместо Loader2 */}
+        {}
         {isLoadingStats ? (
           <div className="h-8 w-12 bg-[var(--tg-theme-secondary-bg-color)] animate-pulse rounded-md mb-0.5" />
         ) : (
