@@ -72,7 +72,7 @@ async def generate_ai_response(
             logger.info(f"🤖 Отправка запроса в LLM (длина истории: {len(history_for_llm)} сообщений)")
             full_ai_response = await AiRiskAnalyzer.answer_question(
                 question=user_text,
-                chat_history=history_for_llm
+                chat_history=history_for_llm    
             )
             logger.success("🤖 Ответ от LLM успешно получен")
             logger.success(f"✨ Ответ AI: {full_ai_response[:200]}...")

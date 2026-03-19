@@ -33,3 +33,7 @@ class UserProfileResponse(BaseModel):
 class UserSettingsUpdateRequest(BaseModel):
     theme: Optional[str] = None
     notifications_enabled: Optional[bool] = None
+    
+class InvoiceRequest(BaseModel):
+    telegram_id: int
+    package_id: str
