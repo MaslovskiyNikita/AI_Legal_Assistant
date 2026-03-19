@@ -187,6 +187,18 @@ export const apiClient = {
     return r.json();
   },
 
+  async getRiskStatistics(user_id: number) {
+    const r = await fetch(`${BASE_URL}/analytics/risks?user_id=${user_id}`);
+    if (!r.ok) throw new Error(`getRiskStatistics failed: ${r.status}`);
+    return r.json();
+  },
+
+  async getActivityStatistics(user_id: number) {
+    const r = await fetch(`${BASE_URL}/analytics/activity?user_id=${user_id}`);
+    if (!r.ok) throw new Error(`getActivityStatistics failed: ${r.status}`);
+    return r.json();
+  },
+
   async createStarsInvoice(telegram_id: number, package_id: string) {
     const r = await fetch(`${BASE_URL}/payments/invoice`, {
       method: "POST",

@@ -54,9 +54,11 @@ export default function Profile() {
         <WeeklyStats />
       </div>
 
-      {/* Кнопка для Web-версии (сплошной цвет фона, без прозрачности и блюра) */}
       {isWeb && (
-        <div className="absolute bottom-0 left-0 w-full p-4 bg-[var(--tg-theme-bg-color)] border-t border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] z-[10]">
+        <div
+          className="absolute bottom-0 left-0 w-full p-4 border-t border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] z-[10]"
+          style={{ backgroundColor: "var(--tg-theme-bg-color)" }}
+        >
           <button
             onClick={startNewChat}
             className="w-full bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] font-semibold text-[17px] py-3.5 rounded-xl shadow-md active:scale-[0.98] transition-all"
