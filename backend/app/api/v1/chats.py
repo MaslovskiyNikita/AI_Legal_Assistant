@@ -7,6 +7,7 @@ from app.api.dependencies import get_db
 from app.schemas.chat import ChatCreateRequest, ChatListResponse, ChatDetailResponse, DocumentResponse, MessageStreamRequest
 from app.services import chat_service
 from app.services.llm_service import generate_ai_response
+from app.api.user_balance_depends import check_positive_balance
 
 router = APIRouter(prefix="/api/v1/chats", tags=["Chats"])
 
@@ -54,7 +55,8 @@ async def get_chat_history(chat_id: int, db: AsyncSession = Depends(get_db)):
 async def stream_chat_message(
     chat_id: int, 
     request: MessageStreamRequest, 
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    balance: int = Depends(check_positive_balance)
 ):
     preview = (request.text[:50] + '...') if len(request.text) > 50 else request.text
     logger.info(f"💬 Сообщение в чат ID={chat_id}: '{preview}'")
