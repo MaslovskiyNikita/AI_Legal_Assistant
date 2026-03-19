@@ -64,15 +64,11 @@ async def generate_ai_response(
     
         if chat_history_orm:
             chat_dict = ChatDetailResponse.model_validate(chat_history_orm).model_dump()
-            history_for_llm = [
-                {"role": msg["role"], "text": msg["text"]} 
-                for msg in chat_dict.get("messages", [])
-            ]
             
-            logger.info(f"🤖 Отправка запроса в LLM (длина истории: {len(history_for_llm)} сообщений)")
+            logger.info(f"🤖 Отправка запроса в LLM (длина истории: {len(chat_dict)} сообщений)")
             full_ai_response = await AiRiskAnalyzer.answer_question(
                 question=user_text,
-                chat_history=history_for_llm    
+                chat_history=chat_dict  
             )
             logger.success("🤖 Ответ от LLM успешно получен")
             logger.success(f"✨ Ответ AI: {full_ai_response[:200]}...")
