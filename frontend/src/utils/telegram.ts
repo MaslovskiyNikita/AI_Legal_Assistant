@@ -63,3 +63,15 @@ export const tgClose = () => {
     console.log("Приложение закрыто (имитация для браузера)");
   }
 };
+
+export const tgOpenInvoice = (
+  url: string,
+  callback: (status: "paid" | "cancelled" | "failed" | "pending") => void,
+) => {
+  if (tg && tg.openInvoice) {
+    tg.openInvoice(url, callback);
+  } else {
+    console.log("Открытие инвойса в браузере:", url);
+    setTimeout(() => callback("paid"), 2000);
+  }
+};
