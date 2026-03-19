@@ -7,7 +7,12 @@ from docx.text.paragraph import Paragraph
 
 
 class DocumentParser:
-    STRUCTURAL_REGEX = re.compile(r"^(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.?)\s*", re.IGNORECASE)
+    # Улучшенная регулярка для отлова структуры юридических документов:
+    # Берет: "Статья 1", "Глава I", "1.", "1.1.", "1)", "а)"
+    STRUCTURAL_REGEX = re.compile(
+        r"^(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.|[а-яА-Яa-zA-Z]\)|\d+\))(\s+|$)",
+        re.IGNORECASE
+    )
 
     @staticmethod
     def _detect_file_type(file_stream: BytesIO) -> str:
@@ -25,11 +30,9 @@ class DocumentParser:
 
     @classmethod
     def parse_to_text(cls, file_stream: BytesIO) -> str:
-        file_type = cls._detect_file_type(file_stream)
-        if file_type == 'docx':
-            return cls._parse_docx_to_text(file_stream)
-        elif file_type == 'pdf':
-            return cls._parse_pdf_to_text(file_stream)
+        # Теперь используем единый движок парсинга, чтобы не писать логику дважды
+        blocks = cls.parse(file_stream)
+        return "\n\n".join(b.text for b in blocks)
 
     @classmethod
     def parse(cls, file_stream: BytesIO) -> list[DocumentBlock]:
@@ -42,23 +45,6 @@ class DocumentParser:
     # ==========================
     # DOCX LOGIC
     # ==========================
-    @staticmethod
-    def _parse_docx_to_text(file_stream: BytesIO) -> str:
-        doc = Document(file_stream)
-        text_parts = []
-        for element in doc.element.body:
-            if element.tag.endswith('p'):
-                p = Paragraph(element, doc)
-                text = p.text.strip()
-                if text:
-                    text_parts.append(text)
-            elif element.tag.endswith('tbl'):
-                from docx.table import Table
-                t = Table(element, doc)
-                for row in t.rows:
-                    text_parts.append(" ".join(cell.text.strip() for cell in row.cells))
-        return "\n\n".join(text_parts)
-
     @staticmethod
     def _parse_docx(file_stream: BytesIO) -> list[DocumentBlock]:
         doc = Document(file_stream)
@@ -96,84 +82,92 @@ class DocumentParser:
     # PDF LOGIC (PyMuPDF - fitz)
     # ==========================
     @staticmethod
-    def _parse_pdf_to_text(file_stream: BytesIO) -> str:
-        file_stream.seek(0)
-        doc = fitz.open(stream=file_stream.read(), filetype="pdf")
-        text_parts = []
-
-        for page in doc:
-            # Извлекаем текст блоками для сохранения структуры абзацев
-            blocks = page.get_text("blocks")
-            for b in blocks:
-                if b[6] == 0:  # Проверка, что блок - это текст, а не картинка (type=0)
-                    clean_text = b[4].strip()
-                    if clean_text:
-                        # Убираем переносы слов и склеиваем строки внутри одного абзаца
-                        clean_text = re.sub(r'-\n\s*', '', clean_text)
-                        clean_text = re.sub(r'\s+', ' ', clean_text.replace('\n', ' '))
-                        text_parts.append(clean_text)
-
-        return "\n\n".join(text_parts)
-
-    @staticmethod
     def _parse_pdf(file_stream: BytesIO) -> list[DocumentBlock]:
         file_stream.seek(0)
         doc = fitz.open(stream=file_stream.read(), filetype="pdf")
-        blocks = []
+        blocks_out = []
         current_index = 0
 
+        visual_lines = []
+
+        # ШАГ 1. Сбор строк с сохранением визуальных границ блоков
         for page in doc:
-            # get_text("blocks") возвращает список кортежей с координатами и текстом.
-            # Элемент [4] - это сам текст, [6] - тип блока (0 - текст, 1 - картинка)
             text_blocks = page.get_text("blocks")
+            # Сортировка блоков: сверху-вниз, слева-направо
+            text_blocks.sort(key=lambda b: (b[1], b[0]))
 
             for b in text_blocks:
                 if b[6] != 0:
-                    continue  # Игнорируем картинки
+                    continue  # Игнорируем изображения
 
-                raw_text = b[4].strip()
-                if not raw_text:
+                text = b[4].strip()
+                if not text:
                     continue
 
-                # 1. Очистка: убираем переносы слов (тире) и лишние пробелы внутри блока
-                clean_text = re.sub(r'-\n\s*', '', raw_text)
-                clean_text = re.sub(r'\s+', ' ', clean_text.replace('\n', ' '))
+                # Игнорируем одиночные номера страниц в колонтитулах
+                if re.match(r'^\d+$', text):
+                    continue
 
-                # 2. Страховка: Если PyMuPDF объединил 2 логических пункта в 1 визуальный блок
-                # (напр: "...закон. Статья 5. Новый текст..."), принудительно разрываем их
-                split_pattern = r'(?<=[.!?])\s+(?=(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.)\s)'
-                sub_blocks = re.split(split_pattern, clean_text)
+                # Убираем переносы слов (тире на стыке строк)
+                text = re.sub(r'-\n\s*', '', text)
+                lines = text.split('\n')
 
-                # Собираем разделенные части обратно корректно
-                # re.split оставляет разделители в списке, если они в (группах), фильтруем их
-                final_parts = []
-                current_part = ""
+                for i, line in enumerate(lines):
+                    clean_line = line.strip()
+                    if clean_line:
+                        # i == 0 означает, что это первая строка визуального блока PyMuPDF
+                        visual_lines.append((clean_line, i == 0))
 
-                for part in sub_blocks:
-                    if not part: continue
-                    if DocumentParser.STRUCTURAL_REGEX.match(part):
-                        if current_part:
-                            final_parts.append(current_part.strip())
-                        current_part = part + " "
-                    else:
-                        current_part += part
-                if current_part:
-                    final_parts.append(current_part.strip())
+        # ШАГ 2. Умная сборка логических абзацев
+        paragraphs = []
+        current_para = ""
 
-                # 3. Формируем финальные DocumentBlock
-                for part_text in final_parts:
-                    if not part_text:
-                        continue
+        for line, is_new_visual_block in visual_lines:
+            is_structural = bool(DocumentParser.STRUCTURAL_REGEX.match(line))
 
-                    match = DocumentParser.STRUCTURAL_REGEX.match(part_text)
-                    block_id = match.group(0).strip() if match else None
+            if not current_para:
+                current_para = line
+                continue
 
-                    blocks.append(DocumentBlock(
-                        index=current_index,
-                        id=block_id,
-                        text=part_text,
-                        hash=DocumentBlock.generate_hash(part_text)
-                    ))
-                    current_index += 1
+            # Проверяем, закончена ли мысль в предыдущей строке
+            prev_ends_with_terminal = current_para.endswith(('.', ';', ':', '!', '?'))
 
-        return blocks
+            # Защита от сокращений, чтобы парсер не рвал текст после "2011 г." или "ул."
+            is_abbrev = re.search(r'(г|им|ул|просп|д|кв|п|ст|обл)\.$', current_para.lower())
+            if is_abbrev:
+                prev_ends_with_terminal = False
+
+            if is_structural:
+                # 1. Жесткое правило: маркер (напр. "136.") = ГАРАНТИРОВАННО новый абзац
+                paragraphs.append(current_para)
+                current_para = line
+            elif is_new_visual_block and prev_ends_with_terminal:
+                # 2. Мягкое правило: Новый визуальный блок + мысль закончена точкой = новый абзац
+                paragraphs.append(current_para)
+                current_para = line
+            else:
+                # 3. Склеиваем: предложение разорвано страницей или это продолжение абзаца
+                current_para += " " + line
+
+        if current_para:
+            paragraphs.append(current_para)
+
+        # ШАГ 3. Формирование объектов DocumentBlock
+        for para in paragraphs:
+            # Финальная чистка лишних пробелов внутри абзаца
+            para = re.sub(r'\s+', ' ', para).strip()
+            if not para:
+                continue
+
+            match = DocumentParser.STRUCTURAL_REGEX.match(para)
+            block_id = match.group(0).strip() if match else None
+
+            blocks_out.append(DocumentBlock(
+                index=current_index,
+                id=block_id,
+                text=para,
+                hash=DocumentBlock.generate_hash(para)
+            ))
+            current_index += 1
+
+        return blocks_out
