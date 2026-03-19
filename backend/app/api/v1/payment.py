@@ -4,6 +4,7 @@ from loguru import logger
 from app.services.payment_service import purchase_package, confirm_payment
 from app.api.dependencies import get_db
 from app.schemas.user import InvoiceRequest
+from fastapi import Request
 
 router = APIRouter(prefix="/api/v1/payments", tags=["Payments"])
 
@@ -20,7 +21,7 @@ async def create_invoice(request: InvoiceRequest, db: AsyncSession = Depends(get
 
 
 @router.post("/confirm")
-async def confirm_payment_endpoint(request: str, db: AsyncSession = Depends(get_db)):
+async def confirm_payment_endpoint(request: Request, db: AsyncSession = Depends(get_db)):
     logger.info("🔔 Получен запрос на подтверждение оплаты")
     data = await request.json()
     success = await confirm_payment(db, data)
