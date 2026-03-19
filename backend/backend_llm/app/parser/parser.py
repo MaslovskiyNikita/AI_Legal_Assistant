@@ -112,76 +112,48 @@ class DocumentParser:
         blocks = []
         current_index = 0
 
-        # Шаг 1. Собираем весь сырой текст
+        # Шаг 1. Собираем весь текст
         full_text = []
         for page in reader.pages:
             text = page.extract_text()
             if text:
                 full_text.append(text)
 
-        raw_text = "\n".join(full_text)
+        raw_text = " ".join(full_text)
 
-        # ДОБАВЛЕНО: Очистка артефактов PDF
-        # 1. Убираем переносы слов (тире на конце строки)
+        # Шаг 2. Очистка от мусора PDF
+        # Убираем переносы слов (тире) и двойные пробелы
         raw_text = re.sub(r'-\n\s*', '', raw_text)
-        # 2. Нормализуем случайные длинные пробелы внутри строк (но сохраняем \n)
-        raw_text = re.sub(r'[ \t]+', ' ', raw_text)
+        raw_text = re.sub(r'\s+', ' ', raw_text)
 
-        # 3. ПРИНУДИТЕЛЬНЫЙ РАЗРЫВ: Если pypdf склеил пункты (напр: "...текст. 2. Новый текст"),
-        # принудительно вставляем \n перед структурой, чтобы сработал STRUCTURAL_REGEX
-        structural_pattern = r'([\.!?]\s+|<br>)(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.)(\s)'
-        raw_text = re.sub(structural_pattern, r'\n\2\4', raw_text, flags=re.IGNORECASE)
+        # Шаг 3. УМНАЯ РАЗБИВКА НА ЛОГИЧЕСКИЕ ЧАСТИ (Решение проблемы "Огромных блоков")
 
-        lines = raw_text.splitlines()
+        # А) Разрываем юридические перечисления (точка с запятой + пробел)
+        raw_text = raw_text.replace('; ', ';\n')
 
-        paragraphs = []
-        current_para = []
+        # Б) Ищем "вклеенные" пункты (например "Текст. 1. Новый текст", "Текст. Статья 5. Текст")
+        # Вставляем перенос строки перед цифрой с точкой, если за ней идет Заглавная буква
+        struct_pattern = r'(?<=\s|^)(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.)\s+(?=[А-ЯЁA-Z])'
+        raw_text = re.sub(struct_pattern, r'\n\1 ', raw_text)
 
-        # Шаг 2. Разбираем строки
+        # В) Разрываем обычные длинные предложения
+        # Ищем: (Буквы минимум 2 шт) + (Точка) + (Пробел) + (Заглавная буква)
+        # [а-яА-Я]{2} спасает от разрыва на сокращениях вроде "2014 г. №173" или "им. Ленина"
+        sentence_pattern = r'(?<=[а-яёА-ЯЁa-zA-Z]{2}\.)\s+(?=[А-ЯЁA-Z])'
+        raw_text = re.sub(sentence_pattern, r'\n', raw_text)
+
+        # Шаг 4. Формируем финальные блоки
+        lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
+
         for line in lines:
-            line = line.strip()
-            if not line:
-                if current_para:
-                    paragraphs.append(" ".join(current_para))
-                    current_para = []
-                continue
-
-            if current_para:
-                prev_line = current_para[-1]
-
-                is_structural = bool(DocumentParser.STRUCTURAL_REGEX.match(line))
-                ends_with_terminal = prev_line.endswith(('.', ';', ':', '!', '?'))
-                starts_with_upper_or_digit = line[0].isupper() or line[0].isdigit() or line.startswith(('"', '«'))
-
-                # ДОБАВЛЕНО: Защита от огромных абзацев. Если накопили больше 800 символов и есть конец предложения - рубим!
-                current_length = sum(len(l) for l in current_para)
-                is_too_long = current_length > 800 and ends_with_terminal
-
-                if is_structural or (ends_with_terminal and starts_with_upper_or_digit) or is_too_long:
-                    paragraphs.append(" ".join(current_para))
-                    current_para = [line]
-                else:
-                    current_para.append(line)
-            else:
-                current_para.append(line)
-
-        if current_para:
-            paragraphs.append(" ".join(current_para))
-
-        # Шаг 3. Формируем DocumentBlock
-        for raw_para in paragraphs:
-            raw_para = raw_para.strip()
-            if not raw_para:
-                continue
-
-            match = DocumentParser.STRUCTURAL_REGEX.match(raw_para)
+            match = DocumentParser.STRUCTURAL_REGEX.match(line)
             block_id = match.group(0).strip() if match else None
 
             blocks.append(DocumentBlock(
                 index=current_index,
                 id=block_id,
-                text=raw_para,
-                hash=DocumentBlock.generate_hash(raw_para)
+                text=line,
+                hash=DocumentBlock.generate_hash(line)
             ))
             current_index += 1
 
