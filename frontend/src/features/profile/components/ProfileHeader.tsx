@@ -1,5 +1,4 @@
-// src/features/profile/components/ProfileHeader.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Zap, ChevronLeft, Star, Loader2, Clock, Info } from "lucide-react";
 import { Drawer } from "vaul";
 import {
@@ -64,7 +63,6 @@ const TokenCircleMenu = ({
           setIsOpen(false);
           showToast("Оплата прошла успешно! Проверяем баланс...", "info");
 
-          // Даем бэкенду 2 секунды на обработку вебхука от Telegram
           setTimeout(async () => {
             await onPaymentSuccess();
             showToast("Баланс успешно обновлен!", "success");
@@ -248,31 +246,30 @@ export const ProfileHeader: React.FC<{
   greeting: string;
   onSettingsClick: () => void;
 }> = ({ firstName, photoUrl, greeting, onSettingsClick }) => {
-  // Инициализируем состояние баланса
   const [balance, setBalance] = useState(() => {
     const userStr = localStorage.getItem("user");
     return userStr ? (JSON.parse(userStr).token_balance ?? 50) : 50;
   });
 
-  // Функция для запроса новых данных с бэкенда
   const fetchFreshBalance = async () => {
     if (!TELEGRAM_USER?.id) return;
     try {
       const freshProfile = await apiClient.getUser(TELEGRAM_USER.id);
-
-      // Обновляем LocalStorage
       const oldUser = JSON.parse(localStorage.getItem("user") || "{}");
       localStorage.setItem(
         "user",
         JSON.stringify({ ...oldUser, ...freshProfile }),
       );
-
-      // Обновляем стейт компонента (чтобы перерисовался интерфейс)
       setBalance(freshProfile.token_balance ?? balance);
     } catch (e) {
       console.error("Не удалось обновить баланс:", e);
     }
   };
+
+  // 👇 ДОБАВЛЕНО: Автоматически запрашиваем баланс при каждом показе профиля
+  useEffect(() => {
+    fetchFreshBalance();
+  }, []);
 
   return (
     <div className="flex items-center justify-between px-4 pt-4 pb-3 relative z-20">

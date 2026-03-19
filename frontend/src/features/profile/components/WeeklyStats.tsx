@@ -1,13 +1,9 @@
 import React, { useEffect, useState } from "react";
 import {
   CheckCircle2,
-  TrendingUp,
-  Wallet,
-  Clock,
-  ShieldAlert,
   Activity,
   PieChart as PieChartIcon,
-  Scale, // <-- Добавили иконку весов
+  Scale,
 } from "lucide-react";
 import {
   PieChart,
@@ -33,7 +29,6 @@ const COLORS = {
   RED: "#FF3B30",
   YELLOW: "#FF9500",
   GREEN: "#34C759",
-  BLUE: "#3390EC",
 };
 
 // Генерация массива 7 дат с подстановкой данных от бэка
@@ -51,16 +46,11 @@ const getFilledActivityData = (backendData: any[]) => {
 
   return dates.map((dateStr) => {
     const found = backendData.find((item) => item.date === dateStr);
-    // Бэкенд теперь присылает message_count вместо count
     return { date: dateStr, count: found ? found.message_count : 0 };
   });
 };
 
-export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
-  userId,
-  documentsAnalyzed,
-  consultationsCount,
-}) => {
+export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
   const [risks, setRisks] = useState({ RED: 0, YELLOW: 0, GREEN: 0 });
   const [activityRaw, setActivityRaw] = useState<any[]>([]);
   const [topLaws, setTopLaws] = useState<any[]>([]);
@@ -69,14 +59,12 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
   useEffect(() => {
     if (!userId) return;
 
-    // Стучимся сразу в 3 ручки
     Promise.all([
       apiClient.getRiskStatistics(userId).catch(() => []),
       apiClient.getActivityStatistics(userId).catch(() => []),
       apiClient.getLawStatistics(userId).catch(() => []),
     ])
       .then(([risksData, activityData, lawsData]) => {
-        // Парсим массив рисков под новые ключи (risk_type)
         const parsedRisks = { RED: 0, YELLOW: 0, GREEN: 0 };
         if (Array.isArray(risksData)) {
           risksData.forEach((item: any) => {
@@ -108,15 +96,6 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
     { name: "В норме", value: risks.GREEN, color: COLORS.GREEN },
   ];
 
-  let safetyScore = 100;
-  if (totalRisks > 0) {
-    const penalty = (risks.RED * 3 + risks.YELLOW * 1) / (totalRisks * 3);
-    safetyScore = Math.round((1 - penalty) * 100);
-  }
-  let scoreColor = COLORS.GREEN;
-  if (safetyScore < 70) scoreColor = COLORS.YELLOW;
-  if (safetyScore < 40) scoreColor = COLORS.RED;
-
   // === 2. АКТИВНОСТЬ ===
   const filledActivityData = getFilledActivityData(activityRaw);
   const totalActivityCount = filledActivityData.reduce(
@@ -124,11 +103,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
     0,
   );
 
-  // === 3. ГЕЙМИФИКАЦИЯ ===
-  const savedMoney = consultationsCount * 1500;
-  const savedHours = consultationsCount * 2;
-
-  // Тултип для столбцов
+  // Тултип для столбцов активности
   const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -145,67 +120,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
 
   return (
     <div className="mb-8 mt-6 space-y-6">
-      {/* 1. ИНДЕКС И ГЕЙМИФИКАЦИЯ */}
-      <section>
-        <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1">
-          Общая сводка
-        </h4>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          <div className="col-span-2 bg-[var(--tg-theme-bg-color)] rounded-2xl p-4 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] shadow-sm flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-1.5 mb-1 text-[var(--tg-theme-text-color)]">
-                <ShieldAlert size={16} style={{ color: scoreColor }} />
-                <span className="text-[13px] font-bold uppercase tracking-wide">
-                  Индекс безопасности
-                </span>
-              </div>
-              <p className="text-[12px] text-[var(--tg-theme-hint-color)]">
-                Качество ваших контрагентов
-              </p>
-            </div>
-            <div
-              className="text-3xl font-extrabold"
-              style={{ color: scoreColor }}
-            >
-              {safetyScore}%
-            </div>
-          </div>
-
-          <div className="bg-gradient-to-br from-[#34C759]/10 to-[#34C759]/5 rounded-2xl p-4 border border-[#34C759]/20 shadow-sm relative overflow-hidden">
-            <Wallet
-              size={40}
-              className="absolute -right-2 -bottom-2 text-[#34C759] opacity-20"
-            />
-            <div className="flex items-center gap-1.5 mb-1 text-[#34C759]">
-              <TrendingUp size={16} />
-              <span className="text-[12px] font-bold uppercase tracking-wide">
-                Сэкономлено
-              </span>
-            </div>
-            <span className="text-xl font-bold text-[var(--tg-theme-text-color)]">
-              ~{savedMoney.toLocaleString("ru-RU")} ₽
-            </span>
-          </div>
-
-          <div className="bg-gradient-to-br from-[#3390EC]/10 to-[#3390EC]/5 rounded-2xl p-4 border border-[#3390EC]/20 shadow-sm relative overflow-hidden">
-            <Clock
-              size={40}
-              className="absolute -right-2 -bottom-2 text-[#3390EC] opacity-20"
-            />
-            <div className="flex items-center gap-1.5 mb-1 text-[#3390EC]">
-              <Clock size={16} />
-              <span className="text-[12px] font-bold uppercase tracking-wide">
-                Время
-              </span>
-            </div>
-            <span className="text-xl font-bold text-[var(--tg-theme-text-color)]">
-              {savedHours} часов
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. АНАЛИТИКА РИСКОВ (Кольцевая диаграмма) */}
+      {/* 1. АНАЛИТИКА РИСКОВ (Кольцевая диаграмма) */}
       <section>
         <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
           <PieChartIcon
@@ -276,7 +191,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
         </div>
       </section>
 
-      {/* 3. АКТИВНОСТЬ ПО ДНЯМ */}
+      {/* 2. АКТИВНОСТЬ ПО ДНЯМ */}
       <section>
         <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
           <Activity size={14} /> Активность общения
@@ -333,7 +248,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
         </div>
       </section>
 
-      {/* 4. ТОП НАРУШЕНИЙ (Прогресс-бары) */}
+      {/* 3. ТОП НАРУШЕНИЙ (Прогресс-бары) */}
       {topLaws.length > 0 && (
         <section>
           <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
@@ -341,7 +256,6 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({
           </h4>
           <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl p-4 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] shadow-sm space-y-4">
             {topLaws.map((item: any, idx: number) => {
-              // Берем максимальное значение для вычисления % ширины прогресс-бара
               const maxCount = topLaws[0].count;
               const percent = Math.max((item.count / maxCount) * 100, 10);
 
