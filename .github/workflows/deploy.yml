@@ -53,7 +53,7 @@ jobs:
           echo "POSTGRES_HOST=db-backend" >> .env
           echo "POSTGRES_PORT=6432" >> .env
           echo "POSTGRES_DB=hackathon_db" >> .env
-          echo "BOT_TOKEN"=${{ secrets.BOT_TOKEN }}" >> .env
+          echo "BOT_TOKEN"="${{ secrets.BOT_TOKEN }}" >> .env
 
       - name: Set Build Start Time
         run: echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
