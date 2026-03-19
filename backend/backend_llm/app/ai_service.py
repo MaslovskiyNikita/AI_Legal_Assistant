@@ -191,8 +191,7 @@ class AiRiskAnalyzer:
         except Exception as e:
             print(f"RAG Chat Error: {e}")
 
-        chat_messages = chat_history["messages"]
-        history_text = format_chat_history(chat_messages)
+        history_text = format_chat_history(chat_history)
 
         system_prompt = LegalPrompts.get_chat_prompt(
             question=question,
