@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from loguru import logger
 
-from backend.app.api.dependencies import get_db
-from backend.app.services.statistic_service import get_risk_statistic
+from app.api.dependencies import get_db
+from app.services.statistic_service import get_risk_statistic
 
 
 router = APIRouter(prefix="/api/v1/analytics", tags=["Analytics"])
