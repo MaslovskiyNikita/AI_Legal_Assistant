@@ -48,3 +48,63 @@ async def export_chat_to_pdf(chat_id: int, db: AsyncSession = Depends(get_db)):
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=chat_{chat_id}.pdf"}
     )
+    
+
+@router.get("/{chat_id}/export/analysis/docx")
+async def export_analysis_to_docx(chat_id: int, db: AsyncSession = Depends(get_db)):
+    logger.info(f"📄 Экспорт АНАЛИЗА чата ID={chat_id} в DOCX")
+
+    chat = await chat_service.get_chat_with_messages(db, chat_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Чат не найден")
+
+    analysis_msg = None
+    for m in reversed(chat.messages):
+        if m.role == "ai" and getattr(m, 'ai_data', None) and "analysis" in m.ai_data:
+            analysis_msg = m
+            break
+    
+    if not analysis_msg:
+        raise HTTPException(status_code=404, detail="Анализ документов не найден")
+
+    ai_data = analysis_msg.ai_data
+    file_stream = await export_service.generate_analysis_docx_stream(
+        analysis_data=ai_data.get("analysis", {}),
+        diff_blocks=ai_data.get("diff_blocks", [])
+    )
+
+    return StreamingResponse(
+        file_stream,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f"attachment; filename=analysis_{chat_id}.docx"}
+    )
+    
+    
+@router.get("/{chat_id}/export/analysis/pdf")
+async def export_analysis_to_pdf(chat_id: int, db: AsyncSession = Depends(get_db)):
+    logger.info(f"📄 Экспорт АНАЛИЗА чата ID={chat_id} в PDF")
+
+    chat = await chat_service.get_chat_with_messages(db, chat_id)
+    if not chat:
+        raise HTTPException(status_code=404, detail="Чат не найден")
+
+    analysis_msg = None
+    for m in reversed(chat.messages):
+        if m.role == "ai" and getattr(m, 'ai_data', None) and "analysis" in m.ai_data:
+            analysis_msg = m
+            break
+    
+    if not analysis_msg:
+        raise HTTPException(status_code=404, detail="Анализ документов не найден")
+
+    ai_data = analysis_msg.ai_data
+    file_stream = await export_service.generate_analysis_pdf_stream(
+        analysis_data=ai_data.get("analysis", {}),
+        diff_blocks=ai_data.get("diff_blocks", [])
+    )
+
+    return StreamingResponse(
+        file_stream,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=analysis_{chat_id}.pdf"}
+    )
