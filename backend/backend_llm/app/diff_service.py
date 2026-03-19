@@ -129,6 +129,11 @@ class DiffService:
         if not old_text: return f"<ins>{new_text}</ins>"
         if not new_text: return f"<del>{old_text}</del>"
 
+        # ДОБАВЛЕНО: Схлопываем все PDF-разрывы строк и множественные пробелы в один пробел.
+        # Это спасет difflib от рассинхрона из-за невидимых артефактов PDF
+        old_text = re.sub(r'\s+', ' ', old_text).strip()
+        new_text = re.sub(r'\s+', ' ', new_text).strip()
+
         # Разбиваем на токены (слова, пробелы, знаки)
         tokenizer = re.compile(r'(\s+|[^\w\s]|\w+)', re.UNICODE)
         old_tokens = tokenizer.findall(old_text)
@@ -141,7 +146,6 @@ class DiffService:
         pending_ins = []
 
         def flush():
-            """Сбрасывает накопленное: сначала весь старый блок, потом весь новый"""
             if pending_del:
                 result.append(f"<del>{''.join(pending_del)}</del>")
                 pending_del.clear()
@@ -153,19 +157,15 @@ class DiffService:
             if tag == 'equal':
                 content = "".join(old_tokens[i1:i2])
 
-                # ЛОГИКА СГЛАЖИВАНИЯ:
-                # Если совпадение слишком короткое (меньше 12 символов ИЛИ меньше 3 слов)
-                # и это не конец/начало строки — считаем это частью изменения.
-                # Это не даст предлогам типа "в", "на", "и" разрывать фразы.
-                is_anchor = len(content) > 12 or len(content.split()) >= 3
+                # Делаем алгоритм чуть строже: считаем якорем кусок длиннее 15 символов
+                is_anchor = len(content) > 15 or len(content.split()) >= 3
 
                 if is_anchor:
                     flush()
                     result.append(content)
                 else:
-                    # Поглощаем маленькое совпадение в правку
-                    pending_del.append(content)
-                    pending_ins.append(content)
+                    pending_del.append("".join(old_tokens[i1:i2]))
+                    pending_ins.append("".join(new_tokens[j1:j2]))
 
             elif tag == 'delete':
                 pending_del.append("".join(old_tokens[i1:i2]))

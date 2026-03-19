@@ -112,7 +112,7 @@ class DocumentParser:
         blocks = []
         current_index = 0
 
-        # Шаг 1. Собираем весь сырой текст со всех страниц
+        # Шаг 1. Собираем весь сырой текст
         full_text = []
         for page in reader.pages:
             text = page.extract_text()
@@ -120,12 +120,24 @@ class DocumentParser:
                 full_text.append(text)
 
         raw_text = "\n".join(full_text)
+
+        # ДОБАВЛЕНО: Очистка артефактов PDF
+        # 1. Убираем переносы слов (тире на конце строки)
+        raw_text = re.sub(r'-\n\s*', '', raw_text)
+        # 2. Нормализуем случайные длинные пробелы внутри строк (но сохраняем \n)
+        raw_text = re.sub(r'[ \t]+', ' ', raw_text)
+
+        # 3. ПРИНУДИТЕЛЬНЫЙ РАЗРЫВ: Если pypdf склеил пункты (напр: "...текст. 2. Новый текст"),
+        # принудительно вставляем \n перед структурой, чтобы сработал STRUCTURAL_REGEX
+        structural_pattern = r'([\.!?]\s+|<br>)(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.)(\s)'
+        raw_text = re.sub(structural_pattern, r'\n\2\4', raw_text, flags=re.IGNORECASE)
+
         lines = raw_text.splitlines()
 
         paragraphs = []
         current_para = []
 
-        # Шаг 2. Разбираем строки и умным образом формируем абзацы
+        # Шаг 2. Разбираем строки
         for line in lines:
             line = line.strip()
             if not line:
@@ -137,20 +149,18 @@ class DocumentParser:
             if current_para:
                 prev_line = current_para[-1]
 
-                # Эвристика 1: Строка начинается с номера (напр. "141.", "25.") или "Статья"
                 is_structural = bool(DocumentParser.STRUCTURAL_REGEX.match(line))
-
-                # Эвристика 2: Прошлая строка закончилась точкой/точкой с запятой/двоеточием,
-                # а новая начинается с большой буквы или цифры
                 ends_with_terminal = prev_line.endswith(('.', ';', ':', '!', '?'))
                 starts_with_upper_or_digit = line[0].isupper() or line[0].isdigit() or line.startswith(('"', '«'))
 
-                if is_structural or (ends_with_terminal and starts_with_upper_or_digit):
-                    # Разрываем абзац, если сработала эвристика нового пункта/абзаца
+                # ДОБАВЛЕНО: Защита от огромных абзацев. Если накопили больше 800 символов и есть конец предложения - рубим!
+                current_length = sum(len(l) for l in current_para)
+                is_too_long = current_length > 800 and ends_with_terminal
+
+                if is_structural or (ends_with_terminal and starts_with_upper_or_digit) or is_too_long:
                     paragraphs.append(" ".join(current_para))
                     current_para = [line]
                 else:
-                    # Это просто перенос строки внутри одного предложения - склеиваем
                     current_para.append(line)
             else:
                 current_para.append(line)
@@ -158,7 +168,7 @@ class DocumentParser:
         if current_para:
             paragraphs.append(" ".join(current_para))
 
-        # Шаг 3. Превращаем логические абзацы в DocumentBlock для точного сравнения
+        # Шаг 3. Формируем DocumentBlock
         for raw_para in paragraphs:
             raw_para = raw_para.strip()
             if not raw_para:
