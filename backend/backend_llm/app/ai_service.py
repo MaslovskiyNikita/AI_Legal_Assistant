@@ -95,7 +95,7 @@ class AiRiskAnalyzer:
         if not api_key or api_key == "ВАШ_КЛЮЧ":
             return AiRiskAnalyzer._heuristic("API KEY MISSING")
 
-        batch_size = 1
+        batch_size = 3
         batches = [meaningful_diffs[i:i + batch_size] for i in range(0, len(meaningful_diffs), batch_size)]
         
         tasks = [AiRiskAnalyzer._process_batch(batch, api_key, tone) for batch in batches]
