@@ -85,3 +85,20 @@ export const tgOpenInvoice = (
     setTimeout(() => callback("paid"), 2000);
   }
 };
+
+export const applyThemeToApp = (theme: "light" | "dark") => {
+  document.documentElement.setAttribute("data-theme", theme);
+
+  const tg = getTg();
+  if (tg) {
+    const bgColor = theme === "dark" ? "#1c1c1d" : "#ffffff";
+    const secBgColor = theme === "dark" ? "#000000" : "#f2f2f7";
+
+    try {
+      if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
+      if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
+    } catch (e) {
+      console.warn("Telegram API не поддерживает смену цветов в этой версии");
+    }
+  }
+};

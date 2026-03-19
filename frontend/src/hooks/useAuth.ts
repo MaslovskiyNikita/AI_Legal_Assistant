@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../api/client";
-import { TELEGRAM_USER, getTg } from "../utils/telegram"; // <-- Добавили getTg
+import { TELEGRAM_USER, getTg, applyThemeToApp } from "../utils/telegram";
 
 // ГЛОБАЛЬНАЯ ПЕРЕМЕННАЯ: переживет любые перерисовки компонентов
 let isAuthCheckedGlobally = false;
@@ -39,7 +39,7 @@ export const useAuth = () => {
           photo_url: TELEGRAM_USER.photo_url,
         });
 
-        // 👇 ИСПРАВЛЕНИЕ: Если юзер новый, сразу сохраняем его нативную тему ТГ на бэкенд
+        // Если юзер новый, сразу сохраняем его нативную тему ТГ на бэкенд
         if (authResponse.is_new_user) {
           const nativeTheme = tg?.colorScheme || "dark";
           await apiClient.updateSettings(tgId, { theme: nativeTheme });
@@ -56,20 +56,9 @@ export const useAuth = () => {
 
         localStorage.setItem("user", JSON.stringify(safeProfile));
 
-        // 👇 ИСПРАВЛЕНИЕ: Синхронизируем DOM и системные цвета ТГ с профилем юзера
+        // 👇 ИСПРАВЛЕНИЕ: Применяем тему пользователя единой функцией (она сама поменяет цвета ТГ)
         if (safeProfile.theme) {
-          document.documentElement.setAttribute(
-            "data-theme",
-            safeProfile.theme,
-          );
-          if (tg) {
-            const bgColor =
-              safeProfile.theme === "dark" ? "#1c1c1d" : "#ffffff";
-            const secBgColor =
-              safeProfile.theme === "dark" ? "#000000" : "#f2f2f7";
-            if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
-            if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
-          }
+          applyThemeToApp(safeProfile.theme);
         }
 
         // Редиректы только если мы на корневой странице

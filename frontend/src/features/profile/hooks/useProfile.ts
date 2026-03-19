@@ -31,22 +31,20 @@ export const useProfile = () => {
   useEffect(() => {
     const tg = getTg();
     if (tg && tg.MainButton) {
-      // 1. Читаем текущую тему из атрибута, который мы меняем в настройках
-      const currentTheme =
-        document.documentElement.getAttribute("data-theme") || "light";
+      // БЕРЕМ ЦВЕТ КНОПКИ ИЗ ТЕМЫ САМОГО ТГ ИЛИ СТАВИМ СИНИЙ (#3390EC)
+      // Мы больше не привязываем её к фону (#1c1c1d)
+      const buttonBgColor = tg.themeParams?.button_color || "#3390EC";
+      const buttonTextColor = tg.themeParams?.button_text_color || "#ffffff";
 
-      const buttonBgColor = currentTheme === "dark" ? "#1c1c1d" : "#3390EC";
-
-      // Стилизуем под дизайн приложения
       tg.MainButton.setParams({
         text: "НАЧАТЬ НОВЫЙ ЧАТ",
         color: buttonBgColor,
-        text_color: "#ffffff",
+        text_color: buttonTextColor,
         is_visible: true,
       });
 
       const handleMainButtonClick = () => {
-        tgHaptic("medium"); // Вибрация при нажатии
+        tgHaptic("medium");
         const agentPrompt =
           agents.find((a) => a.id === selectedAgent)?.prompt || "";
         navigate("/chat/new", { state: { initialPrompt: agentPrompt } });

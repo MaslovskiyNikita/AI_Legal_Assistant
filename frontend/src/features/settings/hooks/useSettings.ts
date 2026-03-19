@@ -2,8 +2,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../../../api/client";
-import { getTg, tgAlert, tgClose } from "../../../utils/telegram";
-
+import {
+  getTg,
+  tgAlert,
+  tgClose,
+  applyThemeToApp,
+} from "../../../utils/telegram";
 export const useSettings = () => {
   const navigate = useNavigate();
 
@@ -156,16 +160,7 @@ export const useSettings = () => {
     const newTheme = theme === "dark" ? "light" : "dark";
 
     setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-
-    const tg = getTg();
-    if (tg) {
-      const bgColor = newTheme === "dark" ? "#1c1c1d" : "#ffffff";
-      const secBgColor = newTheme === "dark" ? "#000000" : "#f2f2f7";
-
-      if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
-      if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
-    }
+    applyThemeToApp(newTheme); // <-- МГНОВЕННО МЕНЯЕМ ВСЕ ЦВЕТА
 
     try {
       await apiClient.updateSettings(internalUserId, { theme: newTheme });
@@ -175,15 +170,9 @@ export const useSettings = () => {
       );
     } catch (error) {
       console.error("Ошибка при смене темы:", error);
+      // Если бэкенд упал, откатываем обратно
       setTheme(theme);
-      document.documentElement.setAttribute("data-theme", theme);
-
-      if (tg) {
-        const oldBgColor = theme === "dark" ? "#1c1c1d" : "#ffffff";
-        const oldSecBgColor = theme === "dark" ? "#000000" : "#f2f2f7";
-        if (tg.setBackgroundColor) tg.setBackgroundColor(oldBgColor);
-        if (tg.setHeaderColor) tg.setHeaderColor(oldSecBgColor);
-      }
+      applyThemeToApp(theme);
     }
   };
 
