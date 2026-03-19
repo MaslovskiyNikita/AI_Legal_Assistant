@@ -16,7 +16,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import app.models.user 
 import app.models.chat
-from app.api.v1 import auth, chats, documents, export, payment
+from app.api.v1 import auth, chats, documents, export, payment, analitics
 
 logging.getLogger("uvicorn.access").handlers = []
 logging.getLogger("uvicorn.error").handlers = []
@@ -47,6 +47,7 @@ app.include_router(chats.router)
 app.include_router(documents.router)
 app.include_router(export.router)
 app.include_router(payment.router)
+app.include_router(analitics.router)
 
 @app.get("/api/v1/ping")
 async def ping():
