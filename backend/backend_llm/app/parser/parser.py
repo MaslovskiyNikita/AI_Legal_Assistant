@@ -1,3 +1,4 @@
+import fitz
 import re
 from io import BytesIO
 from pypdf import PdfReader  # Используем чистый Python-парсер
@@ -108,53 +109,37 @@ class DocumentParser:
 
     @staticmethod
     def _parse_pdf(file_stream: BytesIO) -> list[DocumentBlock]:
-        reader = PdfReader(file_stream)
+        # Открываем PDF из байтов
+        doc = fitz.open(stream=file_stream.read(), filetype="pdf")
         blocks = []
         current_index = 0
 
-        # Шаг 1. Собираем весь текст
-        full_text = []
-        for page in reader.pages:
-            text = page.extract_text()
-            if text:
-                full_text.append(text)
+        for page in doc:
+            # Получаем текст сразу блоками (абзацами)
+            # block_info: (x0, y0, x1, y1, "text", block_no, block_type)
+            text_blocks = page.get_text("blocks")
 
-        raw_text = " ".join(full_text)
+            for b in text_blocks:
+                # block_type == 0 означает, что это текст (а не картинка)
+                if b[6] == 0:
+                    raw_text = b[4].strip()
+                    if not raw_text:
+                        continue
 
-        # Шаг 2. Очистка от мусора PDF
-        # Убираем переносы слов (тире) и двойные пробелы
-        raw_text = re.sub(r'-\n\s*', '', raw_text)
-        raw_text = re.sub(r'\s+', ' ', raw_text)
+                    # Очистка от переносов строк внутри одного абзаца
+                    clean_text = raw_text.replace('\n', ' ')
+                    clean_text = re.sub(r'\s+', ' ', clean_text)
 
-        # Шаг 3. УМНАЯ РАЗБИВКА НА ЛОГИЧЕСКИЕ ЧАСТИ (Решение проблемы "Огромных блоков")
+                    # Извлечение структуры (Статья, Глава и т.д.)
+                    match = DocumentParser.STRUCTURAL_REGEX.match(clean_text)
+                    block_id = match.group(0).strip() if match else None
 
-        # А) Разрываем юридические перечисления (точка с запятой + пробел)
-        raw_text = raw_text.replace('; ', ';\n')
-
-        # Б) Ищем "вклеенные" пункты (например "Текст. 1. Новый текст", "Текст. Статья 5. Текст")
-        # Вставляем перенос строки перед цифрой с точкой, если за ней идет Заглавная буква
-        struct_pattern = r'(?<=\s|^)(Статья\s+\d+|Глава\s+[IXV]+|\d+(\.\d+)*\.)\s+(?=[А-ЯЁA-Z])'
-        raw_text = re.sub(struct_pattern, r'\n\1 ', raw_text)
-
-        # В) Разрываем обычные длинные предложения
-        # Ищем: (Буквы минимум 2 шт) + (Точка) + (Пробел) + (Заглавная буква)
-        # [а-яА-Я]{2} спасает от разрыва на сокращениях вроде "2014 г. №173" или "им. Ленина"
-        sentence_pattern = r'(?<=[а-яёА-ЯЁa-zA-Z]{2}\.)\s+(?=[А-ЯЁA-Z])'
-        raw_text = re.sub(sentence_pattern, r'\n', raw_text)
-
-        # Шаг 4. Формируем финальные блоки
-        lines = [line.strip() for line in raw_text.split('\n') if line.strip()]
-
-        for line in lines:
-            match = DocumentParser.STRUCTURAL_REGEX.match(line)
-            block_id = match.group(0).strip() if match else None
-
-            blocks.append(DocumentBlock(
-                index=current_index,
-                id=block_id,
-                text=line,
-                hash=DocumentBlock.generate_hash(line)
-            ))
-            current_index += 1
+                    blocks.append(DocumentBlock(
+                        index=current_index,
+                        id=block_id,
+                        text=clean_text,
+                        hash=DocumentBlock.generate_hash(clean_text)
+                    ))
+                    current_index += 1
 
         return blocks
