@@ -89,25 +89,52 @@ export const tgOpenInvoice = (
 export const applyThemeToApp = (theme: "light" | "dark") => {
   document.documentElement.setAttribute("data-theme", theme);
 
-  // ЖЕСТКО переопределяем переменные, чтобы Telegram не навязывал свои цвета
-  const root = document.documentElement;
-  if (theme === "dark") {
-    root.style.setProperty("--tg-theme-bg-color", "#1c1c1d");
-    root.style.setProperty("--tg-theme-secondary-bg-color", "#000000");
-    root.style.setProperty("--tg-theme-text-color", "#ffffff");
-    root.style.setProperty("--tg-theme-hint-color", "#8e8e93");
-    root.style.setProperty("--tg-theme-button-color", "#3390ec");
-    root.style.setProperty("--tg-theme-button-text-color", "#ffffff");
-    root.style.setProperty("--tg-theme-section-separator-color", "#38383a");
-  } else {
-    root.style.setProperty("--tg-theme-bg-color", "#ffffff");
-    root.style.setProperty("--tg-theme-secondary-bg-color", "#f2f2f7");
-    root.style.setProperty("--tg-theme-text-color", "#000000");
-    root.style.setProperty("--tg-theme-hint-color", "#8e8e93");
-    root.style.setProperty("--tg-theme-button-color", "#3390ec");
-    root.style.setProperty("--tg-theme-button-text-color", "#ffffff");
-    root.style.setProperty("--tg-theme-section-separator-color", "#e5e5ea");
-  }
+  // Применяем стили и к :root, и к <body>, чтобы скрипт Telegram не смог их перебить
+  const elementsToUpdate = [document.documentElement, document.body];
+
+  elementsToUpdate.forEach((el) => {
+    if (theme === "dark") {
+      el.style.setProperty("--tg-theme-bg-color", "#1c1c1d", "important");
+      el.style.setProperty(
+        "--tg-theme-secondary-bg-color",
+        "#000000",
+        "important",
+      );
+      el.style.setProperty("--tg-theme-text-color", "#ffffff", "important");
+      el.style.setProperty("--tg-theme-hint-color", "#8e8e93", "important");
+      el.style.setProperty("--tg-theme-button-color", "#3390ec", "important");
+      el.style.setProperty(
+        "--tg-theme-button-text-color",
+        "#ffffff",
+        "important",
+      );
+      el.style.setProperty(
+        "--tg-theme-section-separator-color",
+        "#38383a",
+        "important",
+      );
+    } else {
+      el.style.setProperty("--tg-theme-bg-color", "#ffffff", "important");
+      el.style.setProperty(
+        "--tg-theme-secondary-bg-color",
+        "#f2f2f7",
+        "important",
+      );
+      el.style.setProperty("--tg-theme-text-color", "#000000", "important");
+      el.style.setProperty("--tg-theme-hint-color", "#8e8e93", "important");
+      el.style.setProperty("--tg-theme-button-color", "#3390ec", "important");
+      el.style.setProperty(
+        "--tg-theme-button-text-color",
+        "#ffffff",
+        "important",
+      );
+      el.style.setProperty(
+        "--tg-theme-section-separator-color",
+        "#e5e5ea",
+        "important",
+      );
+    }
+  });
 
   const tg = getTg();
   if (tg) {
