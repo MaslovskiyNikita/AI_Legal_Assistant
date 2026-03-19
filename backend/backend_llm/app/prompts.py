@@ -28,7 +28,7 @@ class LegalPrompts:
     def get_system_prompt(
         diff_text: str, 
         rag_context: str, 
-        tone: AssistantTone = AssistantTone.STRICT
+        tone: AssistantTone = AssistantTone.FRIENDLY
     ) -> str:
         persona = LegalPrompts._PERSONAS.get(tone, LegalPrompts._PERSONAS[AssistantTone.STRICT])
         
