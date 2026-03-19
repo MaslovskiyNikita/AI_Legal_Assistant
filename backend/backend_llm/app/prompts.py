@@ -1,6 +1,5 @@
 from typing import Optional
-
-
+from datetime import datetime  # Добавляем импорт
 from backend_llm.app.settings import settings
 from backend_llm.app.models.AssistantTone import AssistantTone
 from backend_llm.app.rag_service import rag_service
@@ -32,6 +31,9 @@ class LegalPrompts:
             blocks_count: int = 1
     ) -> str:
         persona = LegalPrompts._PERSONAS.get(tone, LegalPrompts._PERSONAS[AssistantTone.STRICT])
+        
+        # Получаем текущую дату
+        current_date = datetime.now().strftime("%d.%m.%Y")
 
         if tone == AssistantTone.STRICT:
             style_instruction = "Используй сугубо профессиональную терминологию (Кодексы, Постановления РБ)."
@@ -42,7 +44,11 @@ class LegalPrompts:
 
         return f"""{persona}
 
+    СЕГОДНЯШНЯЯ ДАТА: {current_date}
     ЗАДАЧА: Проведи юридический аудит изменений в документе на соответствие законодательству Республики Беларусь.
+    
+    ВАЖНО: При анализе дат в документе соотноси их с текущей датой ({current_date}). 
+    Не считай даты «будущими», если они соответствуют или наступили относительно сегодняшнего дня.
 
     ### БАЗА ЗАКОНОДАТЕЛЬСТВА (RAG):
     {rag_context or "Релевантные статьи не найдены. Опирайся на общие знания права РБ."}
@@ -77,6 +83,7 @@ class LegalPrompts:
         tone: AssistantTone
     ) -> str:
         persona = LegalPrompts._PERSONAS.get(tone, LegalPrompts._PERSONAS[AssistantTone.STRICT])
+        current_date = datetime.now().strftime("%d.%m.%Y")
         
         if tone == AssistantTone.STRICT:
             behavior = "- Отвечай тезисно.\n- Запрещены приветствия и извинения.\n- Нет данных — отвечай: 'Данные в системе отсутствуют'."
@@ -87,6 +94,7 @@ class LegalPrompts:
 
         return f"""{persona}
 Контекст: Законодательство Республики Беларусь.
+ТЕКУЩАЯ ДАТА: {current_date}
 
 ### БАЗА ЗНАНИЙ: {rag_context}
 ### ИСТОРИЯ ДИАЛОГА:
@@ -96,6 +104,7 @@ class LegalPrompts:
 
 ИНСТРУКЦИЯ:
 {behavior}
+- Используй текущую дату ({current_date}) для контекста, если вопрос касается сроков.
 - Ссылайся на реальные статьи из БАЗЫ ЗНАНИЙ. Не выдумывай законы.
 - Если вопрос по документу — ищи в ИСТОРИИ ДИАЛОГА.
 """
