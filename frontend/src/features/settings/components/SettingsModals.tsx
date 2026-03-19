@@ -134,7 +134,6 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
             <p className="text-[12px] text-[var(--tg-theme-hint-color)] font-semibold uppercase tracking-wider">
               Редакция от: {new Date().toLocaleDateString("ru-RU")}
             </p>
-
             <div>
               <h3 className="font-bold text-[15px] mb-1.5">
                 1. Общие положения
@@ -146,7 +145,6 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
                 условиями.
               </p>
             </div>
-
             <div>
               <h3 className="font-bold text-[15px] mb-1.5">
                 2. Какие данные мы собираем
@@ -170,7 +168,6 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
                 </li>
               </ul>
             </div>
-
             <div>
               <h3 className="font-bold text-[15px] mb-1.5">
                 3. Обработка загружаемых документов
@@ -194,7 +191,6 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
                 </li>
               </ul>
             </div>
-
             <div>
               <h3 className="font-bold text-[15px] mb-1.5">
                 4. Ваши права и удаление данных
@@ -210,7 +206,6 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
                 с наших серверов.
               </p>
             </div>
-
             <div>
               <h3 className="font-bold text-[15px] mb-1.5">
                 5. Оплата и транзакции
@@ -221,7 +216,36 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
                 ваших банковских карт.
               </p>
             </div>
-
+            <div>
+              <h3 className="font-bold text-[15px] mb-1.5 text-[#FF9500]">
+                6. Отказ от ответственности (Disclaimer)
+              </h3>
+              <p className="opacity-90">
+                Сервис «Legal Expert» использует алгоритмы искусственного
+                интеллекта (LLM) для анализа текста. Генерируемые ответы, аудиты
+                и выявляемые риски{" "}
+                <span className="font-semibold">
+                  носят исключительно информационно-рекомендательный характер
+                </span>{" "}
+                и не являются официальной юридической консультацией.
+              </p>
+              <ul className="list-disc pl-4 space-y-1 opacity-90 mt-2">
+                <li>
+                  Разработчики не несут ответственности за любые прямые или
+                  косвенные убытки, возникшие в результате использования
+                  сервиса.
+                </li>
+                <li>
+                  Любые документы, договоры и рекомендации перед их практическим
+                  применением{" "}
+                  <span className="font-semibold underline">
+                    должны быть проверены квалифицированным юристом
+                  </span>
+                  .
+                </li>
+              </ul>
+            </div>
+            ./copy-ts.sh
             <div className="pb-4">
               <h3 className="font-bold text-[15px] mb-1.5">6. Контакты</h3>
               <p className="opacity-90">
