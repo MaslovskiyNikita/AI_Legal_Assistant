@@ -23,15 +23,14 @@ export const useSettings = () => {
   const [isLoadingStats, setIsLoadingStats] = useState(true);
   const [downloadingDocId, setDownloadingDocId] = useState<number | null>(null);
 
-  // 👇 ИСПРАВЛЕНО: Теперь мы всегда в первую очередь смотрим на реальный цвет экрана (DOM),
-  // чтобы положение тумблера на 100% совпадало с визуалом при первом входе.
   const [theme, setTheme] = useState(
     document.documentElement.getAttribute("data-theme") ||
       user?.theme ||
       "dark",
   );
 
-  const [notifications, setNotifications] = useState(
+  // ИСПРАВЛЕНИЕ: Переименовали переменную в vibration
+  const [vibration, setVibration] = useState(
     user?.notifications_enabled ?? true,
   );
 
@@ -156,11 +155,9 @@ export const useSettings = () => {
     if (!internalUserId) return;
     const newTheme = theme === "dark" ? "light" : "dark";
 
-    // 1. Меняем стейт тумблера и атрибут в DOM
     setTheme(newTheme);
     document.documentElement.setAttribute("data-theme", newTheme);
 
-    // 2. Меняем цвета системных рамок Telegram (header/background)
     const tg = getTg();
     if (tg) {
       const bgColor = newTheme === "dark" ? "#1c1c1d" : "#ffffff";
@@ -171,7 +168,6 @@ export const useSettings = () => {
     }
 
     try {
-      // 3. Сохраняем на бэке и локально
       await apiClient.updateSettings(internalUserId, { theme: newTheme });
       localStorage.setItem(
         "user",
@@ -179,7 +175,6 @@ export const useSettings = () => {
       );
     } catch (error) {
       console.error("Ошибка при смене темы:", error);
-      // 4. Откатываем назад, если запрос упал
       setTheme(theme);
       document.documentElement.setAttribute("data-theme", theme);
 
@@ -192,20 +187,22 @@ export const useSettings = () => {
     }
   };
 
-  const toggleNotifications = async () => {
+  // ИСПРАВЛЕНИЕ: Функция toggleVibration
+  const toggleVibration = async () => {
     if (!internalUserId) return;
-    const newNotifications = !notifications;
-    setNotifications(newNotifications);
+    const newVibration = !vibration;
+    setVibration(newVibration);
     try {
+      // Отправляем как notifications_enabled на бэкенд, чтобы не менять БД
       await apiClient.updateSettings(internalUserId, {
-        notifications_enabled: newNotifications,
+        notifications_enabled: newVibration,
       });
       localStorage.setItem(
         "user",
-        JSON.stringify({ ...user, notifications_enabled: newNotifications }),
+        JSON.stringify({ ...user, notifications_enabled: newVibration }),
       );
     } catch (error) {
-      setNotifications(notifications);
+      setVibration(vibration);
     }
   };
 
@@ -284,8 +281,8 @@ export const useSettings = () => {
     displayedDocuments,
     theme,
     toggleTheme,
-    notifications,
-    toggleNotifications,
+    vibration, // Возвращаем vibration
+    toggleVibration, // Возвращаем toggleVibration
     isClearHistoryModalOpen,
     setIsClearHistoryModalOpen,
     isClearing,
