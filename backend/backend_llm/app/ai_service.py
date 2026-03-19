@@ -122,7 +122,7 @@ class AiRiskAnalyzer:
             chat_history: List[Dict[str, str]],
             document_text: Optional[str] = None,
             analysis_summary: Optional[str] = None,
-            tone: AssistantTone = AssistantTone.STRICT
+            tone: AssistantTone = AssistantTone.FRIENDLY
     ) -> str:
         api_key = settings.GEMINI_API_KEY
         if not api_key or api_key == "ВАШ_КЛЮЧ":
