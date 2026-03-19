@@ -121,6 +121,7 @@ class AiRiskAnalyzer:
         
         return FullDocumentAnalysis(overall_risk=overall_risk, summary=summary, details=all_details)
 
+    @staticmethod
     def format_chat_history(chat_messages):
         formatted_messages = []
 
@@ -191,7 +192,7 @@ class AiRiskAnalyzer:
         except Exception as e:
             print(f"RAG Chat Error: {e}")
 
-        history_text = format_chat_history(chat_history)
+        history_text = AiRiskAnalyzer.format_chat_history(chat_history)
 
         system_prompt = LegalPrompts.get_chat_prompt(
             question=question,
