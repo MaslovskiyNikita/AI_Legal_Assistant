@@ -29,13 +29,15 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
 
     try {
       // 1. Запрашиваем ссылку на инвойс у бэкенда
-      const { invoice_link } = await apiClient.createStarsInvoice(
+      // ИСПРАВЛЕНИЕ: деструктурируем invoice_url вместо invoice_link
+      const { invoice_url } = await apiClient.createStarsInvoice(
         TELEGRAM_USER.id,
         packageId,
       );
 
       // 2. Открываем нативное окно оплаты Telegram
-      tgOpenInvoice(invoice_link, async (status) => {
+      // ИСПРАВЛЕНИЕ: передаем invoice_url
+      tgOpenInvoice(invoice_url, async (status) => {
         if (status === "paid") {
           tgHapticNotification("success");
           setIsOpen(false);
@@ -43,9 +45,6 @@ const TokenCircleMenu = ({ balance }: { balance: number }) => {
             "Оплата прошла успешно! Токены скоро поступят на баланс.",
             "success",
           );
-
-          // Здесь в будущем можно дернуть ручку обновления профиля,
-          // чтобы баланс обновился на экране мгновенно
         } else if (status === "cancelled") {
           showToast("Оплата отменена", "info");
         } else {
