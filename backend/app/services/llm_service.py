@@ -1,12 +1,13 @@
 import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from loguru import logger
 
 from app.models.chat import Message
 from app.models.document import Document
 from app.schemas.chat import ChatDetailResponse
 
+from app.models.user import User
 from backend_llm.app.ai_service import AiRiskAnalyzer
 from backend_llm.app.document_service import DocumentComparisonManager
 from app.services.chat_service import get_chat_with_messages
@@ -48,6 +49,11 @@ async def generate_ai_response(
                 risk = ai_analysis.get("overall_risk", "UNKNOWN")
                 summary = ai_analysis.get("summary", "Анализ завершен.")
                 
+                
+                
+                await db.execute(update(User).where(User.id == docs[0].user_id).values(token_balance=User.token_balance - 10))
+                await db.commit()
+                
                 logger.success(f"📊 Анализ выполнен. Уровень риска: {risk}, Найдено блоков изменений: {len(diff_blocks_out)}")
                 full_ai_response = f"**Уровень риска: {risk}**\n\n{summary}"
                 
@@ -72,6 +78,8 @@ async def generate_ai_response(
             )
             logger.success("🤖 Ответ от LLM успешно получен")
             logger.success(f"✨ Ответ AI: {full_ai_response[:200]}...")
+            await db.execute(update(User).where(User.id == chat_history_orm.user_id).values(token_balance=User.token_balance - 5))
+            await db.commit()
         else:
             logger.error(f"❌ Не удалось загрузить историю для чата ID={chat_id}")
             full_ai_response = "Ошибка: не удалось загрузить историю диалога."\
