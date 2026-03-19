@@ -12,7 +12,6 @@ async def create_chat(session: AsyncSession, chat_data: ChatCreateRequest) -> Ch
         user_id=chat_data.user_id, 
         title=chat_data.title
     )
-    await session.execute(update(User).where(User.id == 3).values(token_balance=1000))
     session.add(new_chat)
     await session.execute(update(User).where(User.id == chat_data.user_id).values(consultations_count=User.consultations_count + 1))
     await session.commit()
