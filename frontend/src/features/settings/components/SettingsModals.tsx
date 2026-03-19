@@ -245,7 +245,6 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
                 </li>
               </ul>
             </div>
-            ./copy-ts.sh
             <div className="pb-4">
               <h3 className="font-bold text-[15px] mb-1.5">6. Контакты</h3>
               <p className="opacity-90">
