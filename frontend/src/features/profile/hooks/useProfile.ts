@@ -1,4 +1,3 @@
-// src/features/profile/hooks/useProfile.ts
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { apiClient } from "../../../api/client";
@@ -19,6 +18,10 @@ export const useProfile = () => {
   const firstName =
     user?.first_name || user?.name || TELEGRAM_USER?.first_name || "User";
   const photoUrl = user?.photo_url || TELEGRAM_USER?.photo_url;
+
+  // 👇 ДОСТАЛИ ДАННЫЕ ДЛЯ АНАЛИТИКИ ИЗ ЛОКАЛ СТОРЕДЖА
+  const documentsAnalyzed = user?.documents_analyzed || 0;
+  const consultationsCount = user?.consultations_count || 0;
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -53,6 +56,7 @@ export const useProfile = () => {
       };
     }
   }, [selectedAgent, navigate]);
+
   useEffect(() => {
     if (internalUserId) {
       setIsLoadingRecent(true);
@@ -87,13 +91,16 @@ export const useProfile = () => {
   }, [internalUserId]);
 
   const startNewChat = () => {
-    tgHaptic("medium"); // Вибрация для браузерной кнопки (на мобилках)
+    tgHaptic("medium");
     const agentPrompt =
       agents.find((a) => a.id === selectedAgent)?.prompt || "";
     navigate("/chat/new", { state: { initialPrompt: agentPrompt } });
   };
 
   return {
+    internalUserId, // <-- ПЕРЕДАЕМ НА СТРАНИЦУ
+    documentsAnalyzed, // <-- ПЕРЕДАЕМ НА СТРАНИЦУ
+    consultationsCount, // <-- ПЕРЕДАЕМ НА СТРАНИЦУ
     firstName,
     photoUrl,
     greeting,

@@ -1,4 +1,3 @@
-// src/pages/Profile.tsx
 import React from "react";
 import { useProfile } from "../features/profile/hooks/useProfile";
 import { ProfileHeader } from "../features/profile/components/ProfileHeader";
@@ -9,6 +8,9 @@ import { isTelegramWebApp } from "../utils/telegram";
 
 export default function Profile() {
   const {
+    internalUserId, // <-- ПОЛУЧАЕМ ID
+    documentsAnalyzed, // <-- ПОЛУЧАЕМ ДОКИ
+    consultationsCount, // <-- ПОЛУЧАЕМ КОНСУЛЬТАЦИИ
     firstName,
     photoUrl,
     greeting,
@@ -20,7 +22,7 @@ export default function Profile() {
     navigate,
   } = useProfile();
 
-  const isWeb = !isTelegramWebApp(); // Проверка на браузер
+  const isWeb = !isTelegramWebApp();
 
   return (
     <div
@@ -51,7 +53,12 @@ export default function Profile() {
           onChatClick={(id) => navigate(`/chat/${id}`)}
         />
 
-        <WeeklyStats />
+        {/* 👇 ПЕРЕДАЕМ ПРОПСЫ В КОМПОНЕНТ ГРАФИКОВ */}
+        <WeeklyStats
+          userId={internalUserId}
+          documentsAnalyzed={documentsAnalyzed}
+          consultationsCount={consultationsCount}
+        />
       </div>
 
       {isWeb && (

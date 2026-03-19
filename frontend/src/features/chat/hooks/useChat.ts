@@ -1,4 +1,3 @@
-// src/features/chat/hooks/useChat.ts
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { apiClient } from "../../../api/client";
@@ -268,6 +267,23 @@ export const useChat = (initialChatId: string | undefined) => {
             : msg,
         ),
       );
+
+      // 👇 ТА САМАЯ ВСТАВКА: Фоновое обновление профиля (актуализация токенов)
+      if (internalUserId) {
+        apiClient
+          .getUser(internalUserId)
+          .then((freshProfile) => {
+            const oldUser = JSON.parse(localStorage.getItem("user") || "{}");
+            localStorage.setItem(
+              "user",
+              JSON.stringify({ ...oldUser, ...freshProfile }),
+            );
+          })
+          .catch((e) =>
+            console.error("Ошибка фонового обновления профиля:", e),
+          );
+      }
+      // 👆 КОНЕЦ ВСТАВКИ
     } catch (error) {
       tgHapticNotification("error");
       chatMessages.setMessages((prev) => [
