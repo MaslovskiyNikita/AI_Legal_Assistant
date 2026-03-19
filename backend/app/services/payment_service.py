@@ -40,9 +40,24 @@ async def purchase_package(db: AsyncSession, request: InvoiceRequest) -> bool:
         return {"invoice_link": result["result"]}
     
     
-async def confirm_payment(db: AsyncSession, request: str) -> bool:
-    data = await request.json()
+async def confirm_payment(db: AsyncSession, data: dict) -> bool:
     
+    if "pre_checkout_query" in data:
+        query_id = data["pre_checkout_query"]["id"]
+        logger.info(f"⏳ Получен pre_checkout_query ID: {query_id}")
+        
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/answerPreCheckoutQuery"
+        payload = {
+            "pre_checkout_query_id": query_id,
+            "ok": True 
+        }
+        
+        async with httpx.AsyncClient() as client:
+            await client.post(url, json=payload)
+            
+        logger.info("✅ Отправлен ответ answerPreCheckoutQuery")
+        return True
+
     if "message" in data and "successful_payment" in data["message"]:
         payment = data["message"]["successful_payment"]
         payload = payment.get("invoice_payload", "")
@@ -63,7 +78,7 @@ async def confirm_payment(db: AsyncSession, request: str) -> bool:
             logger.success(f"✅ Начислено {tokens_to_add} токенов пользователю {telegram_id}")
             
         except Exception as e:
-            logger.error(f"Ошибка при начислении токенов: {e}")
+            logger.error(f"❌ Ошибка при начислении токенов: {e}")
             
-    return {"ok": True}
+    return True
     

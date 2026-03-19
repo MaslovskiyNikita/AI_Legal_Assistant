@@ -14,5 +14,6 @@ class Document(Base):
     file_path = Column(String, nullable=False)
     #parsed_text = Column(Text, nullable=True) 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
 
     message = relationship("Message", back_populates="documents")
