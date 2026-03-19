@@ -17,8 +17,8 @@ interface SettingsModalsProps {
   isClearing: boolean;
   isPrivacyModalOpen: boolean;
   setIsPrivacyModalOpen: (val: boolean) => void;
-  isKnowledgeBaseOpen: boolean; // <-- ДОБАВИЛИ В ИНТЕРФЕЙС
-  setIsKnowledgeBaseOpen: (val: boolean) => void; // <-- ДОБАВИЛИ В ИНТЕРФЕЙС
+  isKnowledgeBaseOpen: boolean;
+  setIsKnowledgeBaseOpen: (val: boolean) => void;
 }
 
 const KNOWLEDGE_BASE_LINKS = [
@@ -248,6 +248,7 @@ export const SettingsModals: React.FC<SettingsModalsProps> = (props) => (
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>
+
     {/* 3. Шторка: БАЗА ЗНАНИЙ */}
     <Drawer.Root
       open={props.isKnowledgeBaseOpen}

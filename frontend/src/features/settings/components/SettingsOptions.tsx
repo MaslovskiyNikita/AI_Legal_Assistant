@@ -94,10 +94,10 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
           className="w-full flex items-center justify-between px-4 py-3.5 bg-[var(--tg-theme-bg-color)] active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors text-left"
         >
           <div className="flex items-center gap-3 text-[var(--tg-theme-text-color)]">
-            <div className="w-8 h-8 rounded-lg bg-[#8E8E93]/10 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-lg bg-[color-mix(in_srgb,var(--tg-theme-button-color)_10%,transparent)] flex items-center justify-center">
               <ShieldCheck
                 size={16}
-                className="text-[var(--tg-theme-hint-color)]"
+                className="text-[var(--tg-theme-button-color)]"
               />
             </div>
             <span className="font-medium text-[16px]">
@@ -134,7 +134,7 @@ export const SettingsOptions: React.FC<SettingsOptionsProps> = (props) => (
             <div className="w-8 h-8 rounded-lg bg-[#FF3B30]/10 flex items-center justify-center">
               <LogOut size={16} />
             </div>
-            <span className="font-medium text-[16px]">Выйти из аккаунта</span>
+            <span className="font-medium text-[16px]">Закрыть приложение</span>
           </div>
         </button>
       </div>
