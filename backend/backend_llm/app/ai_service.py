@@ -3,6 +3,7 @@ import re
 from typing import List, Optional, Dict
 import asyncio
 import httpx
+import urllib.parse
 
 from backend_llm.app.settings import settings
 from backend_llm.app.models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis, BlockDiff, ChangeType
@@ -57,8 +58,15 @@ class AiRiskAnalyzer:
             for d in rag_docs:
                 source = d.metadata.get('source', '')
                 article = d.metadata.get('article', '')
+
                 url = get_url_by_source_name(source)
-                url_str = f" [Ссылка: {url}]" if url else ""
+                deep_link = url
+
+                if url and article and article != "Б/Н":
+                    encoded_text = urllib.parse.quote(f"Статья {article}")
+                    deep_link = f"{url}#:~:text={encoded_text}"
+
+                url_str = f" [Ссылка: {deep_link}]" if deep_link else ""
                 rag_parts.append(f"ст. {article} ({source}){url_str}: {d.page_content}")
             rag_context = "\n".join(rag_parts)
         except Exception as e:
@@ -228,7 +236,13 @@ class AiRiskAnalyzer:
                     source = d.metadata.get('source', '')
                     article = d.metadata.get('article', '')
                     url = get_url_by_source_name(source)
-                    url_str = f" [URL: {url}]" if url else ""
+                    deep_link = url
+
+                    if url and article and article != "Б/Н":
+                        encoded_text = urllib.parse.quote(f"Статья {article}")
+                        deep_link = f"{url}#:~:text={encoded_text}"
+
+                    url_str = f" [Ссылка: {deep_link}]" if deep_link else ""
                     rag_parts.append(f"- {source}, ст. {article}{url_str}:\n{d.page_content}")
                 rag_context = "\n\n".join(rag_parts)
         except Exception as e:
