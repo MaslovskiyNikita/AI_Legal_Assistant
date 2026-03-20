@@ -23,7 +23,6 @@ export const useChat = (initialChatId: string | undefined) => {
   const isSendingRef = useRef(false);
   const localSessionLock = useRef(false);
   const hasFetchedHistory = useRef(false);
-  const hasHandledInitialPrompt = useRef(false);
 
   const chatToneRef = useRef<string>("friendly");
 
@@ -67,7 +66,6 @@ export const useChat = (initialChatId: string | undefined) => {
       files.setOldFile(null);
       files.setNewFile(null);
       setInputText("");
-      hasHandledInitialPrompt.current = false;
       localSessionLock.current = false;
       hasFetchedHistory.current = false;
     }
@@ -94,18 +92,6 @@ export const useChat = (initialChatId: string | undefined) => {
       })
       .catch((err) => console.error("Failed to load chat", err));
   }, [currentChatId]);
-
-  useEffect(() => {
-    const prompt = location.state?.initialPrompt;
-    if (prompt && initialChatId === "new" && !hasHandledInitialPrompt.current) {
-      hasHandledInitialPrompt.current = true;
-      navigate(location.pathname, {
-        replace: true,
-        state: { ...location.state, tone: chatToneRef.current },
-      });
-      setTimeout(() => handleSend(prompt), 100);
-    }
-  }, [location.state, initialChatId, navigate]);
 
   useEffect(() => {
     if (location.state?.openCompareModal) {

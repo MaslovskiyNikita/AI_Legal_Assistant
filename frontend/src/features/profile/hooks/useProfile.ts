@@ -45,7 +45,6 @@ export const useProfile = () => {
         const agent = agents.find((a) => a.id === selectedAgent);
         navigate("/chat/new", {
           state: {
-            initialPrompt: agent?.prompt || "",
             tone: agent?.tone,
           },
         });
@@ -98,8 +97,8 @@ export const useProfile = () => {
     const agent = agents.find((a) => a.id === selectedAgent);
     navigate("/chat/new", {
       state: {
-        initialPrompt: agent?.prompt || "",
-        tone: agent?.tone,
+        // БОЛЬШЕ НЕ ПЕРЕДАЕМ initialPrompt!
+        tone: agent?.tone, // Передаем только стиль
       },
     });
   };
