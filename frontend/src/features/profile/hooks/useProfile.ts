@@ -19,7 +19,6 @@ export const useProfile = () => {
     user?.first_name || user?.name || TELEGRAM_USER?.first_name || "User";
   const photoUrl = user?.photo_url || TELEGRAM_USER?.photo_url;
 
-  
   const documentsAnalyzed = user?.documents_analyzed || 0;
   const consultationsCount = user?.consultations_count || 0;
 
@@ -43,9 +42,13 @@ export const useProfile = () => {
 
       const handleMainButtonClick = () => {
         tgHaptic("medium");
-        const agentPrompt =
-          agents.find((a) => a.id === selectedAgent)?.prompt || "";
-        navigate("/chat/new", { state: { initialPrompt: agentPrompt } });
+        const agent = agents.find((a) => a.id === selectedAgent);
+        navigate("/chat/new", {
+          state: {
+            initialPrompt: agent?.prompt || "",
+            tone: agent?.tone,
+          },
+        });
       };
 
       tg.MainButton.onClick(handleMainButtonClick);
@@ -92,15 +95,19 @@ export const useProfile = () => {
 
   const startNewChat = () => {
     tgHaptic("medium");
-    const agentPrompt =
-      agents.find((a) => a.id === selectedAgent)?.prompt || "";
-    navigate("/chat/new", { state: { initialPrompt: agentPrompt } });
+    const agent = agents.find((a) => a.id === selectedAgent);
+    navigate("/chat/new", {
+      state: {
+        initialPrompt: agent?.prompt || "",
+        tone: agent?.tone,
+      },
+    });
   };
 
   return {
-    internalUserId, 
-    documentsAnalyzed, 
-    consultationsCount, 
+    internalUserId,
+    documentsAnalyzed,
+    consultationsCount,
     firstName,
     photoUrl,
     greeting,

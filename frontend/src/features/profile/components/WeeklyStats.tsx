@@ -16,8 +16,10 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
+  Sector,
 } from "recharts";
 import { apiClient } from "../../../api/client";
+import { tgHaptic } from "../../../utils/telegram";
 
 interface WeeklyStatsProps {
   userId: number | null;
@@ -30,7 +32,6 @@ const COLORS = {
   YELLOW: "#FF9500",
   GREEN: "#34C759",
 };
-
 
 const getFilledActivityData = (backendData: any[]) => {
   const dates = [];
@@ -55,6 +56,8 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
   const [activityRaw, setActivityRaw] = useState<any[]>([]);
   const [topLaws, setTopLaws] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -88,7 +91,6 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
     );
   }
 
-  
   const totalRisks = risks.RED + risks.YELLOW + risks.GREEN;
   const riskData = [
     { name: "Критичные", value: risks.RED, color: COLORS.RED },
@@ -96,14 +98,12 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
     { name: "В норме", value: risks.GREEN, color: COLORS.GREEN },
   ];
 
-  
   const filledActivityData = getFilledActivityData(activityRaw);
   const totalActivityCount = filledActivityData.reduce(
     (acc, curr) => acc + curr.count,
     0,
   );
 
-  
   const CustomBarTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -118,9 +118,32 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
     return null;
   };
 
+  const renderActiveShape = (props: any) => {
+    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } =
+      props;
+    return (
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius - 4}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+        style={{ filter: "brightness(0.85)", transition: "all 0.15s ease" }}
+      />
+    );
+  };
+
+  const displayValue =
+    activeIndex !== null ? riskData[activeIndex].value : totalRisks;
+  const displayColor =
+    activeIndex !== null
+      ? riskData[activeIndex].color
+      : "var(--tg-theme-button-color)";
+
   return (
     <div className="mb-8 mt-6 space-y-6">
-      {}
       <section>
         <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
           <PieChartIcon
@@ -150,16 +173,40 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
                         paddingAngle={5}
                         dataKey="value"
                         stroke="none"
+                        activeIndex={
+                          activeIndex !== null ? activeIndex : undefined
+                        }
+                        activeShape={renderActiveShape}
+                        onMouseEnter={(_, index) => {
+                          setActiveIndex(index);
+                          tgHaptic("light");
+                        }}
+                        onMouseLeave={() => setActiveIndex(null)}
+                        onTouchStart={(_, index) => {
+                          setActiveIndex(index);
+                          tgHaptic("light");
+                        }}
+                        onTouchEnd={() => setActiveIndex(null)}
                       >
                         {riskData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={entry.color}
+                            style={{
+                              outline: "none",
+                              transition: "all 0.15s ease",
+                            }}
+                          />
                         ))}
                       </Pie>
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-2xl font-bold leading-none text-[var(--tg-theme-button-color)]">
-                      {totalRisks}
+                    <span
+                      className="text-2xl font-bold leading-none transition-colors duration-200"
+                      style={{ color: displayColor }}
+                    >
+                      {displayValue}
                     </span>
                   </div>
                 </div>
@@ -193,11 +240,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
 
       <section>
         <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
-          {}
-          <Activity
-            size={14}
-            className="text-[var(--tg-theme-button-color)]"
-          />{" "}
+          <Activity size={14} className="text-[var(--tg-theme-button-color)]" />{" "}
           Активность общения
         </h4>
         <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl pt-6 pb-4 px-4 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] shadow-sm">
@@ -252,7 +295,6 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
         </div>
       </section>
 
-      {}
       {topLaws.length > 0 && (
         <section>
           <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">

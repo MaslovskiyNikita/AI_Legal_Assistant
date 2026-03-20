@@ -149,13 +149,33 @@ export const apiClient = {
     return r.json();
   },
 
-  async createChat(payload: { user_id: number; title?: string }) {
+  async createChat(payload: {
+    user_id: number;
+    title?: string;
+    tone?: string;
+  }) {
     const r = await fetch(`${BASE_URL}/chats/`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
     if (!r.ok) throw new Error(`createChat failed: ${r.status}`);
+    return r.json();
+  },
+
+  async createPostAnalysis(chat_id: number) {
+    const r = await fetch(`${BASE_URL}/chats/${chat_id}/post-analysis`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!r.ok) {
+      let detail = `createPostAnalysis failed: ${r.status}`;
+      try {
+        const errData = await r.json();
+        if (errData.detail) detail = errData.detail;
+      } catch (e) {}
+      throw new Error(detail);
+    }
     return r.json();
   },
 

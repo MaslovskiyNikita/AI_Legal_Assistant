@@ -25,6 +25,13 @@ export const useChat = (initialChatId: string | undefined) => {
   const hasFetchedHistory = useRef(false);
   const hasHandledInitialPrompt = useRef(false);
 
+  const chatToneRef = useRef<string>("friendly");
+
+  if (location.state?.tone) {
+    chatToneRef.current = location.state.tone;
+  }
+  const backPath = location.state?.from || "/profile";
+
   const modals = useChatModals();
   const files = useChatFiles();
   const chatMessages = useChatMessages(
@@ -43,14 +50,14 @@ export const useChat = (initialChatId: string | undefined) => {
     const tg = getTg();
     if (tg && tg.BackButton) {
       tg.BackButton.show();
-      const handleBack = () => navigate("/profile");
+      const handleBack = () => navigate(backPath);
       tg.BackButton.onClick(handleBack);
       return () => {
         tg.BackButton.offClick(handleBack);
         tg.BackButton.hide();
       };
     }
-  }, [navigate]);
+  }, [navigate, backPath]);
 
   useEffect(() => {
     if (initialChatId === "new") {
@@ -91,7 +98,10 @@ export const useChat = (initialChatId: string | undefined) => {
     const prompt = location.state?.initialPrompt;
     if (prompt && initialChatId === "new" && !hasHandledInitialPrompt.current) {
       hasHandledInitialPrompt.current = true;
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(location.pathname, {
+        replace: true,
+        state: { ...location.state, tone: chatToneRef.current },
+      });
       setTimeout(() => handleSend(prompt), 100);
     }
   }, [location.state, initialChatId, navigate]);
@@ -99,7 +109,11 @@ export const useChat = (initialChatId: string | undefined) => {
   useEffect(() => {
     if (location.state?.openCompareModal) {
       modals.setIsCompareModalOpen(true);
-      navigate(location.pathname, { replace: true, state: {} });
+      navigate(location.pathname, {
+        replace: true,
+        // Сохраняем ...location.state, чтобы не потерять backPath
+        state: { ...location.state, tone: chatToneRef.current },
+      });
     }
   }, [location.state, navigate]);
 
@@ -162,8 +176,8 @@ export const useChat = (initialChatId: string | undefined) => {
 
     const finalPrompt = textToSend.trim();
     let activeChatId = currentChatId;
-
     const assistantMsgId = `msg_${Date.now()}_ai`;
+    const userMsgId = `msg_${Date.now()}_user`;
 
     try {
       if (activeChatId === "new" || !activeChatId) {
@@ -178,14 +192,17 @@ export const useChat = (initialChatId: string | undefined) => {
         const newChat = await apiClient.createChat({
           user_id: internalUserId,
           title: chatTitle,
+          tone: chatToneRef.current,
         });
         activeChatId = newChat.id.toString();
 
         setCurrentChatId(activeChatId);
-        navigate(`/chat/${activeChatId}`, { replace: true, state: {} });
+        navigate(`/chat/${activeChatId}`, {
+          replace: true,
+          state: { ...location.state, tone: chatToneRef.current },
+        });
       }
 
-      const userMsgId = `msg_${Date.now()}_user`;
       let userTextForUI = finalPrompt;
 
       if (hasFiles) {
@@ -272,6 +289,56 @@ export const useChat = (initialChatId: string | undefined) => {
         ),
       );
 
+      if (
+        newAiData &&
+        newAiData.diff_blocks &&
+        newAiData.diff_blocks.length > 0
+      ) {
+        const postAnalysisMsgId = `msg_${Date.now()}_post`;
+
+        chatMessages.setMessages((prev) => [
+          ...prev,
+          {
+            id: postAnalysisMsgId,
+            role: "ai",
+            text: "...",
+            created_at: new Date().toISOString(),
+            isComplete: false,
+          },
+        ]);
+
+        try {
+          const postResponse = await apiClient.createPostAnalysis(
+            Number(activeChatId),
+          );
+
+          chatMessages.setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === postAnalysisMsgId
+                ? {
+                    ...msg,
+                    text: postResponse.text,
+                    isComplete: true,
+                  }
+                : msg,
+            ),
+          );
+        } catch (postErr) {
+          console.error("Ошибка при генерации постанализа:", postErr);
+          chatMessages.setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === postAnalysisMsgId
+                ? {
+                    ...msg,
+                    text: "❌ Не удалось сформировать итоговый отчет.",
+                    isComplete: true,
+                  }
+                : msg,
+            ),
+          );
+        }
+      }
+
       if (internalUserId) {
         apiClient
           .getUser(internalUserId)
@@ -290,8 +357,18 @@ export const useChat = (initialChatId: string | undefined) => {
       tgHapticNotification("error");
 
       chatMessages.setMessages((prev) =>
-        prev.filter((m) => m.id !== assistantMsgId),
+        prev.filter((m) => m.id !== assistantMsgId && m.id !== userMsgId),
       );
+
+      if (hasFiles) {
+        files.setChatDocuments((prev) =>
+          prev.filter(
+            (doc) =>
+              doc.filename !== currentOldFile?.name &&
+              doc.filename !== currentNewFile?.name,
+          ),
+        );
+      }
 
       if (
         error.status === 403 ||
@@ -348,5 +425,6 @@ export const useChat = (initialChatId: string | undefined) => {
     handleExport,
     handleExportAnalysis,
     handleSend,
+    backPath,
   };
 };

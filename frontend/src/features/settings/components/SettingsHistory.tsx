@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router";
 import {
@@ -42,7 +41,7 @@ interface SettingsHistoryProps {
     filename: string,
   ) => void;
   onDeleteChat?: (chatId: number) => void;
-  onDeleteDocument?: (docId: number) => void; 
+  onDeleteDocument?: (docId: number) => void;
 }
 
 const filters = [
@@ -55,7 +54,6 @@ const filters = [
 export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
   const navigate = useNavigate();
 
-  
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +62,6 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
     setActiveIndex(index !== -1 ? index : 0);
   }, [props.filterPeriod]);
 
-  
   const trailingActionsChat = (chatId: number) => (
     <TrailingActions>
       <SwipeAction
@@ -78,7 +75,6 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
     </TrailingActions>
   );
 
-  
   const trailingActionsDoc = (docId: number) => (
     <TrailingActions>
       <SwipeAction
@@ -102,13 +98,11 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </h3>
       </div>
 
-      {}
       <div className="px-4 mb-4">
         <div
           ref={containerRef}
           className="flex items-center bg-[color-mix(in_srgb,var(--tg-theme-text-color)_8%,transparent)] p-1 rounded-xl relative"
         >
-          {}
           <div
             className="absolute top-1 bottom-1 bg-[var(--tg-theme-bg-color)] rounded-lg shadow-sm transition-transform duration-300 ease-out"
             style={{
@@ -117,7 +111,6 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
             }}
           />
 
-          {}
           {filters.map((filter) => {
             const isSelected = props.filterPeriod === filter.id;
             return (
@@ -142,7 +135,6 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </div>
       </div>
 
-      {}
       {props.filterPeriod === "custom" && (
         <div className="mx-4 mb-4 flex items-center gap-2 animate-in slide-in-from-top-2 fade-in duration-200">
           <input
@@ -163,7 +155,6 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
         </div>
       )}
 
-      {}
       <div className="mx-4 bg-[var(--tg-theme-bg-color)] rounded-2xl border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] overflow-hidden flex flex-col min-h-[120px] shadow-sm">
         {props.isLoadingStats ? (
           <div className="w-full flex flex-col">
@@ -209,7 +200,11 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                       className={`w-full bg-[var(--tg-theme-bg-color)] ${idx !== props.displayedChats.length - 1 ? "border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]" : ""}`}
                     >
                       <div
-                        onClick={() => navigate(`/chat/${chat.id}`)}
+                        onClick={() =>
+                          navigate(`/chat/${chat.id}`, {
+                            state: { from: "/settings" },
+                          })
+                        }
                         className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer text-left"
                       >
                         <div className="flex items-center gap-3 overflow-hidden pr-4">
@@ -251,8 +246,7 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
               )}
             </>
           )
-        ) : 
-        props.allFilteredDocsCount === 0 ? (
+        ) : props.allFilteredDocsCount === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center py-8 text-center px-4">
             <FileText size={32} className="text-[#C7C7CC] mb-3" />
             <p className="text-[var(--tg-theme-hint-color)] text-[15px]">
@@ -282,7 +276,11 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                     className={`w-full bg-[var(--tg-theme-bg-color)] ${idx !== props.displayedDocuments.length - 1 ? "border-b border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]" : ""}`}
                   >
                     <div
-                      onClick={() => navigate(`/chat/${doc.chatId}`)}
+                      onClick={() =>
+                        navigate(`/chat/${doc.chatId}`, {
+                          state: { from: "/settings" },
+                        })
+                      }
                       className="w-full flex items-center justify-between px-4 py-3.5 active:bg-[var(--tg-theme-secondary-bg-color)] transition-colors cursor-pointer text-left"
                     >
                       <div className="flex items-center gap-3 overflow-hidden pr-2">
@@ -301,7 +299,6 @@ export const SettingsHistory: React.FC<SettingsHistoryProps> = (props) => {
                           </span>
                         </div>
                       </div>
-                      {}
                       <button
                         type="button"
                         onClick={(e) =>

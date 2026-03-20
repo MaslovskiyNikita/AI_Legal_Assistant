@@ -1,5 +1,5 @@
 import React from "react";
-import { useParams } from "react-router";
+import { useParams, useNavigate } from "react-router";
 import { useChat } from "../features/chat/hooks/useChat";
 
 import { ChatHeader } from "../features/chat/components/ChatHeader";
@@ -10,11 +10,13 @@ import { ChatModals } from "../features/chat/components/ChatModals";
 export default function Chat() {
   const { chatId } = useParams();
   const chat = useChat(chatId);
+  const navigate = useNavigate();
 
   return (
     <div className="h-[100dvh] w-full relative flex flex-col bg-[var(--tg-theme-bg-color)] overflow-hidden font-sans">
       <ChatHeader
         chatId={chat.chatId}
+        onBack={() => navigate(chat.backPath)}
         onOpenDownload={() => chat.setIsDownloadModalOpen(true)}
         onOpenExport={() => chat.setIsExportModalOpen(true)}
         onOpenDelete={() => chat.setIsDeleteModalOpen(true)}

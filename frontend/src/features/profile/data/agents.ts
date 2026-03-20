@@ -1,4 +1,3 @@
-
 import { Scale, Briefcase, FileSearch } from "lucide-react";
 
 export const agents = [
@@ -9,6 +8,7 @@ export const agents = [
     icon: Scale,
     size: "large",
     prompt: "Действуй как строгий корпоративный юрист. ",
+    tone: "strict",
   },
   {
     id: "consultant",
@@ -17,6 +17,7 @@ export const agents = [
     icon: Briefcase,
     size: "small",
     prompt: "Действуй как дружелюбный и понятный юридический консультант. ",
+    tone: "friendly",
   },
   {
     id: "analyzer",
@@ -26,5 +27,6 @@ export const agents = [
     size: "small",
     prompt:
       "Твоя задача - проверить документы на ошибки и риски. Будь дотошным. ",
+    tone: "neutral",
   },
 ];
