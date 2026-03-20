@@ -74,7 +74,25 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
         }
         setRisks(parsedRisks);
         setActivityRaw(activityData);
-        setTopLaws(lawsData || []);
+        const rawLaws = Array.isArray(lawsData) ? lawsData : [];
+        const aggregatedMap = new Map<string, number>();
+
+        rawLaws.forEach((item: any) => {
+          let cleanName = item.law_name || "Неизвестно";
+          const mdMatch = cleanName.match(/\[(.*?)\]\(.*?\)/);
+          if (mdMatch && mdMatch[1]) {
+            cleanName = mdMatch[1];
+          }
+          cleanName = cleanName.replace(/[*_`]/g, "").trim();
+          const currentCount = aggregatedMap.get(cleanName) || 0;
+          aggregatedMap.set(cleanName, currentCount + item.count);
+        });
+        const processedLaws = Array.from(aggregatedMap.entries())
+          .map(([law_name, count]) => ({ law_name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 3);
+
+        setTopLaws(processedLaws);
       })
       .finally(() => setIsLoading(false));
   }, [userId]);
@@ -259,13 +277,16 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
           </h4>
           <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl p-4 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] shadow-sm space-y-4">
             {topLaws.map((item: any, idx: number) => {
-              const maxCount = topLaws[0].count;
-              const percent = Math.max((item.count / maxCount) * 100, 10);
+              const maxCount = Math.max(topLaws[0]?.count || 1, 1);
+              const percent = Math.max((item.count / maxCount) * 100, 5);
 
               return (
                 <div key={idx} className="flex flex-col gap-1.5">
                   <div className="flex justify-between items-center text-[13px]">
-                    <span className="font-semibold text-[var(--tg-theme-text-color)] truncate pr-4">
+                    <span
+                      className="font-semibold text-[var(--tg-theme-text-color)] truncate pr-4"
+                      title={item.law_name}
+                    >
                       {item.law_name}
                     </span>
                     <span className="font-bold text-[var(--tg-theme-hint-color)]">
@@ -274,7 +295,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
                   </div>
                   <div className="w-full bg-[var(--tg-theme-secondary-bg-color)] h-2 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-[#FF9500] rounded-full"
+                      className="h-full bg-[#FF9500] rounded-full transition-all duration-500"
                       style={{ width: `${percent}%` }}
                     />
                   </div>
