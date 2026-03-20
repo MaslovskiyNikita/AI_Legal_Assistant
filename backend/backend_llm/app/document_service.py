@@ -17,6 +17,12 @@ class DocumentComparisonManager:
         old_blocks = await asyncio.to_thread(DocumentParser.parse, BytesIO(old_file_content))
         new_blocks = await asyncio.to_thread(DocumentParser.parse, BytesIO(new_file_content))
 
+        # Генерация названия чата по первым блокам нового документа
+        chat_title = "Новый диалог"
+        if new_blocks:
+            first_chunks_text = "\n".join(b.text for b in new_blocks[:5] if b.text)
+            chat_title = await AiRiskAnalyzer.generate_chat_title(first_chunks_text)
+
         # 2. Сравнение
         diff_blocks = await asyncio.to_thread(SmartDiffService.compare, old_blocks, new_blocks)
 
@@ -31,7 +37,8 @@ class DocumentComparisonManager:
             )
             return {
                 "diff_blocks": [],
-                "analysis": analysis.model_dump()
+                "analysis": analysis.model_dump(),
+                "chat_title": chat_title
             }
 
         # 4. AI Анализ
@@ -47,6 +54,7 @@ class DocumentComparisonManager:
         def prepare_response():
             return {
                 "diff_blocks": [b.model_dump() for b in meaningful_diffs],
-                "analysis": analysis.model_dump()
+                "analysis": analysis.model_dump(),
+                "chat_title": chat_title
             }
         return await asyncio.to_thread(prepare_response)

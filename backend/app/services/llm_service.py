@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, update
 from loguru import logger
 
-from app.models.chat import Message
+from app.models.chat import Message, Chat
 from app.models.document import Document
 from app.schemas.chat import ChatDetailResponse
 
@@ -22,6 +22,7 @@ async def generate_ai_response(
     
     full_ai_response = ""
     diff_blocks_out = []
+    chat_title = None
 
     if comparison_message_id:
         logger.info(f"📂 Запрос на сравнение документов для сообщения ID={comparison_message_id}")
@@ -46,10 +47,12 @@ async def generate_ai_response(
 
                 diff_blocks_out = analysis_data.get("diff_blocks", [])
                 ai_analysis = analysis_data.get("analysis", {})
+                chat_title = analysis_data.get("chat_title")
                 risk = ai_analysis.get("overall_risk", "UNKNOWN")
                 summary = ai_analysis.get("summary", "Анализ завершен.")
                 
-                
+                if chat_title:
+                    await db.execute(update(Chat).where(Chat.id == chat_id).values(title=chat_title))
                 
                 await db.execute(update(User).where(User.id == docs[0].user_id).values(token_balance=User.token_balance - 10))
                 await db.commit()
@@ -102,5 +105,6 @@ async def generate_ai_response(
 
     return {
         "text": full_ai_response.strip(),
-        "diff_blocks": diff_blocks_out
+        "diff_blocks": diff_blocks_out,
+        "chat_title": chat_title
     }
