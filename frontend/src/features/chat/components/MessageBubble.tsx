@@ -504,7 +504,43 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           {diff.new_block?.text || "—"}
                         </td>
                         <td className="p-3 border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
-                          {violatedLaw ? violatedLaw : "—"}
+                          {violatedLaw ? (
+                            <ReactMarkdown
+                              components={{
+                                p: ({ node, ...props }) => (
+                                  <p className="m-0 inline" {...props} />
+                                ),
+                                a: ({ node, href, children, ...props }) => (
+                                  <a
+                                    href={href}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      if (!href) return;
+                                      const tg = (window as any).Telegram
+                                        ?.WebApp;
+                                      if (tg && tg.openLink) {
+                                        tg.openLink(href);
+                                      } else {
+                                        window.open(
+                                          href,
+                                          "_blank",
+                                          "noopener,noreferrer",
+                                        );
+                                      }
+                                    }}
+                                    className="text-[#3390EC] hover:underline cursor-pointer"
+                                    {...props}
+                                  >
+                                    {children}
+                                  </a>
+                                ),
+                              }}
+                            >
+                              {violatedLaw}
+                            </ReactMarkdown>
+                          ) : (
+                            "—"
+                          )}
                         </td>
                         <td className="p-3 border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                           {renderRiskBadge(riskLevel)}
@@ -515,28 +551,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                               p: ({ node, ...props }) => (
                                 <p className="m-0 inline" {...props} />
                               ),
-                              a: ({ node, href, children, ...props }) => (
-                                <a
-                                  href={href}
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    if (!href) return;
-                                    const tg = (window as any).Telegram?.WebApp;
-                                    if (tg && tg.openLink) {
-                                      tg.openLink(href);
-                                    } else {
-                                      window.open(
-                                        href,
-                                        "_blank",
-                                        "noopener,noreferrer",
-                                      );
-                                    }
-                                  }}
-                                  className="text-[#3390EC] underline cursor-pointer"
-                                  {...props}
-                                >
-                                  {children}
-                                </a>
+                              a: ({ node, ...props }) => (
+                                <span {...props}>{props.children}</span>
                               ),
                             }}
                           >
