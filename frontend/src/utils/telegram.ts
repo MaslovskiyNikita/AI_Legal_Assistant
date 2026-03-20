@@ -1,11 +1,6 @@
-
-
-
 const tg = (window as any).Telegram?.WebApp;
 
-
 export const getTg = () => tg;
-
 
 const getUser = () => {
   if (tg?.initDataUnsafe?.user) {
@@ -18,15 +13,14 @@ const getUser = () => {
     };
   }
   return {
-    id: 1234532131231,
-    username: "demo_user",
+    id: 98989898,
+    username: "demo",
     first_name: "Boris",
     photo_url: null,
   };
 };
 
 export const TELEGRAM_USER = getUser();
-
 
 export const isTelegramWebApp = () => {
   return tg && tg.platform && tg.platform !== "unknown";
@@ -40,26 +34,22 @@ export const tgAlert = (message: string) => {
   }
 };
 
-
 export const tgHaptic = (
   style: "light" | "medium" | "heavy" | "rigid" | "soft" = "light",
 ) => {
-  
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
-  if (user && user.notifications_enabled === false) return; 
+  if (user && user.notifications_enabled === false) return;
 
   if (tg && tg.HapticFeedback) {
     tg.HapticFeedback.impactOccurred(style);
   }
 };
 
-
 export const tgHapticNotification = (type: "error" | "success" | "warning") => {
-  
   const userStr = localStorage.getItem("user");
   const user = userStr ? JSON.parse(userStr) : null;
-  if (user && user.notifications_enabled === false) return; 
+  if (user && user.notifications_enabled === false) return;
 
   if (tg && tg.HapticFeedback) {
     tg.HapticFeedback.notificationOccurred(type);
@@ -88,7 +78,6 @@ export const tgOpenInvoice = (
 export const applyThemeToApp = (theme: "light" | "dark") => {
   document.documentElement.setAttribute("data-theme", theme);
 
-  
   const elementsToUpdate = [document.documentElement, document.body];
 
   elementsToUpdate.forEach((el) => {
@@ -113,7 +102,6 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
         "important",
       );
 
-      
       el.style.backgroundColor = "#1c1c1d";
     } else {
       el.style.setProperty("--tg-theme-bg-color", "#ffffff", "important");
@@ -136,7 +124,6 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
         "important",
       );
 
-      
       el.style.backgroundColor = "#ffffff";
     }
   });
@@ -147,14 +134,11 @@ export const applyThemeToApp = (theme: "light" | "dark") => {
     const secBgColor = theme === "dark" ? "#000000" : "#f2f2f7";
 
     try {
-      
       if (tg.setBackgroundColor) tg.setBackgroundColor(bgColor);
-      
+
       if (tg.setHeaderColor) tg.setHeaderColor(secBgColor);
 
-      
       if (tg.setBottomBarColor) {
-        
         tg.setBottomBarColor(bgColor);
       }
     } catch (e) {
