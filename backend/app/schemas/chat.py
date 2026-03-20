@@ -53,5 +53,10 @@ class ChatDetailResponse(BaseModel):
 class MessageStreamRequest(BaseModel):
     text: str
     comparison_id: Optional[int] = None # ID загруженных документов (если есть)
+
+from backend_llm.app.models.AssistantTone import AssistantTone
+
+class PostAnalysisRequest(BaseModel):
+    tone: AssistantTone = AssistantTone.FRIENDLY
     
         

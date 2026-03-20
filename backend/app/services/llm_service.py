@@ -108,3 +108,37 @@ async def generate_ai_response(
         "diff_blocks": diff_blocks_out,
         "chat_title": chat_title
     }
+
+from backend_llm.app.models.AssistantTone import AssistantTone
+
+async def generate_chat_post_analysis(db: AsyncSession, chat_id: int, tone: AssistantTone = AssistantTone.FRIENDLY) -> dict:
+    logger.info(f"📊 Запуск постанализа для чата ID={chat_id}")
+    
+    chat_history_orm = await get_chat_with_messages(db, chat_id)
+    if not chat_history_orm:
+        logger.error(f"❌ Чат ID={chat_id} не найден для постанализа")
+        return {"text": "Чат не найден"}
+        
+    chat_dict = ChatDetailResponse.model_validate(chat_history_orm).model_dump()
+    
+    logger.info(f"🤖 Отправка запроса на постанализ в LLM (длина истории: {len(chat_dict.get('messages', []))} сообщений)")
+    
+    analysis_text = await AiRiskAnalyzer.generate_post_analysis(chat_history=chat_dict, tone=tone)
+    
+    # Списываем токены за постанализ
+    await db.execute(update(User).where(User.id == chat_history_orm.user_id).values(token_balance=User.token_balance - 10))
+    await db.commit()
+    
+    logger.success("🤖 Постанализ от LLM успешно получен")
+    
+    ai_message = Message(chat_id=chat_id, role="ai", text=analysis_text)
+    db.add(ai_message)
+    
+    try:
+        await db.commit()
+        logger.success(f"🏁 Постанализ завершен. Сообщение сохранено для чата ID={chat_id}")
+    except Exception as e:
+        logger.error(f"❌ Ошибка при коммите сообщения постанализа: {str(e)}")
+        await db.rollback()
+
+    return {"text": analysis_text}

@@ -122,7 +122,7 @@ class AiRiskAnalyzer:
         return FullDocumentAnalysis(overall_risk=overall_risk, summary=summary, details=all_details)
 
     @staticmethod
-    def format_chat_history(chat_data) -> str:
+    def format_chat_history(chat_data, limit: Optional[int] = 6) -> str:
         """
         Обрабатывает историю чата. Поддерживает как список сообщений,
         так и полный словарь чата (с ключом 'messages').
@@ -137,8 +137,10 @@ class AiRiskAnalyzer:
 
         formatted_messages = []
 
-        # Берем последние 6 сообщений для экономии контекста
-        for m in messages_list[-6:]:
+        # Берем последние сообщения для экономии контекста (если установлен limit)
+        messages_to_process = messages_list[-limit:] if limit else messages_list
+
+        for m in messages_to_process:
             role = "Пользователь" if m.get("role") == "user" else "Ассистент"
             message_text = m.get("text", "")
 
@@ -296,3 +298,45 @@ class AiRiskAnalyzer:
         except Exception as e:
             print(f"Ошибка генерации названия чата: {e}")
             return "Новый диалог"
+
+    @staticmethod
+    async def generate_post_analysis(
+            chat_history: dict | list,
+            tone: AssistantTone = AssistantTone.NEUTRAL
+    ) -> str:
+        """
+        Генерирует финальный постанализ (итог) по всем изменениям документа
+        и контексту общения в чате.
+        """
+        api_key = settings.GEMINI_API_KEY
+        if not api_key or api_key == "ВАШ_КЛЮЧ":
+            return "Ошибка конфигурации API."
+
+        # Для постанализа берем всю историю чата (limit=None)
+        history_text = AiRiskAnalyzer.format_chat_history(chat_history, limit=None)
+
+        system_prompt = LegalPrompts.get_post_analysis_prompt(tone)
+
+        # Подставляем историю в промпт (можно было в systemInstruction, но передадим как текст юзера)
+        prompt_with_history = system_prompt.format(history=history_text or "История диалога пуста.")
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-goog-api-key": api_key
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=settings.GEMINI_TIMEOUT) as client:
+                response = await client.post(
+                    f"{settings.GEMINI_BASE_URL}/v1beta/models/{settings.GEMINI_MODEL}:generateContent?key={api_key}",
+                    headers=headers,
+                    json={
+                        "contents": [{"role": "user", "parts": [{"text": prompt_with_history}]}],
+                        "generationConfig": {"temperature": 0.3}
+                    },
+                )
+                response.raise_for_status()
+                return response.json()["candidates"][0]["content"]["parts"][0]["text"].strip()
+        except Exception as e:
+            print(f"Ошибка генерации постанализа: {e}")
+            return f"Ошибка при генерации постанализа: {str(e)}"
