@@ -27,9 +27,12 @@ class MessageResponse(MessageBase):
     class Config:
         from_attributes = True
 
+from backend_llm.app.models.AssistantTone import AssistantTone
+
 class ChatListResponse(BaseModel):
     id: int
     title: str
+    tone: AssistantTone = AssistantTone.FRIENDLY
     updated_at: datetime
 
 
@@ -39,10 +42,12 @@ class ChatListResponse(BaseModel):
 class ChatCreateRequest(BaseModel):
     user_id: int
     title: Optional[str] = "Новый диалог"
+    tone: Optional[AssistantTone] = AssistantTone.FRIENDLY
 
 class ChatDetailResponse(BaseModel):
     id: int
     title: str
+    tone: AssistantTone = AssistantTone.FRIENDLY
     created_at: datetime
     messages: List[MessageResponse] = [] 
 
@@ -53,10 +58,5 @@ class ChatDetailResponse(BaseModel):
 class MessageStreamRequest(BaseModel):
     text: str
     comparison_id: Optional[int] = None # ID загруженных документов (если есть)
-
-from backend_llm.app.models.AssistantTone import AssistantTone
-
-class PostAnalysisRequest(BaseModel):
-    tone: AssistantTone = AssistantTone.FRIENDLY
     
         

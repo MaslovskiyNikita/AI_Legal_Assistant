@@ -73,11 +73,14 @@ async def generate_ai_response(
     
         if chat_history_orm:
             chat_dict = ChatDetailResponse.model_validate(chat_history_orm).model_dump()
+            tone_str = getattr(chat_history_orm, "tone", "friendly")
+            tone = AssistantTone(tone_str) if tone_str else AssistantTone.FRIENDLY
             
             logger.info(f"🤖 Отправка запроса в LLM (длина истории: {len(chat_dict)} сообщений)")
             full_ai_response = await AiRiskAnalyzer.answer_question(
                 question=user_text,
-                chat_history=chat_dict  
+                chat_history=chat_dict,
+                tone=tone
             )
             logger.success("🤖 Ответ от LLM успешно получен")
             logger.success(f"✨ Ответ AI: {full_ai_response[:200]}...")
@@ -111,7 +114,7 @@ async def generate_ai_response(
 
 from backend_llm.app.models.AssistantTone import AssistantTone
 
-async def generate_chat_post_analysis(db: AsyncSession, chat_id: int, tone: AssistantTone = AssistantTone.FRIENDLY) -> dict:
+async def generate_chat_post_analysis(db: AsyncSession, chat_id: int) -> dict:
     logger.info(f"📊 Запуск постанализа для чата ID={chat_id}")
     
     chat_history_orm = await get_chat_with_messages(db, chat_id)
@@ -120,6 +123,8 @@ async def generate_chat_post_analysis(db: AsyncSession, chat_id: int, tone: Assi
         return {"text": "Чат не найден"}
         
     chat_dict = ChatDetailResponse.model_validate(chat_history_orm).model_dump()
+    tone_str = getattr(chat_history_orm, "tone", "friendly")
+    tone = AssistantTone(tone_str) if tone_str else AssistantTone.FRIENDLY
     
     logger.info(f"🤖 Отправка запроса на постанализ в LLM (длина истории: {len(chat_dict.get('messages', []))} сообщений)")
     

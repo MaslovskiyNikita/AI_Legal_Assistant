@@ -10,7 +10,8 @@ async def create_chat(session: AsyncSession, chat_data: ChatCreateRequest) -> Ch
 
     new_chat = Chat(
         user_id=chat_data.user_id, 
-        title=chat_data.title
+        title=chat_data.title,
+        tone=chat_data.tone.value if chat_data.tone else "friendly"
     )
     session.add(new_chat)
     await session.execute(update(User).where(User.id == chat_data.user_id).values(consultations_count=User.consultations_count + 1))

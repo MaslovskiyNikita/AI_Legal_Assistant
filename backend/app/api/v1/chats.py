@@ -4,7 +4,7 @@ from typing import List
 from loguru import logger
 
 from app.api.dependencies import get_db
-from app.schemas.chat import ChatCreateRequest, ChatListResponse, ChatDetailResponse, DocumentResponse, MessageStreamRequest, PostAnalysisRequest
+from app.schemas.chat import ChatCreateRequest, ChatListResponse, ChatDetailResponse, DocumentResponse, MessageStreamRequest
 from app.services import chat_service
 from app.services.llm_service import generate_ai_response, generate_chat_post_analysis
 from app.api.user_balance_depends import check_positive_balance
@@ -78,12 +78,11 @@ async def stream_chat_message(
 @router.post("/{chat_id}/post-analysis")
 async def create_post_analysis(
     chat_id: int, 
-    request: PostAnalysisRequest,
     db: AsyncSession = Depends(get_db),
     balance: int = Depends(check_positive_balance)
 ):
-    logger.info(f"📈 Запрос на постанализ документа для чата ID={chat_id} с тоном {request.tone}")
-    response_data = await generate_chat_post_analysis(db=db, chat_id=chat_id, tone=request.tone)
+    logger.info(f"📈 Запрос на постанализ документа для чата ID={chat_id}")
+    response_data = await generate_chat_post_analysis(db=db, chat_id=chat_id)
     return response_data
   
 @router.get("/{chat_id}/documents", response_model=List[DocumentResponse])
