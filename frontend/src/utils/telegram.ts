@@ -13,7 +13,7 @@ const getUser = () => {
     };
   }
   return {
-    id: 123451234541,
+    id: 8828472472848941,
     username: "demo",
     first_name: "Boris",
     photo_url: null,
