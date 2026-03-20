@@ -300,11 +300,28 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                           {...props}
                         />
                       ),
-                      a: ({ node, ...props }) => (
+                      a: ({ node, href, children, ...props }) => (
                         <a
-                          className={`${isUser ? "text-white underline" : "text-[var(--tg-theme-button-color)] underline"} break-all`}
+                          href={href}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            if (!href) return;
+                            const tg = (window as any).Telegram?.WebApp;
+                            if (tg && tg.openLink) {
+                              tg.openLink(href);
+                            } else {
+                              window.open(
+                                href,
+                                "_blank",
+                                "noopener,noreferrer",
+                              );
+                            }
+                          }}
+                          className={`${isUser ? "text-white underline" : "text-[var(--tg-theme-button-color)] underline"} break-all cursor-pointer`}
                           {...props}
-                        />
+                        >
+                          {children}
+                        </a>
                       ),
                       strong: ({ node, ...props }) => (
                         <strong className="font-semibold" {...props} />
@@ -486,15 +503,45 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                         <td className="p-3 bg-[#34C759]/5 text-[#34C759] border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                           {diff.new_block?.text || "—"}
                         </td>
-                        <td className="p-3 text-[#3390EC] font-medium cursor-pointer hover:underline border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
+                        <td className="p-3 border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                           {violatedLaw ? violatedLaw : "—"}
                         </td>
                         <td className="p-3 border-r border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))]">
                           {renderRiskBadge(riskLevel)}
                         </td>
                         <td className="p-3 text-[12px] font-medium opacity-90">
-                          {}
-                          {explanation}
+                          <ReactMarkdown
+                            components={{
+                              p: ({ node, ...props }) => (
+                                <p className="m-0 inline" {...props} />
+                              ),
+                              a: ({ node, href, children, ...props }) => (
+                                <a
+                                  href={href}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    if (!href) return;
+                                    const tg = (window as any).Telegram?.WebApp;
+                                    if (tg && tg.openLink) {
+                                      tg.openLink(href);
+                                    } else {
+                                      window.open(
+                                        href,
+                                        "_blank",
+                                        "noopener,noreferrer",
+                                      );
+                                    }
+                                  }}
+                                  className="text-[#3390EC] underline cursor-pointer"
+                                  {...props}
+                                >
+                                  {children}
+                                </a>
+                              ),
+                            }}
+                          >
+                            {explanation}
+                          </ReactMarkdown>
                         </td>
                       </tr>
                     );
