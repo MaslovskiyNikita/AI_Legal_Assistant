@@ -64,6 +64,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
       apiClient.getLawStatistics(userId).catch(() => []),
     ])
       .then(([risksData, activityData, lawsData]) => {
+        // --- Обработка рисков ---
         const parsedRisks = { RED: 0, YELLOW: 0, GREEN: 0 };
         if (Array.isArray(risksData)) {
           risksData.forEach((item: any) => {
@@ -74,19 +75,23 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
         }
         setRisks(parsedRisks);
         setActivityRaw(activityData);
+
         const rawLaws = Array.isArray(lawsData) ? lawsData : [];
         const aggregatedMap = new Map<string, number>();
 
         rawLaws.forEach((item: any) => {
           let cleanName = item.law_name || "Неизвестно";
+
           const mdMatch = cleanName.match(/\[(.*?)\]\(.*?\)/);
           if (mdMatch && mdMatch[1]) {
             cleanName = mdMatch[1];
           }
           cleanName = cleanName.replace(/[*_`]/g, "").trim();
+
           const currentCount = aggregatedMap.get(cleanName) || 0;
           aggregatedMap.set(cleanName, currentCount + item.count);
         });
+
         const processedLaws = Array.from(aggregatedMap.entries())
           .map(([law_name, count]) => ({ law_name, count }))
           .sort((a, b) => b.count - a.count)
@@ -273,7 +278,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
         <section>
           <h4 className="text-[13px] font-medium text-[var(--tg-theme-hint-color)] uppercase tracking-wider mb-3 ml-1 flex items-center gap-1.5">
             <Scale size={14} className="text-[var(--tg-theme-button-color)]" />{" "}
-            Частые нарушения законов
+            Часто упоминаемые статьи закона
           </h4>
           <div className="bg-[var(--tg-theme-bg-color)] rounded-2xl p-4 border border-[var(--tg-theme-section-separator-color,rgba(128,128,128,0.2))] shadow-sm space-y-4">
             {topLaws.map((item: any, idx: number) => {
