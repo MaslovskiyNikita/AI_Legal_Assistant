@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Drawer } from "vaul";
 import {
@@ -9,6 +8,7 @@ import {
   Trash2,
   FileText,
   AlertTriangle,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { FileIcon } from "../../../components/ui/FileIcon";
@@ -37,7 +37,6 @@ interface ChatModalsProps {
   isFileLimitModalOpen: boolean;
   setIsFileLimitModalOpen: (val: boolean) => void;
 }
-
 
 const DropzoneArea = ({
   id,
@@ -112,6 +111,13 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
+  const [isFetchingBase, setIsFetchingBase] = useState(false);
+
+  const isEvolutionMode = props.chatDocuments.length >= 2;
+  const baseDoc = isEvolutionMode
+    ? props.chatDocuments[props.chatDocuments.length - 1]
+    : null;
+
   const handleFileSelect = (
     file: File | null,
     setFile: (f: File | null) => void,
@@ -134,13 +140,12 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
       return;
     }
 
-    tgHaptic("light"); 
+    tgHaptic("light");
     setFile(file);
   };
 
   return (
     <>
-      {}
       <Drawer.Root
         open={props.isDeleteModalOpen}
         onOpenChange={(open) => {
@@ -188,7 +193,6 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {}
       <Drawer.Root
         open={props.isDownloadModalOpen}
         onOpenChange={(open) => {
@@ -239,7 +243,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                           doc.filename || "document",
                         );
                       }}
-                      className="w-10 h-10 bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm flex items-center justify-center text-[var(--tg-theme-button-color)] active:scale-95 transition-all shrink-0"
+                      className="w-10 h-10 bg-[var(--tg-theme-bg-color)] rounded-full shadow-sm flex items-center justify-center text-[var(--tg-theme-button-color)] active:scale-95 transition-all shrink-0 cursor-pointer"
                     >
                       <Download size={18} />
                     </button>
@@ -251,7 +255,6 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {}
       <Drawer.Root
         open={props.isExportModalOpen}
         onOpenChange={(open) => {
@@ -286,7 +289,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     props.handleExport("docx");
                   }}
                   disabled={props.isExporting}
-                  className="w-full py-4 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all"
+                  className="w-full py-4 bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   {props.isExporting ? "Экспорт..." : "Скачать в формате .DOCX"}
                 </button>
@@ -296,7 +299,7 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                     props.handleExport("pdf");
                   }}
                   disabled={props.isExporting}
-                  className="w-full py-4 bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-button-color)] rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all"
+                  className="w-full py-4 bg-[var(--tg-theme-secondary-bg-color)] text-[var(--tg-theme-button-color)] rounded-xl text-[17px] font-semibold flex justify-center items-center gap-2 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   {props.isExporting ? "Экспорт..." : "Скачать в формате .PDF"}
                 </button>
@@ -306,7 +309,6 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
         </Drawer.Portal>
       </Drawer.Root>
 
-      {}
       <Drawer.Root
         open={props.isCompareModalOpen}
         onOpenChange={(open) => {
@@ -323,20 +325,40 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-[var(--tg-theme-hint-color)] opacity-20 mt-4 mb-2" />
             <div className="px-5 pb-3 pt-2 text-center">
               <Drawer.Title className="text-[20px] font-bold text-[var(--tg-theme-text-color)]">
-                Сравнение документов
+                {isEvolutionMode
+                  ? "Эволюция документа"
+                  : "Сравнение документов"}
               </Drawer.Title>
               <Drawer.Description className="text-[14px] text-[var(--tg-theme-hint-color)] mt-1">
-                Загрузите две версии документа для поиска изменений и рисков.
+                {isEvolutionMode
+                  ? "Добавьте новую версию для сравнения с последней загруженной."
+                  : "Загрузите две версии документа для поиска изменений и рисков."}
               </Drawer.Description>
             </div>
 
             <div className="p-5 pb-10 space-y-4">
-              {}
               <div className="bg-[var(--tg-theme-bg-color)] p-4 rounded-2xl shadow-sm">
                 <label className="text-[13px] font-bold text-[var(--tg-theme-hint-color)] uppercase tracking-wider block mb-3">
-                  Старая редакция
+                  {isEvolutionMode
+                    ? "Базовая редакция (из чата)"
+                    : "Старая редакция"}
                 </label>
-                {!props.oldFile ? (
+
+                {isEvolutionMode && baseDoc ? (
+                  <div className="flex items-center justify-between p-3 bg-[color-mix(in_srgb,var(--tg-theme-hint-color)_10%,transparent)] rounded-xl border border-[color-mix(in_srgb,var(--tg-theme-hint-color)_30%,transparent)] opacity-80">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                      <FileIcon filename={baseDoc.filename} />
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="text-[15px] font-semibold text-[var(--tg-theme-text-color)] truncate">
+                          {baseDoc.filename}
+                        </span>
+                        <span className="text-[13px] text-[var(--tg-theme-hint-color)]">
+                          Предыдущая версия
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ) : !props.oldFile ? (
                   <DropzoneArea
                     id="old-file"
                     onFileSelect={(file) =>
@@ -369,10 +391,11 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
                 )}
               </div>
 
-              {}
               <div className="bg-[var(--tg-theme-bg-color)] p-4 rounded-2xl shadow-sm">
                 <label className="text-[13px] font-bold text-[var(--tg-theme-hint-color)] uppercase tracking-wider block mb-3">
-                  Новая редакция
+                  {isEvolutionMode
+                    ? "Новая редакция (Эволюция)"
+                    : "Новая редакция"}
                 </label>
                 {!props.newFile ? (
                   <DropzoneArea
@@ -408,21 +431,48 @@ export const ChatModals: React.FC<ChatModalsProps> = (props) => {
               </div>
 
               <button
-                onClick={() => {
+                onClick={async () => {
                   tgHaptic("medium");
-                  props.setIsCompareModalOpen(false);
+
+                  if (isEvolutionMode && baseDoc && props.newFile) {
+                    setIsFetchingBase(true);
+                    try {
+                      const fetchedOldFile = await apiClient.getDocumentFile(
+                        baseDoc.id,
+                        baseDoc.filename,
+                      );
+                      props.setOldFile(fetchedOldFile);
+                      props.setIsCompareModalOpen(false);
+                    } catch (e) {
+                      showToast(
+                        "Не удалось загрузить базовый документ",
+                        "error",
+                      );
+                    } finally {
+                      setIsFetchingBase(false);
+                    }
+                  } else {
+                    props.setIsCompareModalOpen(false);
+                  }
                 }}
-                disabled={!props.oldFile || !props.newFile}
-                className="w-full bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] font-semibold text-[17px] py-4 rounded-xl mt-4 disabled:opacity-50 active:scale-[0.98] transition-all cursor-pointer"
+                disabled={
+                  isFetchingBase ||
+                  (!isEvolutionMode && (!props.oldFile || !props.newFile)) ||
+                  (isEvolutionMode && !props.newFile)
+                }
+                className="w-full bg-[var(--tg-theme-button-color)] text-[var(--tg-theme-button-text-color,white)] font-semibold text-[17px] py-4 rounded-xl mt-4 disabled:opacity-50 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
               >
-                Готово
+                {isFetchingBase ? (
+                  <Loader2 size={20} className="animate-spin" />
+                ) : (
+                  "Готово"
+                )}
               </button>
             </div>
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>
 
-      {}
       <Drawer.Root
         open={props.isFileLimitModalOpen}
         onOpenChange={(open) => {

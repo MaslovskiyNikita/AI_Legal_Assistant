@@ -330,14 +330,30 @@ export const useChat = (initialChatId: string | undefined) => {
         comparisonMsgId = uploadResponse?.message_id;
 
         const newDocId = uploadResponse?.new_document_id || uploadResponse?.id;
-        files.setChatDocuments((prev) => [
-          ...prev,
-          {
-            id: newDocId ? newDocId - 1 : Date.now(),
-            filename: currentOldFile!.name,
-          },
-          { id: newDocId || Date.now() + 1, filename: currentNewFile!.name },
-        ]);
+
+        files.setChatDocuments((prev) => {
+          const newDocs = [...prev];
+          const oldExists = newDocs.some(
+            (d) => d.filename === currentOldFile!.name,
+          );
+          const newExists = newDocs.some(
+            (d) => d.filename === currentNewFile!.name,
+          );
+
+          if (!oldExists) {
+            newDocs.push({
+              id: newDocId ? newDocId - 1 : Date.now(),
+              filename: currentOldFile!.name,
+            });
+          }
+          if (!newExists) {
+            newDocs.push({
+              id: newDocId || Date.now() + 1,
+              filename: currentNewFile!.name,
+            });
+          }
+          return newDocs;
+        });
       }
 
       const targetComparisonId = comparisonMsgId ? comparisonMsgId : undefined;

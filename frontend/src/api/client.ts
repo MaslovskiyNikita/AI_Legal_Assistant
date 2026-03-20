@@ -247,6 +247,15 @@ export const apiClient = {
     return r.json();
   },
 
+  async getDocumentFile(documentId: number, filename: string): Promise<File> {
+    const downloadUrl = `${BASE_URL}/documents/${documentId}/download`;
+    const response = await fetch(downloadUrl);
+    if (!response.ok) throw new Error("Failed to fetch document for evolution");
+
+    const blob = await response.blob();
+    return new File([blob], filename, { type: blob.type });
+  },
+
   async createStarsInvoice(telegram_id: number, package_id: string) {
     const r = await fetch(`${BASE_URL}/payments/invoice`, {
       method: "POST",

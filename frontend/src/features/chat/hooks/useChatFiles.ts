@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 
 export const useChatFiles = () => {
@@ -7,10 +6,10 @@ export const useChatFiles = () => {
   const [newFile, setNewFile] = useState<File | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  
   const hasAttachedFiles = Boolean(oldFile && newFile);
   const isFilesAttachedToChat = chatDocuments.length >= 2;
-  const canAttachFiles = !isFilesAttachedToChat;
+  const canAttachFiles = true;
+
   const shouldShowAttachedIcon = hasAttachedFiles || isFilesAttachedToChat;
 
   return {
