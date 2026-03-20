@@ -31,6 +31,7 @@ def _md_to_html(text: str) -> str:
     text = re.sub(r'\*\*\*(.*?)\*\*\*', r'<b><i>\1</i></b>', text)
     text = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', text)
     text = re.sub(r'\*(.*?)\*', r'<i>\1</i>', text)
+    text = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2">\1</a>', text)
     text = text.replace('\n', '<br>')
     return text
 
@@ -305,16 +306,18 @@ def _build_analysis_docx_sync(analysis_data: dict, diff_blocks: list) -> io.Byte
             _render_content_docx(doc, detail.get("explanation", ""))
 
             violated_law = detail.get("violated_law")
-            if violated_law:
-                # Добавляем законодательство и кликабельную ссылку (если есть в словаре)
+            if violated_law and violated_law != "null":
                 p_law = doc.add_paragraph("Законодательство: ")
-                p_law.add_run(violated_law).italic = True
 
-                url = _get_source_url(violated_law)
-                if url:
-                    p_law.add_run(" (")
-                    _add_hyperlink(p_law, "открыть источник", url)
-                    p_law.add_run(")")
+                # Ищем Markdown ссылку вида [Текст](URL)
+                match = re.search(r'\[(.*?)\]\((.*?)\)', violated_law)
+                if match:
+                    text_link = match.group(1)
+                    url_link = match.group(2)
+                    _add_hyperlink(p_law, text_link, url_link)
+                else:
+                    # Если ИИ вернул просто текст без ссылки
+                    p_law.add_run(violated_law).italic = True
 
     doc.add_heading("Таблица изменений", level=2)
     try:
@@ -382,13 +385,10 @@ def _build_analysis_pdf_sync(analysis_data: dict, diff_blocks: list) -> io.Bytes
             pdf.write_html(_md_to_html(detail.get("explanation", "")))
 
             violated_law = detail.get("violated_law")
-            if violated_law:
+            if violated_law and violated_law != "null":
                 pdf.ln(2)
-                url = _get_source_url(violated_law)
-                if url:
-                    pdf.write_html(f"<i>Связано с: {violated_law} (<a href='{url}'>открыть источник</a>)</i>")
-                else:
-                    pdf.write_html(f"<i>Связано с: {violated_law}</i>")
+                html_law = _md_to_html(violated_law)
+                pdf.write_html(f"<i>Законодательство: {html_law}</i>")
             pdf.ln(8)
 
     pdf.ln(5)
