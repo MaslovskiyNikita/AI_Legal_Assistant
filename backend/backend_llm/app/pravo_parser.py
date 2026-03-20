@@ -216,28 +216,10 @@ class PravoParser:
 
 if __name__ == "__main__":
     import urllib3
+    from backend_llm.app.core.law_sources import LAW_SOURCES_REGISTRY
 
     urllib3.disable_warnings()
 
-    docs = [
-        {
-            "url": "https://pravo.by/pravovaya-informatsiya/normativnye-dokumenty/konstitutsiya-respubliki-belarus/",
-            "name": "Конституция Республики Беларусь"
-        },
-        {
-            "url": "https://pravo.by/document/?guid=3871&p0=Hk9900275",
-            "name": "Уголовный кодекс Республики Беларусь"
-        },
-        {
-            "url": "https://pravo.by/document/?guid=3871&p0=Hk9800218",
-            "name": "Гражданский кодекс Республики Беларусь"
-        },
-        {
-            "url": "https://pravo.by/document/?guid=3871&p0=HK9900296",
-            "name": "Трудовой кодекс Республики Беларусь"
-        }
-    ]
-
-    for doc in docs:
+    for doc in LAW_SOURCES_REGISTRY:
         parser = PravoParser(url=doc["url"], source_name=doc["name"])
         parser.check_and_save()

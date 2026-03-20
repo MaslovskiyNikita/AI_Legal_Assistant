@@ -8,7 +8,8 @@ from backend_llm.app.settings import settings
 from backend_llm.app.models import FullDocumentAnalysis, RiskLevel, ChangeAnalysis, BlockDiff, ChangeType
 from backend_llm.app.models.AssistantTone import AssistantTone
 from backend_llm.app.rag_service import rag_service
-from backend_llm.app.prompts import LegalPrompts 
+from backend_llm.app.prompts import LegalPrompts
+from backend_llm.app.core.law_sources import get_url_by_source_name
 
 class AiRiskAnalyzer:
     """
@@ -52,7 +53,14 @@ class AiRiskAnalyzer:
 
         try:
             rag_docs = await rag_service.asearch(" ".join(query_parts))
-            rag_context = "\n".join([f"ст. {d.metadata.get('article')} ({d.metadata.get('source')}): {d.page_content}" for d in rag_docs])
+            rag_parts = []
+            for d in rag_docs:
+                source = d.metadata.get('source', '')
+                article = d.metadata.get('article', '')
+                url = get_url_by_source_name(source)
+                url_str = f" [Ссылка: {url}]" if url else ""
+                rag_parts.append(f"ст. {article} ({source}){url_str}: {d.page_content}")
+            rag_context = "\n".join(rag_parts)
         except Exception as e:
             print(f"RAG Error: {e}")
             rag_context = ""
@@ -215,8 +223,13 @@ class AiRiskAnalyzer:
         try:
             rag_docs = await rag_service.asearch(question)
             if rag_docs:
-                rag_parts = [f"- {d.metadata.get('source')}, ст. {d.metadata.get('article')}: {d.page_content}" for d in
-                             rag_docs]
+                rag_parts = []
+                for d in rag_docs:
+                    source = d.metadata.get('source', '')
+                    article = d.metadata.get('article', '')
+                    url = get_url_by_source_name(source)
+                    url_str = f" [URL: {url}]" if url else ""
+                    rag_parts.append(f"- {source}, ст. {article}{url_str}:\n{d.page_content}")
                 rag_context = "\n\n".join(rag_parts)
         except Exception as e:
             print(f"RAG Chat Error: {e}")
