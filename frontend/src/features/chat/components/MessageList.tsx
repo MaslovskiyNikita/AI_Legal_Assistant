@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useRef } from "react";
 import { Scale } from "lucide-react";
 import { MessageBubble } from "./MessageBubble";
 import { formatDateLabel } from "../../../utils/dateUtils";
 import { motion, AnimatePresence } from "motion/react";
+
 interface MessageListProps {
   messages: any[];
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
@@ -12,7 +12,7 @@ interface MessageListProps {
   copiedMessageId: string | number | null;
   onCopy: (text: string, id: string | number) => void;
   onOpenDownload: () => void;
-  onExportDocx: () => void; 
+  onExportDocx: () => void;
   isTyping: boolean;
 }
 
@@ -24,12 +24,13 @@ export const MessageList: React.FC<MessageListProps> = ({
   copiedMessageId,
   onCopy,
   onOpenDownload,
-  onExportDocx, 
+  onExportDocx,
   isTyping,
 }) => {
   const [isScrolling, setIsScrolling] = useState(false);
   const [floatingDate, setFloatingDate] = useState<string | null>(null);
-  const scrollTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastScrollCheck = useRef<number>(0);
 
   const lastUserMsg = [...messages].reverse().find((m) => m.role === "user");
@@ -136,7 +137,7 @@ export const MessageList: React.FC<MessageListProps> = ({
                 {group.messages.map((msg, index) => (
                   <motion.div
                     key={`${msg.id ?? msg.created_at ?? "msg"}-${index}`}
-                    layout 
+                    layout
                     initial={{
                       opacity: 0,
                       y: 20,
@@ -147,9 +148,9 @@ export const MessageList: React.FC<MessageListProps> = ({
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{
                       type: "spring",
-                      stiffness: 450, 
-                      damping: 30, 
-                      mass: 0.8, 
+                      stiffness: 450,
+                      damping: 30,
+                      mass: 0.8,
                     }}
                     className="w-full"
                   >

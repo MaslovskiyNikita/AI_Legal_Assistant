@@ -39,6 +39,7 @@ export default function Chat() {
         setInputText={chat.setInputText}
         isTyping={chat.isTyping}
         handleSend={chat.handleSend}
+        handlePostAnalysis={chat.handlePostAnalysis}
         oldFile={chat.oldFile}
         newFile={chat.newFile}
         setOldFile={chat.setOldFile}

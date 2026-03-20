@@ -30,6 +30,7 @@ export const useChat = (initialChatId: string | undefined) => {
   if (location.state?.tone) {
     chatToneRef.current = location.state.tone;
   }
+
   const backPath = location.state?.from || "/profile";
 
   const modals = useChatModals();
@@ -111,7 +112,6 @@ export const useChat = (initialChatId: string | undefined) => {
       modals.setIsCompareModalOpen(true);
       navigate(location.pathname, {
         replace: true,
-        // Сохраняем ...location.state, чтобы не потерять backPath
         state: { ...location.state, tone: chatToneRef.current },
       });
     }
@@ -153,6 +153,88 @@ export const useChat = (initialChatId: string | undefined) => {
     }
   };
 
+  const handlePostAnalysis = async () => {
+    if (!currentChatId || currentChatId === "new") {
+      showToast("Сначала начните диалог или загрузите документы.", "info");
+      return;
+    }
+    if (isSendingRef.current || isTyping) return;
+
+    isSendingRef.current = true;
+    setIsTyping(true);
+    tgHapticNotification("success");
+
+    const postAnalysisMsgId = `msg_${Date.now()}_post`;
+
+    chatMessages.setMessages((prev) => [
+      ...prev,
+      {
+        id: postAnalysisMsgId,
+        role: "ai",
+        text: "...",
+        created_at: new Date().toISOString(),
+        isComplete: false,
+      },
+    ]);
+
+    try {
+      const postResponse = await apiClient.createPostAnalysis(
+        Number(currentChatId),
+      );
+
+      chatMessages.setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === postAnalysisMsgId
+            ? { ...msg, text: postResponse.text, isComplete: true }
+            : msg,
+        ),
+      );
+
+      if (internalUserId) {
+        apiClient
+          .getUser(internalUserId)
+          .then((freshProfile) => {
+            const oldUser = JSON.parse(localStorage.getItem("user") || "{}");
+            localStorage.setItem(
+              "user",
+              JSON.stringify({ ...oldUser, ...freshProfile }),
+            );
+          })
+          .catch((e) => console.error(e));
+      }
+    } catch (error: any) {
+      console.error("Ошибка при генерации постанализа:", error);
+      chatMessages.setMessages((prev) =>
+        prev.filter((m) => m.id !== postAnalysisMsgId),
+      );
+
+      if (
+        error.status === 403 ||
+        (error.message && error.message.includes("токенов"))
+      ) {
+        showToast("Недостаточно токенов для этого действия", "error");
+        navigate("/profile", {
+          replace: true,
+          state: { openTokenModal: true },
+        });
+      } else {
+        chatMessages.setMessages((prev) => [
+          ...prev,
+          {
+            id: `msg_err_${Date.now()}`,
+            role: "ai",
+            text: `❌ ${error.message || "Не удалось сформировать отчет."}`,
+            created_at: new Date().toISOString(),
+            isComplete: true,
+          },
+        ]);
+      }
+    } finally {
+      isSendingRef.current = false;
+      setIsTyping(false);
+    }
+  };
+
   const handleSend = async (textOverride?: string | React.MouseEvent) => {
     if (isSendingRef.current || isTyping) return;
 
@@ -176,6 +258,7 @@ export const useChat = (initialChatId: string | undefined) => {
 
     const finalPrompt = textToSend.trim();
     let activeChatId = currentChatId;
+
     const assistantMsgId = `msg_${Date.now()}_ai`;
     const userMsgId = `msg_${Date.now()}_user`;
 
@@ -289,56 +372,6 @@ export const useChat = (initialChatId: string | undefined) => {
         ),
       );
 
-      if (
-        newAiData &&
-        newAiData.diff_blocks &&
-        newAiData.diff_blocks.length > 0
-      ) {
-        const postAnalysisMsgId = `msg_${Date.now()}_post`;
-
-        chatMessages.setMessages((prev) => [
-          ...prev,
-          {
-            id: postAnalysisMsgId,
-            role: "ai",
-            text: "...",
-            created_at: new Date().toISOString(),
-            isComplete: false,
-          },
-        ]);
-
-        try {
-          const postResponse = await apiClient.createPostAnalysis(
-            Number(activeChatId),
-          );
-
-          chatMessages.setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === postAnalysisMsgId
-                ? {
-                    ...msg,
-                    text: postResponse.text,
-                    isComplete: true,
-                  }
-                : msg,
-            ),
-          );
-        } catch (postErr) {
-          console.error("Ошибка при генерации постанализа:", postErr);
-          chatMessages.setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === postAnalysisMsgId
-                ? {
-                    ...msg,
-                    text: "❌ Не удалось сформировать итоговый отчет.",
-                    isComplete: true,
-                  }
-                : msg,
-            ),
-          );
-        }
-      }
-
       if (internalUserId) {
         apiClient
           .getUser(internalUserId)
@@ -425,6 +458,7 @@ export const useChat = (initialChatId: string | undefined) => {
     handleExport,
     handleExportAnalysis,
     handleSend,
+    handlePostAnalysis,
     backPath,
   };
 };

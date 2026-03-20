@@ -1,4 +1,3 @@
-
 import React from "react";
 import { motion } from "motion/react";
 import {
@@ -9,7 +8,7 @@ import {
   Loader2,
   ArrowUp,
   Sparkles,
-  AlertTriangle, 
+  AlertTriangle,
   ShieldAlert,
 } from "lucide-react";
 import { tgHaptic } from "../../../utils/telegram";
@@ -19,6 +18,7 @@ interface ChatInputProps {
   setInputText: (val: string) => void;
   isTyping: boolean;
   handleSend: (textOverride?: string) => void;
+  handlePostAnalysis: () => void;
   oldFile: File | null;
   newFile: File | null;
   setOldFile: (val: File | null) => void;
@@ -37,7 +37,7 @@ const QUICK_ACTIONS = [
     prompt: "Сделай краткую выжимку главных изменений в документах.",
   },
   {
-    id: "errors", 
+    id: "errors",
     label: "Ошибки",
     icon: AlertTriangle,
     prompt:
@@ -57,6 +57,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   setInputText,
   isTyping,
   handleSend,
+  handlePostAnalysis, // <-- ДОСТАЛИ ИЗ ПРОПСОВ
   oldFile,
   newFile,
   setOldFile,
@@ -120,7 +121,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               type="button"
               onClick={() => {
                 tgHaptic("light");
-                handleSend(action.prompt);
+                if (action.id === "summary") {
+                  handlePostAnalysis();
+                } else {
+                  handleSend(action.prompt);
+                }
               }}
               disabled={isTyping}
               className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 bg-[var(--tg-theme-secondary-bg-color)] hover:bg-[var(--tg-theme-secondary-bg-color)] active:bg-[var(--tg-theme-bg-color)] text-[var(--tg-theme-text-color)] rounded-xl text-[12px] font-medium transition-colors disabled:opacity-50 border border-[var(--tg-theme-secondary-bg-color)] min-w-0 shadow-sm"

@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { AILoader, TypingLoader } from "./AILoader";
 import ReactMarkdown from "react-markdown";
@@ -57,7 +56,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   let parsedData: any = null;
   let isComplexAnalysis = false;
 
-  
   if (
     !isUser &&
     aiData &&
@@ -66,8 +64,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   ) {
     isComplexAnalysis = true;
 
-    
-    
     let extractedRisk = "GREEN";
     const riskMatch = rawText.match(
       /\*\*Уровень риска:\s*(RED|YELLOW|GREEN|UNKNOWN)\*\*/i,
@@ -88,9 +84,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         details: [],
       },
     };
-  }
-  
-  else if (!isUser && rawText.trim().startsWith("{")) {
+  } else if (!isUser && rawText.trim().startsWith("{")) {
     try {
       const fallbackData = JSON.parse(rawText);
       if (fallbackData.analysis || fallbackData.diff_blocks) {
@@ -397,7 +391,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
                 const detail = parsedData.analysis?.details?.[idx] || null;
 
-                
                 const riskLevel =
                   detail?.risk ||
                   diff?.risk ||
@@ -469,7 +462,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   {parsedData?.diff_blocks?.map((diff: any, idx: number) => {
                     const detail = parsedData.analysis?.details?.[idx] || null;
 
-                    
                     const riskLevel =
                       detail?.risk ||
                       diff?.risk ||
@@ -481,7 +473,6 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     let violatedLaw =
                       detail?.violated_law || diff?.violated_law;
 
-                    
                     if (violatedLaw === "null") violatedLaw = null;
 
                     return (

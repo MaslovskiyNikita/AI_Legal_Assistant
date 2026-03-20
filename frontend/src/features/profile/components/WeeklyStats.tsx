@@ -16,10 +16,8 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Sector,
 } from "recharts";
 import { apiClient } from "../../../api/client";
-import { tgHaptic } from "../../../utils/telegram";
 
 interface WeeklyStatsProps {
   userId: number | null;
@@ -56,8 +54,6 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
   const [activityRaw, setActivityRaw] = useState<any[]>([]);
   const [topLaws, setTopLaws] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!userId) return;
@@ -118,30 +114,6 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
     return null;
   };
 
-  const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill } =
-      props;
-    return (
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={innerRadius}
-        outerRadius={outerRadius - 4}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill={fill}
-        style={{ filter: "brightness(0.85)", transition: "all 0.15s ease" }}
-      />
-    );
-  };
-
-  const displayValue =
-    activeIndex !== null ? riskData[activeIndex].value : totalRisks;
-  const displayColor =
-    activeIndex !== null
-      ? riskData[activeIndex].color
-      : "var(--tg-theme-button-color)";
-
   return (
     <div className="mb-8 mt-6 space-y-6">
       <section>
@@ -163,7 +135,7 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
               <div className="flex items-center">
                 <div className="w-[120px] h-[120px] shrink-0 relative">
                   <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
+                    <PieChart style={{ pointerEvents: "none" }}>
                       <Pie
                         data={riskData}
                         cx="50%"
@@ -173,29 +145,13 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
                         paddingAngle={5}
                         dataKey="value"
                         stroke="none"
-                        activeIndex={
-                          activeIndex !== null ? activeIndex : undefined
-                        }
-                        activeShape={renderActiveShape}
-                        onMouseEnter={(_, index) => {
-                          setActiveIndex(index);
-                          tgHaptic("light");
-                        }}
-                        onMouseLeave={() => setActiveIndex(null)}
-                        onTouchStart={(_, index) => {
-                          setActiveIndex(index);
-                          tgHaptic("light");
-                        }}
-                        onTouchEnd={() => setActiveIndex(null)}
+                        isAnimationActive={true}
                       >
                         {riskData.map((entry, index) => (
                           <Cell
                             key={`cell-${index}`}
                             fill={entry.color}
-                            style={{
-                              outline: "none",
-                              transition: "all 0.15s ease",
-                            }}
+                            style={{ outline: "none" }}
                           />
                         ))}
                       </Pie>
@@ -203,10 +159,10 @@ export const WeeklyStats: React.FC<WeeklyStatsProps> = ({ userId }) => {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span
-                      className="text-2xl font-bold leading-none transition-colors duration-200"
-                      style={{ color: displayColor }}
+                      className="text-2xl font-bold leading-none"
+                      style={{ color: "var(--tg-theme-button-color)" }}
                     >
-                      {displayValue}
+                      {totalRisks}
                     </span>
                   </div>
                 </div>
